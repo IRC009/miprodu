@@ -37,25 +37,25 @@ const {
 // SUSCRIPCIONES
 // ─────────────────────────────────────────────
 
-exports.createSubscription       = onCall(handleCreateSubscription);
-exports.cancelSubscription       = onCall(handleCancelSubscription);
+exports.createSubscription       = onCall({ secrets: ["MP_ACCESS_TOKEN"] }, handleCreateSubscription);
+exports.cancelSubscription       = onCall({ secrets: ["MP_ACCESS_TOKEN"] }, handleCancelSubscription);
 exports.adminRestoreSubscription = onCall(handleAdminRestore);
-exports.verifySubscriptionExpiration = onCall(verifySubscriptionExpiration);
+exports.verifySubscriptionExpiration = onCall({ secrets: ["MP_ACCESS_TOKEN"] }, verifySubscriptionExpiration);
 
 // ─────────────────────────────────────────────
 // WEBHOOKS
 // ─────────────────────────────────────────────
 
-exports.webhookMP           = onRequest(handleWebhookMP);
-exports.webhookOrderPayment = onRequest(handleWebhookOrderPayment);
+exports.webhookMP           = onRequest({ secrets: ["MP_ACCESS_TOKEN", "MP_WEBHOOK_SECRET"] }, handleWebhookMP);
+exports.webhookOrderPayment = onRequest({ secrets: ["MP_ACCESS_TOKEN", "MP_WEBHOOK_SECRET"] }, handleWebhookOrderPayment);
 exports.webhookOrderBold    = onRequest(handleWebhookOrderBold);
 
 // ─────────────────────────────────────────────
 // PAGOS DE ÓRDENES
 // ─────────────────────────────────────────────
 
-exports.createOrderPreference  = onCall(handleCreateOrderPreference);
-exports.processMPBrickPayment  = onCall(handleProcessMPBrickPayment);
+exports.createOrderPreference  = onCall({ secrets: ["MP_ACCESS_TOKEN"] }, handleCreateOrderPreference);
+exports.processMPBrickPayment  = onCall({ secrets: ["MP_ACCESS_TOKEN"] }, handleProcessMPBrickPayment);
 exports.createBoldPendingOrder = onCall(handleCreateBoldPendingOrder);
 
 // ─────────────────────────────────────────────
