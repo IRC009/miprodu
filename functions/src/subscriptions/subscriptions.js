@@ -192,7 +192,7 @@ async function handleCreateSubscription(request) {
     const branchLabel = numBranches > 1 ? `${numBranches} sedes` : "1 sede";
 
     const payload = {
-      reason: `Carta y Mesa · Plan ${planLabel} · ${branchLabel} · ${cycleLabel}`,
+      reason: `MiProdu · Plan ${planLabel} · ${branchLabel} · ${cycleLabel}`,
       external_reference: isMixed 
         ? `${restaurantId}|mixed|${p0Branches}|${p1Branches}|${p2Branches}|${billingCycle}${oldSubIdToCancel ? "|" + oldSubIdToCancel : ""}`
         : `${restaurantId}|${levelInt}|${numBranches}|${billingCycle}${oldSubIdToCancel ? "|" + oldSubIdToCancel : ""}`,

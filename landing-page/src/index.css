@@ -1,27 +1,27 @@
 /* ============================================================
-   GLOBAL DESIGN TOKENS — Carta y Mesa Landing Page v2
+   GLOBAL DESIGN TOKENS — MiProdu Landing Page v1
    ============================================================ */
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght=0,400;0,700;0,900;1,400;1,700&family=Inter:wght=300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-  /* Paleta principal: vino tinto */
-  --wine: #8B1A2E;
-  --wine-mid: #A52040;
-  --wine-light: #C23055;
-  --wine-glow: rgba(139, 26, 46, 0.35);
+  /* Paleta principal: Mostaza / Ámbar Dorado */
+  --wine: #C9A227;
+  --wine-mid: #D4B034;
+  --wine-light: #E8C84A;
+  --wine-glow: rgba(201, 162, 39, 0.35);
 
   /* Fondos - Modo Claro */
   --black: #FFFFFF;
-  --black-soft: #F8FAFC;
-  --black-card: #F1F5F9;
+  --black-soft: #F9F8F4;
+  --black-card: #F3F0E6;
   --black-border: rgba(0,0,0,0.08);
 
-  --white: #060608;
+  --white: #0f0e0c;
   --text-muted: rgba(0,0,0,0.45);
-  --text-soft: rgba(0,0,0,0.75);
+  --text-soft: rgba(0,0,0,0.70);
 
   /* Tipografía */
-  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-serif: 'Plus Jakarta Sans', system-ui, sans-serif;
   --font-sans: 'Inter', system-ui, sans-serif;
 
   /* Espaciado */
@@ -61,15 +61,15 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: rgba(139, 26, 46, 0.12);
-  border: 1px solid rgba(139, 26, 46, 0.35);
+  background: rgba(201, 162, 39, 0.12);
+  border: 1px solid rgba(201, 162, 39, 0.35);
   border-radius: 999px;
   padding: 6px 18px;
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #E8748A;
+  color: #C9A227;
   margin-bottom: 20px;
 }
 
@@ -92,14 +92,14 @@ body {
 .section-title {
   font-family: var(--font-serif);
   font-size: clamp(2rem, 5vw, 3.6rem);
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1.1;
   color: var(--white);
   margin-bottom: 20px;
 }
 
 .wine-text {
-  background: linear-gradient(135deg, #E8748A, var(--wine-mid), var(--wine));
+  background: linear-gradient(135deg, #E8C84A, var(--wine-mid), var(--wine));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

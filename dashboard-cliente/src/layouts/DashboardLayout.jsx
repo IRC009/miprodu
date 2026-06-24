@@ -120,8 +120,8 @@ export default function DashboardLayout({ user }) {
 
   if (userProfile.loading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', backgroundColor: '#f1f5f9', gap: '1rem' }}>
-        <div className="spinner" style={{ width: '40px', height: '40px', border: '4px solid #e2e8f0', borderTop: '4px solid #4f46e5', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9f8f4', gap: '1rem' }}>
+        <div className="spinner" style={{ width: '40px', height: '40px', border: '4px solid #e2e8f0', borderTop: '4px solid #C9A227', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
         <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
         <p style={{ color: '#64748b', fontWeight: 600 }}>Cargando panel de control...</p>
       </div>
@@ -133,16 +133,16 @@ export default function DashboardLayout({ user }) {
   if (availableRestaurants.length === 0) {
     if (isOwner) {
       return (
-        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', backgroundColor: '#f1f5f9', gap: '1rem' }}>
-          <div className="spinner" style={{ width: '40px', height: '40px', border: '4px solid #e2e8f0', borderTop: '4px solid #4f46e5', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9f8f4', gap: '1rem' }}>
+          <div className="spinner" style={{ width: '40px', height: '40px', border: '4px solid #e2e8f0', borderTop: '4px solid #C9A227', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
           <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
-          <p style={{ color: '#64748b', fontWeight: 600 }}>Cargando tu restaurante...</p>
+          <p style={{ color: '#64748b', fontWeight: 600 }}>Cargando tu catálogo...</p>
         </div>
       );
     }
     return (
         <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f5f9' }}>
-            <h2>No tienes restaurantes asociados</h2>
+            <h2>No tienes tiendas asociadas</h2>
             <p>Si eres personal, pide que te inviten usando tu correo: <b>{userProfile.email}</b></p>
             <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
               <button className="btn-primary" onClick={() => window.location.reload()}>Refrescar Página</button>
@@ -181,8 +181,8 @@ export default function DashboardLayout({ user }) {
       <div className="layout-container" style={{ display: 'block', backgroundColor: '#f8fafc', minHeight: '100vh', overflowY: 'auto' }}>
         <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2rem', backgroundColor: '#fff', borderBottom: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <img src={logoSinfondo} alt="Tienda y QR" style={{ height: '36px' }} />
-            <span style={{ fontWeight: 800, fontSize: '1.1rem', color: '#0f172a' }}>Tienda <span style={{ color: '#8B1A2E' }}>&amp;</span> QR</span>
+            <img src={logoSinfondo} alt="MiProdu" style={{ height: '36px' }} />
+            <span style={{ fontWeight: 800, fontSize: '1.1rem', color: '#0f172a' }}>Mi<span style={{ color: '#C9A227' }}>Produ</span></span>
           </div>
           <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', fontWeight: 600, fontSize: '0.9rem' }}>
             <LogOut size={18} /> Cerrar Sesión
@@ -203,14 +203,13 @@ export default function DashboardLayout({ user }) {
           <div className="sidebar-logo">
             <img
               src={logoSinfondo}
-              alt="Tienda y QR"
+              alt="MiProdu"
               className="sidebar-logo-img"
             />
             {isSidebarOpen && (
               <div className="logo-wordmark">
-                <span className="logo-brand">Tienda</span>
-                <span className="logo-brand logo-brand-separator">&amp;</span>
-                <span className="logo-brand">QR</span>
+                <span className="logo-brand">Mi</span>
+                <span className="logo-brand logo-brand-separator" style={{ color: '#C9A227' }}>Produ</span>
               </div>
             )}
           </div>
@@ -334,7 +333,7 @@ export default function DashboardLayout({ user }) {
                 <span className="switcher-arrow">▾</span>
               </div>
             ) : (
-              <h2 className="restaurant-name">{restaurant?.name || 'Mi Tienda'}</h2>
+              <h2 className="restaurant-name">{restaurant?.name || 'Mi Catálogo'}</h2>
             )}
           </div>
           <div className="topbar-right">
@@ -361,10 +360,10 @@ export default function DashboardLayout({ user }) {
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="topbar-menu-link"
-                  title="Ver mi tienda pública"
+                  title="Ver mi catálogo público"
                 >
                   <span className="topbar-menu-link-icon">👁️</span>
-                  <span className="topbar-menu-link-text">Tienda</span>
+                  <span className="topbar-menu-link-text">Catálogo</span>
                 </a>
               );
             })()}

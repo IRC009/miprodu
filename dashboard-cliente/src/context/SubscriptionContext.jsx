@@ -189,7 +189,7 @@ export function SubscriptionProvider({ user, children }) {
           const uData = userSnap.exists() ? userSnap.data() : {};
           
           const restaurantData = {
-            name: uData.restaurantName || 'Mi Restaurante',
+            name: uData.restaurantName || 'Mi Catálogo',
             ownerId: user.uid,
             ownerEmail: userEmail,
             ownerName: uData.ownerName || 'Dueño/Admin',

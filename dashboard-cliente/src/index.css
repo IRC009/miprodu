@@ -1,23 +1,23 @@
 /* ══════════════════════════════════════════════
-   CARTA Y MESA — Design System
-   Sidebar: Vino Tinto Premium
-   Contenido: Minimal & Clean
+   MIPRODU — Design System
+   Sidebar: Negro Carbón Premium
+   Contenido: Mostaza + Blanco + Negro
    ══════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  /* — Primario: Vino Tinto — */
-  --primary:        #8B1A2E;   /* vino tinto principal */
-  --primary-hover:  #6e1424;   /* vino oscuro en hover */
-  --primary-light:  #fdf2f4;   /* fondo tenue vino */
-  --primary-glow:   rgba(139, 26, 46, 0.12);
+  /* — Primario: Mostaza / Ámbar Dorado — */
+  --primary:        #C9A227;   /* mostaza principal */
+  --primary-hover:  #a8841c;   /* mostaza oscura en hover */
+  --primary-light:  #fdf8e7;   /* fondo tenue mostaza */
+  --primary-glow:   rgba(201, 162, 39, 0.15);
 
-  --secondary:      #1a0a10;   /* Vino tinto oscuro (igual que el sidebar) */
-  --secondary-hover:#2b121b;
+  --secondary:      #1A1A1A;   /* Negro carbón */
+  --secondary-hover:#2a2a2a;
 
   /* — Sidebar — */
-  --bg-sidebar:     #1a0a10;
+  --bg-sidebar:     #111111;
 
   /* — Status — */
   --success:        #16a34a;
@@ -57,7 +57,7 @@
   --shadow-md: 0 4px 8px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04);
   --shadow-lg: 0 8px 16px rgba(0,0,0,0.07), 0 4px 6px rgba(0,0,0,0.04);
   --shadow-xl: 0 16px 32px rgba(0,0,0,0.08);
-  --shadow-primary: 0 2px 8px rgba(139, 26, 46, 0.25);
+  --shadow-primary: 0 2px 8px rgba(201, 162, 39, 0.30);
 
   /* — Layout — */
   --sidebar-width:  260px;

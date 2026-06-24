@@ -100,23 +100,23 @@ export default function Hero() {
         <div ref={leftContentRef} className="hero-copy">
           <div className="hero-badge">
             <span className="hero-badge-dot" />
-            La evolución para tu restaurante
+            La plataforma de catálogos digitales
           </div>
           
           <h1 className="hero-title">
-            Digitaliza, gestiona y <span className="wine-text">escala</span> tus ventas
+            Publica, vende y <span className="wine-text">escala</span> tu catálogo online
           </h1>
           
           <p className="hero-subtitle">
-            Carta y Mesa es la plataforma todo-en-uno que moderniza la experiencia de tus clientes y optimiza el trabajo de tu equipo. Menús QR, comandas y analytics en un solo lugar.
+            MiProdu es la plataforma todo-en-uno para digitalizar tu catálogo de productos — camisas, accesorios, gadgets, lo que quieras. QR por producto, pedidos en línea y analytics en un solo lugar.
           </p>
 
           <div className="hero-actions">
-            <a href="https://app.cartaymesa.com" target="_blank" rel="noopener noreferrer" className="btn-primary">
+            <a href="https://app.tu-nuevo-dominio.com" target="_blank" rel="noopener noreferrer" className="btn-primary">
               {trialDays > 0 ? `Empezar ${trialDays} días gratis` : 'Empezar gratis'}
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
             </a>
-            <a href="https://wa.me/573026713501?text=Hola,%20quiero%20m%C3%A1s%20informaci%C3%B3n%20sobre%20Carta%20y%20Mesa" target="_blank" rel="noopener noreferrer" className="btn-secondary">
+            <a href="https://wa.me/573026713501?text=Hola,%20quiero%20m%C3%A1s%20informaci%C3%B3n%20sobre%20MiProdu" target="_blank" rel="noopener noreferrer" className="btn-secondary">
               Agendar demostración
             </a>
           </div>
@@ -124,7 +124,7 @@ export default function Hero() {
           <div className="hero-stats-row">
             <div className="hero-stat">
               <span className="hero-stat-val">+50</span>
-              <span className="hero-stat-label">Restaurantes<br/>activos</span>
+              <span className="hero-stat-label">Catálogos<br/>activos</span>
             </div>
             <div className="hero-stat-divider" />
             <div className="hero-stat">
@@ -143,25 +143,25 @@ export default function Hero() {
               <div className="phone-notch" />
               <div className="phone-screen">
                 <div className="ps-header">
-                  <div className="ps-logo">Carta y Mesa</div>
+                  <div className="ps-logo">MiProdu</div>
                   <div className="ps-nav"><span/><span/></div>
                 </div>
                 <div className="ps-hero">
-                  <div className="ps-hero-img">🥩</div>
-                  <div className="ps-hero-title">Ribeye Premium</div>
+                  <div className="ps-hero-img">👕</div>
+                  <div className="ps-hero-title">Camiseta Premium</div>
                   <div className="ps-hero-price">$85.000</div>
-                  <div className="ps-hero-btn">Agregar orden</div>
+                  <div className="ps-hero-btn">Agregar al carrito</div>
                 </div>
                 <div className="ps-list">
                   <div className="ps-list-item">
-                    <div className="ps-item-img wine-bg">🍷</div>
+                    <div className="ps-item-img wine-bg">👟</div>
                     <div className="ps-item-info">
                       <div className="ps-line w-full"/>
                       <div className="ps-line w-half"/>
                     </div>
                   </div>
                   <div className="ps-list-item">
-                    <div className="ps-item-img black-bg">🥗</div>
+                    <div className="ps-item-img black-bg">🧢</div>
                     <div className="ps-item-info">
                       <div className="ps-line w-full"/>
                       <div className="ps-line w-half"/>
@@ -175,19 +175,19 @@ export default function Hero() {
             <div className="mockup-float float-qr visual-card">
               <div className="fq-icon">📱</div>
               <div className="fq-text">
-                <strong>Mesa 04</strong>
+                <strong>Producto #04</strong>
                 <span>Escaneado activo</span>
               </div>
             </div>
 
             {/* Floating 3D Element 2: New Order Alert */}
             <div className="mockup-float float-order visual-card">
-              <div className="fo-avatar">👨‍🍳</div>
+              <div className="fo-avatar">🛍️</div>
               <div className="fo-text">
-                <strong>Nueva Comanda #102</strong>
+                <strong>Nuevo Pedido #102</strong>
                 <span>Hace 2 min</span>
               </div>
-              <div className="fo-badge">En cocina</div>
+              <div className="fo-badge">En proceso</div>
             </div>
 
             {/* Floating 3D Element 3: Sales Chart */}
