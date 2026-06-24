@@ -1,0 +1,139 @@
+.modern-alert-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20000;
+  padding: 20px;
+  animation: fadeIn 0.3s ease;
+}
+
+.modern-alert-modal {
+  background-color: white;
+  border-radius: 24px;
+  width: 100%;
+  max-width: 320px;
+  padding: 32px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modern-alert-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  margin-bottom: 20px;
+}
+
+.modern-alert-title {
+  margin: 0 0 8px 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.modern-alert-message {
+  margin: 0 0 24px 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #475569;
+  white-space: pre-wrap;
+}
+
+.modern-alert-actions {
+  width: 100%;
+}
+
+.modern-alert-btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 14px;
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.modern-alert-btn:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+/* Color themes per alert type */
+.modern-alert-icon.info {
+  background-color: rgba(59, 130, 246, 0.1);
+  background-color: color-mix(in srgb, var(--primary-color, #3b82f6) 10%, transparent);
+  color: var(--primary-color, #3b82f6);
+}
+
+.modern-alert-icon.success {
+  background-color: rgba(16, 185, 129, 0.1);
+  background-color: color-mix(in srgb, var(--primary-color, #10b981) 10%, transparent);
+  color: var(--primary-color, #10b981);
+}
+
+.modern-alert-icon.error {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.modern-alert-icon.warning {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.modern-alert-btn.info {
+  background-color: var(--primary-color, #3b82f6);
+}
+
+.modern-alert-btn.success {
+  background-color: var(--primary-color, #10b981);
+}
+
+.modern-alert-btn.error {
+  background-color: #ef4444;
+}
+
+.modern-alert-btn.warning {
+  background-color: #f59e0b;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Dark mode support if parent has class */
+:global(.is-dark) .modern-alert-modal {
+  background-color: #1e293b;
+}
+
+:global(.is-dark) .modern-alert-title {
+  color: #f8fafc;
+}
+
+:global(.is-dark) .modern-alert-message {
+  color: #94a3b8;
+}

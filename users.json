@@ -1,0 +1,42 @@
+{"users": [
+{
+  "localId": "3dvVTXP6gMV9LabkmsTyOSg8yF22",
+  "email": "isaacrodas2001@gmail.com",
+  "emailVerified": true,
+  "displayName": "Isaac Rodas Cáceres",
+  "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocKvwqly4QrVf7mR_K7ZU-74HrLWP52kJBtvyCe2Qaec6Byzn9Pm6w=s96-c",
+  "lastSignedInAt": "1780531741754",
+  "createdAt": "1778976980260",
+  "providerUserInfo": [
+    {
+      "providerId": "google.com",
+      "rawId": "110987050254254039728",
+      "email": "isaacrodas2001@gmail.com",
+      "displayName": "Isaac Rodas Cáceres",
+      "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocKvwqly4QrVf7mR_K7ZU-74HrLWP52kJBtvyCe2Qaec6Byzn9Pm6w=s96-c"
+    }
+  ]
+},
+{
+  "localId": "VioEJixb4XNelKD9l98fIC97aN52",
+  "email": "karol@txg2sh1ha9p5zjimch2n.staff.cartaymesa.com",
+  "emailVerified": false,
+  "passwordHash": "N2Mvq4lKsyEG+rZp2w5FAAJemMVgyUcVrX6eYlk4DTkit7ns2mYjP+uJ9US1VAA/c0NVCi6RVXXYAsuLNFKaIw==",
+  "salt": "c/VNSu5l2ZrKSQ==",
+  "displayName": "Karol",
+  "lastSignedInAt": "1780606076422",
+  "createdAt": "1780605436229",
+  "disabled": false,
+  "customAttributes": "{\"isStaff\":true,\"restaurantId\":\"txG2sh1HA9P5zJiMCH2NeSZKuvs1\",\"waiterId\":\"0vKlfw68JmoJyhTUx8e1\",\"role\":\"mesero\"}",
+  "providerUserInfo": []
+},
+{
+  "localId": "txG2sh1HA9P5zJiMCH2NeSZKuvs1",
+  "email": "gaona.sanchez55@gmail.com",
+  "emailVerified": false,
+  "passwordHash": "OIfNrrVdBZbO6PrEEA0uRrDfKgMwZ+Kg5YFR2JOHemqW7wLfplW4G8rAgUfqhIGfndwLoln/GexODgJUWUnhgQ==",
+  "salt": "IZfw86U5XT9Bkw==",
+  "lastSignedInAt": "1780452782696",
+  "createdAt": "1780420835893",
+  "providerUserInfo": []
+}]}

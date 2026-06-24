@@ -1,0 +1,50 @@
+.wa-float {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #25D366;
+  color: white;
+  border-radius: 999px;
+  padding: 14px 20px 14px 16px;
+  text-decoration: none;
+  box-shadow: 0 8px 32px rgba(37, 211, 102, 0.35);
+  transition: transform 0.25s, box-shadow 0.25s;
+  overflow: hidden;
+}
+
+.wa-float::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.1);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.wa-float:hover {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 0 16px 48px rgba(37, 211, 102, 0.5);
+}
+.wa-float:hover::before { opacity: 1; }
+
+.wa-float svg {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.wa-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .wa-float { padding: 14px; }
+  .wa-label { display: none; }
+  .wa-float { border-radius: 50%; width: 52px; height: 52px; justify-content: center; }
+}

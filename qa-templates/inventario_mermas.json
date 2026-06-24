@@ -1,0 +1,73 @@
+{
+  "title": "📦 Inventario y Descuento Automático",
+  "description": "Prueba el sistema de recetas, insumos y el descuento de stock en tiempo real al realizar ventas.",
+  "icon": "📋",
+  "order": 6,
+  "isExploratoryMode": false,
+  "groups": [
+    {
+      "id": "g1_creacion_inventario",
+      "title": "1. Creación de Insumos",
+      "personaId": "admin",
+      "order": 1,
+      "nodes": [
+        {
+          "id": "n1_alta_insumo",
+          "type": "check",
+          "title": "Registro de Ingrediente Base",
+          "steps": [
+            { "id": "s1", "label": "Ir a la pestaña de 'Inventario'." },
+            { "id": "s2", "label": "Crear un nuevo insumo llamado 'Pan de Hamburguesa' con un stock inicial de 10 unidades." },
+            { "id": "s3", "label": "Verificar que el insumo aparezca en la lista y permita configurar una alerta de 'Stock Mínimo' (Ej: en 2 unidades)." }
+          ]
+        },
+        {
+          "id": "n2_receta",
+          "type": "check",
+          "title": "Asignación a Receta",
+          "steps": [
+            { "id": "s1", "label": "Ir al 'Menú' y editar un plato existente (Ej: Hamburguesa Clásica)." },
+            { "id": "s2", "label": "Vincular el ingrediente 'Pan de Hamburguesa' a la receta de ese plato (restando 1 unidad por venta)." },
+            { "id": "s3", "label": "Guardar cambios en el menú." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g2_merma_automatica",
+      "title": "2. Prueba de Descuento",
+      "personaId": "cajero",
+      "order": 2,
+      "nodes": [
+        {
+          "id": "n3_venta_pos",
+          "type": "check",
+          "title": "Venta en Caja",
+          "steps": [
+            { "id": "s1", "label": "Ir al POS / Caja." },
+            { "id": "s2", "label": "Vender y facturar exactamente 2 unidades del plato 'Hamburguesa Clásica'." },
+            { "id": "s3", "label": "Cerrar la mesa y confirmar que la transacción de pago se completó." }
+          ]
+        },
+        {
+          "id": "n4_auditoria",
+          "type": "branch",
+          "title": "Auditoría de Stock",
+          "description": "Revisión final de los números del inventario:",
+          "paths": [
+            {
+              "id": "path_inventario_ok",
+              "label": "Verificación de Cantidades",
+              "icon": "⚖️",
+              "steps": [
+                { "id": "s1", "label": "Regresar a la pestaña de 'Inventario'." },
+                { "id": "s2", "label": "Validar que el stock del 'Pan de Hamburguesa' haya bajado exactamente a 8 unidades." },
+                { "id": "s3", "label": "Revisar el 'Historial de Movimientos' (Kardex) y asegurar que exista el registro del egreso justificado por una venta de POS." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

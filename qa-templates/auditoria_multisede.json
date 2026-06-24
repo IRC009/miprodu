@@ -1,0 +1,64 @@
+{
+  "title": "🔍 Auditoría y Multi-Sedes (Control Maestro)",
+  "description": "Prueba de alta seguridad para cadenas. Valida que las acciones peligrosas queden registradas (Logs) y que las sedes estén aisladas.",
+  "icon": "🕵️",
+  "order": 12,
+  "isExploratoryMode": true,
+  "groups": [
+    {
+      "id": "g1_accion_critica",
+      "title": "1. Generación de Eventos Sospechosos",
+      "personaId": "cajero",
+      "order": 1,
+      "nodes": [
+        {
+          "id": "n1_eliminar_orden",
+          "type": "check",
+          "title": "Acción Rastreada",
+          "steps": [
+            { "id": "s1", "label": "Asegurar que estás conectado en la 'Sede Principal' (Sede 1)." },
+            { "id": "s2", "label": "Ir al Historial de Órdenes e intencionalmente Anular o Eliminar una factura pagada de valor alto." },
+            { "id": "s3", "label": "Confirmar la eliminación del sistema." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g2_auditoria",
+      "title": "2. Revisión de Logs Administrativos",
+      "personaId": "admin",
+      "order": 2,
+      "nodes": [
+        {
+          "id": "n2_rastreo",
+          "type": "check",
+          "title": "Verificación del Log (Audit Trail)",
+          "steps": [
+            { "id": "s1", "label": "Entrar como Admin y navegar a la sección de 'Audit' (Auditoría)." },
+            { "id": "s2", "label": "Buscar los eventos de las últimas 24 horas." },
+            { "id": "s3", "label": "Comprobar que exista un registro claro que diga qué correo (el cajero) anuló una factura específica y a qué hora." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g3_aislamiento",
+      "title": "3. Aislamiento Multi-Sede (Branches)",
+      "personaId": "admin",
+      "order": 3,
+      "nodes": [
+        {
+          "id": "n3_cambio_sede",
+          "type": "negative",
+          "title": "División Ciega entre Sucursales",
+          "description": "PASÓ = La Sede 2 es completamente ignorante de la Sede 1.",
+          "steps": [
+            { "id": "s1", "label": "Crear y cambiar el entorno a la 'Sede Sur' (Sede 2) desde el selector superior de Branches." },
+            { "id": "s2", "label": "Ir a la pestaña de 'Órdenes' y verificar que no aparezcan las ventas de la Sede 1." },
+            { "id": "s3", "label": "Ir a 'Auditoría' (Audit) en la Sede Sur y comprobar que NO aparezca el registro del cajero que anuló la factura en la sede principal." }
+          ]
+        }
+      ]
+    }
+  ]
+}

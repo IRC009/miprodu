@@ -1,0 +1,56 @@
+{
+  "title": "📅 Gestión de Reservas",
+  "description": "Prueba el ciclo de vida de una reservación, desde que el cliente la solicita hasta que el restaurante la aprueba y le asigna una mesa física.",
+  "icon": "📝",
+  "order": 10,
+  "isExploratoryMode": false,
+  "groups": [
+    {
+      "id": "g1_solicitud",
+      "title": "1. Solicitud del Cliente",
+      "personaId": "cliente",
+      "order": 1,
+      "nodes": [
+        {
+          "id": "n1_crear_reserva",
+          "type": "check",
+          "title": "Formulario de Reserva",
+          "steps": [
+            { "id": "s1", "label": "Ir a la sección pública de Reservas (Menú / Landing Page)." },
+            { "id": "s2", "label": "Llenar el formulario pidiendo mesa para 4 personas, fecha de mañana y hora válida." },
+            { "id": "s3", "label": "Enviar la solicitud y validar que aparezca el mensaje de 'Reserva sujeta a confirmación'." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g2_gestion_dashboard",
+      "title": "2. Aprobación en Dashboard",
+      "personaId": "admin",
+      "order": 2,
+      "nodes": [
+        {
+          "id": "n2_aprobar_reserva",
+          "type": "check",
+          "title": "Flujo de Aprobación",
+          "steps": [
+            { "id": "s1", "label": "Entrar al Dashboard y navegar a la pestaña de 'Reservaciones'." },
+            { "id": "s2", "label": "Buscar la reserva recién creada que debe estar en estado 'Pendiente'." },
+            { "id": "s3", "label": "Cambiar el estado a 'Confirmada' y verificar que se refleje correctamente." },
+            { "id": "s4", "label": "Opcional: Asignarle una mesa física a la reserva si el sistema lo permite." }
+          ]
+        },
+        {
+          "id": "n3_conflicto",
+          "type": "negative",
+          "title": "Choque de Horarios",
+          "description": "PASÓ = El sistema previene el Overbooking.",
+          "steps": [
+            { "id": "s1", "label": "Intentar confirmar otra reserva en la misma mesa y exactamente a la misma hora." },
+            { "id": "s2", "label": "El sistema DEBE alertar sobre la colisión de horarios." }
+          ]
+        }
+      ]
+    }
+  ]
+}

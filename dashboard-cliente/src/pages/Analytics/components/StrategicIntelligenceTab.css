@@ -1,0 +1,193 @@
+/* StrategicIntelligenceTab.css — Dark Enterprise Theme */
+
+.si-root { display: flex; flex-direction: column; gap: 2rem; }
+
+/* ─── TOOLBAR ─────────────────────────────────────────────────────────────── */
+.si-toolbar {
+  display: flex; justify-content: space-between; align-items: center;
+  background: linear-gradient(135deg, #0a0d16 0%, #111827 100%);
+  border-radius: 14px; padding: 1rem 1.5rem;
+  border: 1px solid rgba(255,255,255,0.07);
+}
+.si-toolbar-info { font-size: 0.82rem; color: #64748b; }
+.si-refresh-btn {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white; border: none; border-radius: 10px;
+  padding: 0.6rem 1.4rem; font-size: 0.88rem; font-weight: 700;
+  cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.si-refresh-btn:hover:not(.disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99,102,241,0.4); }
+.si-refresh-btn.disabled { background: #1e2335; color: #475569; cursor: not-allowed; border: 1px solid rgba(255,255,255,0.07); }
+
+/* ─── LOADING ─────────────────────────────────────────────────────────────── */
+.si-loading-wrap {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 1rem; padding: 4rem 2rem;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  border-radius: 20px; border: 1px solid rgba(255,255,255,0.07);
+}
+.si-loading-brain { font-size: 4rem; animation: pulse-bi 1.5s ease-in-out infinite; }
+@keyframes pulse-bi { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+.si-loading-title { color: #e2e8f0; font-size: 1.4rem; font-weight: 800; margin: 0; }
+.si-loading-step  { color: #94a3b8; font-size: 0.9rem; margin: 0; min-height: 1.4em; text-align: center; }
+.si-progress-track {
+  width: 100%; max-width: 420px; height: 8px;
+  background: #1e293b; border-radius: 99px; overflow: hidden; border: 1px solid rgba(255,255,255,0.07);
+}
+.si-progress-fill {
+  height: 100%; background: linear-gradient(90deg, #6366f1, #10b981);
+  border-radius: 99px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+.si-progress-pct { font-size: 0.85rem; color: #64748b; font-weight: 700; }
+
+/* ─── SECTIONS ────────────────────────────────────────────────────────────── */
+.si-section {
+  background: #181c27;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.07);
+  padding: 1.75rem;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+.si-section-header {
+  display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1.5rem;
+}
+.si-section-icon { font-size: 2rem; flex-shrink: 0; }
+.si-section-header h3 { margin: 0 0 0.2rem; color: #e2e8f0; font-size: 1.15rem; font-weight: 800; }
+.si-section-header p  { margin: 0; color: #64748b; font-size: 0.85rem; }
+
+.si-empty-card {
+  background: #1e2335; border: 2px dashed rgba(255,255,255,0.1);
+  border-radius: 16px; padding: 2.5rem 2rem; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 0.75rem; color: #64748b;
+}
+.si-empty-card span { font-size: 2.5rem; }
+.si-empty-card p    { margin: 0; font-size: 0.92rem; max-width: 380px; }
+
+/* ─── BASKET CROSS-SELL ───────────────────────────────────────────────────── */
+.si-combo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+.si-combo-card {
+  border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 1.25rem;
+  display: flex; flex-direction: column; gap: 0.75rem;
+  background: #1e2335;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+.si-combo-card:hover { box-shadow: 0 4px 16px rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.3); }
+.si-combo-confidence {
+  display: flex; flex-direction: column; align-items: center;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white; border-radius: 10px; padding: 0.7rem;
+}
+.si-combo-pct   { font-size: 1.6rem; font-weight: 900; line-height: 1; }
+.si-combo-label { font-size: 0.7rem; opacity: 0.85; text-transform: uppercase; letter-spacing: 0.05em; }
+.si-combo-items { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.si-combo-item  { background: #0f1117; border-radius: 6px; padding: 0.3rem 0.7rem; font-size: 0.85rem; font-weight: 700; color: #e2e8f0; border: 1px solid rgba(255,255,255,0.08); }
+.si-combo-plus  { font-size: 1.2rem; color: #6366f1; font-weight: 900; }
+.si-combo-meta  { font-size: 0.78rem; color: #64748b; }
+.si-combo-tip   { font-size: 0.78rem; color: #a78bfa; background: rgba(139,92,246,0.1); border-radius: 8px; padding: 0.5rem 0.75rem; border: 1px solid rgba(139,92,246,0.15); }
+
+/* ─── CHURN ───────────────────────────────────────────────────────────────── */
+.si-churn-badge {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.4rem 1rem; border-radius: 99px; font-size: 0.82rem; font-weight: 700; margin-bottom: 0.75rem;
+}
+.si-churn-badge.danger  { background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.25); }
+.si-churn-badge.success { background: rgba(16,185,129,0.12); color: #34d399; border: 1px solid rgba(16,185,129,0.25); }
+.si-badge { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 99px; font-size: 0.75rem; font-weight: 700; }
+.si-badge.danger { background: rgba(239,68,68,0.15); color: #f87171; }
+.si-table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid rgba(255,255,255,0.07); }
+.si-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+.si-table thead tr { background: #0f1117; }
+.si-table th { padding: 0.75rem 1rem; color: #64748b; font-weight: 700; font-size: 0.78rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.07); text-transform: uppercase; letter-spacing: 0.05em; }
+.si-table td { padding: 0.7rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.04); color: #cbd5e1; }
+.si-churn-row:hover td { background: #1e2335; }
+.si-whatsapp-btn {
+  background: rgba(16,185,129,0.12); color: #34d399; padding: 0.3rem 0.75rem;
+  border-radius: 8px; font-weight: 700; font-size: 0.78rem; text-decoration: none;
+  display: inline-block; transition: background 0.15s; border: 1px solid rgba(16,185,129,0.2);
+}
+.si-whatsapp-btn:hover { background: rgba(16,185,129,0.22); }
+.si-no-phone { font-size: 0.75rem; color: #475569; }
+.si-loyal-grid { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.si-loyal-card {
+  background: #1e2335; border: 1px solid rgba(255,255,255,0.07); border-radius: 12px;
+  padding: 1rem 1.25rem; text-align: center; min-width: 130px;
+}
+.si-loyal-medal { font-size: 1.8rem; }
+.si-loyal-name  { font-weight: 700; color: #e2e8f0; font-size: 0.9rem; margin-top: 0.25rem; }
+.si-loyal-stat  { font-size: 0.75rem; color: #64748b; margin-top: 0.2rem; }
+
+/* ─── MENU MATRIX ─────────────────────────────────────────────────────────── */
+.si-matrix-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media (max-width: 640px) { .si-matrix-grid { grid-template-columns: 1fr; } }
+.si-quadrant {
+  border: 1px solid rgba(255,255,255,0.06); border-radius: 14px;
+  background: #1e2335; padding: 1rem;
+  border-left: 3px solid var(--q-color, #6366f1);
+}
+.si-quadrant-header {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-weight: 800; color: var(--q-color); font-size: 0.95rem; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.25rem;
+}
+.si-quadrant-desc { font-size: 0.72rem; font-weight: 600; color: #64748b; }
+.si-quadrant-items { display: flex; flex-direction: column; gap: 0.4rem; }
+.si-quadrant-item  { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0.6rem; background: #0f1117; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); }
+.si-q-name  { font-weight: 700; font-size: 0.83rem; color: #e2e8f0; }
+.si-q-stats { font-size: 0.75rem; color: #64748b; white-space: nowrap; }
+.si-q-empty { font-size: 0.82rem; color: #475569; font-style: italic; }
+
+/* ─── DEMAND HEATMAP ──────────────────────────────────────────────────────── */
+.si-block-bars { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.5rem; }
+.si-block-bar-wrap { display: flex; align-items: center; gap: 0.75rem; }
+.si-block-label  { font-size: 0.82rem; font-weight: 700; color: #94a3b8; min-width: 140px; }
+.si-block-track  { flex: 1; height: 10px; background: #0f1117; border-radius: 99px; overflow: hidden; border: 1px solid rgba(255,255,255,0.06); }
+.si-block-fill   { height: 100%; background: linear-gradient(90deg, #6366f1, #06b6d4); border-radius: 99px; transition: width 0.4s; }
+.si-block-value  { font-size: 0.82rem; font-weight: 700; color: #e2e8f0; min-width: 100px; text-align: right; }
+.si-heatmap-wrap { overflow-x: auto; }
+.si-heatmap-hours { display: flex; padding-left: 52px; gap: 3px; margin-bottom: 4px; }
+.si-heatmap-hours span { font-size: 0.62rem; color: #475569; width: 28px; text-align: center; flex-shrink: 0; }
+.si-heatmap-row { display: flex; align-items: center; gap: 3px; margin-bottom: 3px; }
+.si-heatmap-day  { font-size: 0.72rem; font-weight: 700; color: #94a3b8; min-width: 46px; }
+.si-heatmap-cell { width: 28px; height: 24px; border-radius: 4px; flex-shrink: 0; cursor: pointer; transition: transform 0.1s; }
+.si-heatmap-cell:hover { transform: scale(1.3); z-index: 1; }
+.si-heatmap-legend {
+  display: flex; align-items: center; gap: 6px; margin-top: 0.75rem;
+  font-size: 0.72rem; color: #64748b; padding-left: 52px;
+}
+
+/* ─── GEO-BI ──────────────────────────────────────────────────────────────── */
+.si-geo-grid { display: grid; grid-template-columns: 1fr auto; gap: 1.5rem; align-items: start; }
+@media (max-width: 600px) { .si-geo-grid { grid-template-columns: 1fr; } }
+.si-geo-rankings { display: flex; flex-direction: column; gap: 0.6rem; }
+.si-geo-row { display: flex; align-items: center; gap: 0.75rem; }
+.si-geo-rank { width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg,#6366f1,#8b5cf6); color:white; font-size:0.72rem; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.si-geo-info { flex: 1; }
+.si-geo-name { font-size: 0.85rem; font-weight: 700; color: #e2e8f0; display: block; margin-bottom: 3px; }
+.si-geo-bar-track { height: 6px; background: #0f1117; border-radius: 99px; overflow: hidden; }
+.si-geo-bar-fill  { height: 100%; background: linear-gradient(90deg,#10b981,#06b6d4); border-radius: 99px; transition: width 0.4s; }
+.si-geo-stats { text-align: right; font-size: 0.78rem; font-weight: 700; color: #e2e8f0; display:flex; flex-direction:column; gap:2px; }
+.si-geo-stats span:last-child { color: #64748b; font-weight: 400; }
+.si-geo-radar-wrap { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+.si-radar { width: 200px; height: 200px; border-radius: 50%; border: 3px solid #1e293b; }
+.si-radar-legend { font-size: 0.72rem; color: #64748b; }
+
+/* ─── STAFF GAMIFICATION ──────────────────────────────────────────────────── */
+.si-staff-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.si-staff-tab {
+  background: #1e2335; color: #94a3b8; border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px; padding: 0.4rem 1rem; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: all 0.15s;
+}
+.si-staff-tab.active  { background: #6366f1; color: white; border-color: #6366f1; box-shadow: 0 4px 12px rgba(99,102,241,0.3); }
+.si-staff-tab:hover:not(.active) { background: #252d42; color: #e2e8f0; }
+.si-podium-grid { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.si-podium-card {
+  flex: 1; min-width: 140px; border-radius: 14px; padding: 1.25rem 1rem;
+  text-align: center; border: 1px solid rgba(255,255,255,0.07); background: #1e2335; transition: box-shadow 0.2s;
+}
+.si-podium-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+.si-podium-card.rank-1 { background: linear-gradient(135deg,#1c1a0d,#2a240a); border-color: rgba(251,191,36,0.3); }
+.si-podium-card.rank-2 { background: linear-gradient(135deg,#141a24,#1a2132); border-color: rgba(148,163,184,0.2); }
+.si-podium-card.rank-3 { background: linear-gradient(135deg,#1c110a,#25160c); border-color: rgba(251,146,60,0.25); }
+.si-podium-medal { font-size: 2rem; }
+.si-podium-name  { font-weight: 800; color: #e2e8f0; font-size: 0.92rem; margin-top: 0.5rem; }
+.si-podium-value { font-size: 1rem; font-weight: 900; color: #818cf8; margin-top: 0.25rem; }
+.si-podium-sub   { font-size: 0.72rem; color: #64748b; margin-top: 0.2rem; }

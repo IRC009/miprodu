@@ -1,0 +1,412 @@
+/* ══════════════════════════════════════════════
+   WAITERS MANAGER — Personal / Staff
+   ══════════════════════════════════════════════ */
+
+.waiters-page {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+/* ── Header ── */
+.waiters-header {
+  margin-bottom: 1.75rem;
+}
+
+.waiters-header h2 {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.waiters-header p {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+/* ── Grid layout ── */
+.waiters-grid {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.list-waiters-card {
+  flex: 2;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.create-waiter-card {
+  min-width: 320px;
+  max-width: 400px;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+  padding: 1.5rem;
+  transition: box-shadow 0.2s;
+}
+
+.create-waiter-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* ── Form group ── */
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.4rem;
+  letter-spacing: 0.01em;
+}
+
+/* ── Empty state ── */
+.empty-text {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* ── Modal ── */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 10000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  animation: overlayFadeIn 0.2s ease;
+}
+
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.modal-content {
+  background: white;
+  width: 100%;
+  max-width: 420px;
+  border-radius: 20px;
+  box-shadow:
+    0 32px 64px -12px rgba(0, 0, 0, 0.28),
+    0 0 0 1px rgba(0,0,0,0.06);
+  animation: modalScale 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: 95vh;
+}
+
+@keyframes modalScale {
+  from { transform: scale(0.95) translateY(10px); opacity: 0; }
+  to   { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+/* ── Waiter Staff Card (lista) ── */
+.waiter-card {
+  background: white;
+  border: 1px solid var(--border-light);
+  border-radius: 14px;
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  transition: all 0.18s;
+  box-shadow: var(--shadow-xs);
+}
+
+.waiter-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+  border-color: var(--border-medium);
+}
+
+.waiter-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  box-shadow: 0 3px 8px rgba(37, 99, 235, 0.3);
+}
+
+.waiter-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.waiter-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  margin-bottom: 0.15rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.waiter-role {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.waiter-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.waiter-btn {
+  background: none;
+  border: 1.5px solid var(--border-light);
+  border-radius: 8px;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  color: var(--text-secondary);
+}
+
+.waiter-btn:hover {
+  background: #f8fafc;
+  border-color: var(--border-medium);
+  color: var(--text-primary);
+}
+
+.waiter-btn.danger {
+  color: var(--danger);
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.waiter-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+/* ── Role badge ── */
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 99px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+/* ── btn-outline ── */
+.btn-outline {
+  background: white;
+  border: 1.5px solid var(--border-light);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+
+.btn-outline:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-light);
+}
+
+.role-badge.owner {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.role-badge.waiter {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.role-badge.manager {
+  background: #f3e8ff;
+  color: #7c3aed;
+}
+
+/* ── Animations ── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Responsive ── */
+.show-mobile { display: none !important; }
+
+@media (max-width: 900px) {
+  .waiters-page {
+    padding: 1rem !important;
+  }
+  
+  .hide-mobile { display: none !important; }
+  .show-mobile { display: block !important; }
+
+  .team-table-container {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .mobile-team-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .mobile-member-card {
+    background: white;
+    border-radius: 18px;
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-sm);
+    padding: 1.25rem;
+    animation: fadeInUp 0.3s ease-out;
+  }
+
+  .member-card-main {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .member-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+  }
+
+  .member-details {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .member-name {
+    font-weight: 800;
+    font-size: 1rem;
+    color: #0f172a;
+    margin-bottom: 0.25rem;
+  }
+
+  .member-subtext {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    align-items: flex-start;
+  }
+
+  .member-email {
+    font-size: 0.7rem;
+    color: #64748b;
+    word-break: break-all;
+  }
+
+  .member-actions-mini {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .mini-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: 1.5px solid #e2e8f0;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .mini-btn.delete {
+    color: #ef4444;
+    border-color: #fee2e2;
+    background: #fff5f5;
+  }
+
+  .member-card-footer {
+    padding-top: 1rem;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .footer-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .footer-section .label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+  }
+
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .tag {
+    font-size: 0.7rem;
+    padding: 3px 8px;
+    background: #f1f5f9;
+    border-radius: 6px;
+    font-weight: 700;
+    color: #475569;
+  }
+
+  .tag-global {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #10b981;
+  }
+}
+
+@media (max-width: 600px) {
+  .waiters-page header {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+  
+  .waiters-page header div {
+    margin-bottom: 0.5rem;
+  }
+}

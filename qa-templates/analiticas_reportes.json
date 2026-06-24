@@ -1,0 +1,72 @@
+{
+  "title": "📊 Analíticas y Reportes de Ventas",
+  "description": "Prueba de la integridad matemática y actualización en tiempo real de los tableros de control financieros.",
+  "icon": "📈",
+  "order": 13,
+  "isExploratoryMode": false,
+  "groups": [
+    {
+      "id": "g1_preparacion_datos",
+      "title": "1. Generación de Datos Base",
+      "personaId": "cajero",
+      "order": 1,
+      "nodes": [
+        {
+          "id": "n1_ventas_prueba",
+          "type": "check",
+          "title": "Simulación de Ingresos",
+          "steps": [
+            { "id": "s1", "label": "Ir al POS y crear 3 facturas distintas con montos variables." },
+            { "id": "s2", "label": "Cobrar 2 facturas en 'Efectivo' y 1 en 'Tarjeta'." },
+            { "id": "s3", "label": "Validar que las órdenes hayan quedado cerradas y registradas en el historial." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g2_visualizacion_datos",
+      "title": "2. Integridad de los Gráficos",
+      "personaId": "admin",
+      "order": 2,
+      "nodes": [
+        {
+          "id": "n2_dashboard_analiticas",
+          "type": "check",
+          "title": "Revisión del Panel Central",
+          "steps": [
+            { "id": "s1", "label": "Ingresar a la pestaña de 'Analíticas'." },
+            { "id": "s2", "label": "Seleccionar el filtro de fecha de 'Hoy'." },
+            { "id": "s3", "label": "Validar matemáticamente que la tarjeta de 'Ingresos Totales' sume de manera exacta el valor de las 3 facturas de prueba." }
+          ]
+        },
+        {
+          "id": "n3_desglose_pagos",
+          "type": "check",
+          "title": "Desglose por Métodos de Pago",
+          "steps": [
+            { "id": "s1", "label": "Buscar el gráfico circular (o tabla) de 'Métodos de Pago' en el dashboard." },
+            { "id": "s2", "label": "Validar que la gráfica muestre la separación exacta entre el monto que ingresó por Efectivo vs Tarjeta." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g3_filtros",
+      "title": "3. Pruebas de Temporalidad",
+      "personaId": "admin",
+      "order": 3,
+      "nodes": [
+        {
+          "id": "n4_cambio_fecha",
+          "type": "negative",
+          "title": "Filtro de Días Anteriores",
+          "description": "PASÓ = Los datos de hoy NO se mezclan con los del pasado.",
+          "steps": [
+            { "id": "s1", "label": "Cambiar el filtro de fecha a 'Ayer' o una 'Semana Anterior'." },
+            { "id": "s2", "label": "El sistema DEBE reflejar una suma de ingresos diferente (o $0 si la cuenta es nueva), aislando correctamente las ventas que se acaban de hacer hoy." }
+          ]
+        }
+      ]
+    }
+  ]
+}

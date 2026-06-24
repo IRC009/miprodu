@@ -1,0 +1,146 @@
+# Parches de Integración — Sistema de Dominios Personalizados
+# ──────────────────────────────────────────────────────────────
+# Este archivo documenta EXACTAMENTE qué líneas agregar a los archivos
+# existentes para activar el sistema. NO tocar hasta recibir el OK.
+
+═══════════════════════════════════════════════════════════════
+PARCHE 1 — functions/index.js
+═══════════════════════════════════════════════════════════════
+
+DÓNDE: Al inicio del archivo, después de la línea:
+  const { handleArchiveInactiveReservation } = require("./src/reservations/triggers");
+
+AGREGAR:
+  const { handleRegisterCustomDomain, handleCheckDomainStatus, handleDeleteCustomDomain } = require("./src/domains/domainHandlers");
+
+──────────────────────────────────────────────────────────────
+DÓNDE: Al final del archivo, después de la sección de RESPALDOS.
+
+AGREGAR:
+  // ─────────────────────────────────────────────
+  // DOMINIOS PERSONALIZADOS
+  // ─────────────────────────────────────────────
+  exports.registerCustomDomain = onCall(handleRegisterCustomDomain);
+  exports.checkDomainStatus    = onCall(handleCheckDomainStatus);
+  exports.deleteCustomDomain   = onCall(handleDeleteCustomDomain);
+
+
+═══════════════════════════════════════════════════════════════
+PARCHE 2 — functions/config.js
+═══════════════════════════════════════════════════════════════
+
+DÓNDE: Dentro del objeto module.exports = { ... }, al final antes del cierre };
+
+AGREGAR:
+  // Cloudflare for SaaS — Dominios personalizados
+  CF_API_TOKEN: process.env.CF_API_TOKEN || "",
+  CF_ZONE_ID:   process.env.CF_ZONE_ID   || "",
+  PLATFORM_DOMAINS: ["cartaymesa.com", "web.app", "firebaseapp.com", "localhost"],
+
+NOTA: Después del deploy, configurar los secrets con:
+  firebase functions:secrets:set CF_API_TOKEN
+  firebase functions:secrets:set CF_ZONE_ID
+
+
+═══════════════════════════════════════════════════════════════
+PARCHE 3 — menu-publico/src/components/PaywallRouteWrapper.jsx
+═══════════════════════════════════════════════════════════════
+
+SIN CAMBIOS al archivo existente.
+El nuevo PaywallRouteWrapperByDomain.jsx (ya creado) es un archivo independiente.
+
+
+═══════════════════════════════════════════════════════════════
+PARCHE 4 — menu-publico/src/App.jsx
+═══════════════════════════════════════════════════════════════
+
+DÓNDE: Al inicio, en la sección de lazy imports.
+
+AGREGAR:
+  const PaywallRouteWrapperByDomain = lazy(() => import('./components/PaywallRouteWrapperByDomain'));
+
+──────────────────────────────────────────────────────────────
+DÓNDE: Al inicio del componente function App(), antes del return.
+
+AGREGAR:
+  // Detectar si el acceso viene de un dominio personalizado de cliente
+  const PLATFORM_DOMAINS = ['cartaymesa.com', 'web.app', 'firebaseapp.com', 'localhost'];
+  const isCustomDomain = !PLATFORM_DOMAINS.some(d =>
+    window.location.hostname === d || window.location.hostname.endsWith('.' + d)
+  );
+
+──────────────────────────────────────────────────────────────
+DÓNDE: Dentro de <Routes>, ANTES de la línea:
+  <Route path="/menu" element={<Navigate to="/" replace />} />
+
+AGREGAR:
+  {/* Rutas para acceso por dominio personalizado de cliente */}
+  {isCustomDomain && (
+    <Route path="/" element={<PaywallRouteWrapperByDomain />}>
+      <Route index element={<Welcome />} />
+      <Route element={<PublicMenuLayout />}>
+        <Route path="menu"         element={<Menu />} />
+        <Route path="reservations" element={<Reservations />} />
+        <Route path="promotions"   element={<Promotions />} />
+        <Route path="branches"     element={<Branches />} />
+      </Route>
+    </Route>
+  )}
+
+
+═══════════════════════════════════════════════════════════════
+PARCHE 5 — menu-publico/src/layouts/PublicMenuLayout.jsx
+═══════════════════════════════════════════════════════════════
+
+DÓNDE: Al inicio del componente, después de:
+  const { slug } = useParams();
+  const { restaurantData } = useOutletContext() || {};
+
+AGREGAR:
+  // Detectar si el acceso es por dominio personalizado (slug no existe en la URL)
+  const PLATFORM_DOMAINS = ['cartaymesa.com', 'web.app', 'firebaseapp.com', 'localhost'];
+  const isCustomDomain = !PLATFORM_DOMAINS.some(d =>
+    window.location.hostname === d || window.location.hostname.endsWith('.' + d)
+  );
+  // Base path para los links internos (sin /r/:slug en dominio propio)
+  const basePath = isCustomDomain ? '' : `/r/${slug}`;
+
+──────────────────────────────────────────────────────────────
+DÓNDE: En la línea 150 (Link del logo en el header):
+  <Link to={`/r/${slug}?home=true`} ...>
+
+CAMBIAR A:
+  <Link to={`${basePath}/?home=true`} ...>
+
+──────────────────────────────────────────────────────────────
+DÓNDE: En la línea 165 (segundo Link del header, cuando no hay logo):
+  <Link to={`/r/${slug}?home=true`} ...>
+
+CAMBIAR A:
+  <Link to={`${basePath}/?home=true`} ...>
+
+──────────────────────────────────────────────────────────────
+DÓNDE: En la línea 184 (Outlet context):
+  <Outlet context={{ restaurantId, branchId, designConfig, ordersEnabled, basePath: `/r/${slug}`, restaurantData }} />
+
+CAMBIAR A:
+  <Outlet context={{ restaurantId, branchId, designConfig, ordersEnabled, basePath, restaurantData, isCustomDomain }} />
+
+
+═══════════════════════════════════════════════════════════════
+PARCHE 6 — dashboard-cliente (GeneralSettings.jsx u otra página de Settings)
+═══════════════════════════════════════════════════════════════
+
+DÓNDE: En la sección de Settings donde corresponda mostrar el panel de dominio.
+
+AGREGAR el import:
+  import CustomDomainPanel from './components/CustomDomainPanel';
+
+AGREGAR el componente en el JSX:
+  <CustomDomainPanel
+    restaurantId={restaurantId}
+    restaurantData={restaurantData}
+  />
+
+NOTA: restaurantId y restaurantData deben venir del contexto ya disponible
+en esa página (generalmente de useSubscription() o del contexto de restaurante).

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>panel-admin</title>
+
+    <!-- Limpieza profunda de cache ante errores de carga de chunks -->
+    <script>
+      window.forceHardReload = async function() {
+        if (typeof window.stop === 'function') window.stop();
+        const retryCount = parseInt(sessionStorage.getItem('chunk_retry_count') || '0', 10);
+        if (retryCount >= 3) return;
+        sessionStorage.setItem('chunk_retry_count', (retryCount + 1).toString());
+        
+        const performCleanup = async () => {
+          try {
+            if ('serviceWorker' in navigator) {
+              const registrations = await navigator.serviceWorker.getRegistrations();
+              for (const registration of registrations) await registration.unregister();
+            }
+            if ('caches' in window) {
+              const keys = await caches.keys();
+              for (const key of keys) await caches.delete(key);
+            }
+          } catch (err) {}
+        };
+
+        await Promise.race([performCleanup(), new Promise(resolve => setTimeout(resolve, 1000))]);
+        const url = new URL(window.location.href);
+        url.searchParams.set('reload_fix', Date.now().toString());
+        window.location.replace(url.toString());
+      }
+
+      window.addEventListener('vite:preloadError', () => window.forceHardReload());
+      window.addEventListener('error', (e) => {
+        if (e.message && (e.message.includes('Failed to fetch') || e.message.includes('MIME type'))) {
+          window.forceHardReload();
+        }
+      }, true);
+      window.addEventListener('unhandledrejection', (e) => {
+        if (e.reason && e.reason.toString().includes('Failed to fetch')) window.forceHardReload();
+      });
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

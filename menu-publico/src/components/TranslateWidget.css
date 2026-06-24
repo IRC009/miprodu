@@ -1,0 +1,132 @@
+/* Custom Translate Dropdown Container */
+.translate-widget-container {
+  display: inline-block;
+}
+
+.translate-dropdown-menu {
+  position: absolute;
+  bottom: 70px;
+  right: 0;
+  width: 180px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  z-index: 10000;
+  padding: 6px 0;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  animation: slideUpFade 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.translate-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 12px 18px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #191c1f;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.translate-dropdown-item:hover {
+  background-color: #f3f4f6;
+}
+
+.translate-dropdown-item.active {
+  background-color: #e5e7eb;
+  color: #000000;
+}
+
+.translate-flag {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  display: block;
+}
+
+.translate-label {
+  flex: 1;
+}
+
+/* Hide Google Translate Top Bar, Banners, and floating widgets (iframes) */
+.goog-te-banner-frame,
+.goog-te-banner-frame.skiptranslate,
+iframe.goog-te-banner-frame,
+iframe.skiptranslate,
+iframe.goog-te-menu-frame,
+.goog-te-banner,
+#goog-gt-tt {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* Position Google Translate element completely off-screen instead of display: none */
+#google_translate_element {
+  position: absolute !important;
+  top: -9999px !important;
+  left: -9999px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  display: block !important;
+  visibility: visible !important;
+}
+
+body {
+  top: 0px !important;
+  position: static !important;
+}
+
+html {
+  margin-top: 0px !important;
+  padding-top: 0px !important;
+}
+
+.goog-logo-link, 
+.goog-logo-link:link, 
+.goog-logo-link:visited, 
+.goog-logo-link:hover, 
+.goog-logo-link:active {
+  display: none !important;
+}
+
+.goog-te-gadget {
+  font-size: 0 !important;
+}
+
+/* Hide translation popups/tooltips on hover */
+.goog-text-highlight {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+#goog-gt-tt, 
+.goog-te-balloon-frame,
+.goog-tooltip,
+.goog-tooltip:hover {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* Animations */
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

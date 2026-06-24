@@ -1,0 +1,151 @@
+.promos-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.promos-container {
+  width: 90%;
+  max-width: 450px;
+  position: relative;
+  background: #1e293b;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  animation: scaleUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.promos-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: background 0.2s;
+}
+
+.promos-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.promos-carousel {
+  width: 100%;
+  aspect-ratio: 1 / 1.2;
+  position: relative;
+}
+
+.promo-slide {
+  width: 100%;
+  height: 100%;
+  animation: slideFade 0.5s ease-out;
+}
+
+@keyframes slideFade {
+  from { opacity: 0; transform: translateX(10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.promo-img-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+.promo-img-full {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.promo-info-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 2rem 1.5rem 1rem;
+  background: linear-gradient(transparent, rgba(0,0,0,0.9));
+  color: white;
+}
+
+.promo-info-overlay h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.promo-info-overlay p {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+  opacity: 0.9;
+  line-height: 1.4;
+}
+
+.promos-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 1rem 0;
+}
+
+.promo-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.promo-dot.active {
+  background: #6366f1;
+  width: 20px;
+  border-radius: 4px;
+}
+
+.promos-cta {
+  display: block;
+  width: 100%;
+  padding: 1.25rem;
+  background: #6366f1;
+  color: white;
+  border: none;
+  font-weight: 800;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.promos-cta:hover {
+  background: #4f46e5;
+}

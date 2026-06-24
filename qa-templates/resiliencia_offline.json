@@ -1,0 +1,57 @@
+{
+  "title": "🛜 Resiliencia y Modo Offline",
+  "description": "Prueba extrema de conectividad. Valida que el sistema POS no se congele si falla el internet local.",
+  "icon": "🔌",
+  "order": 9,
+  "isExploratoryMode": true,
+  "groups": [
+    {
+      "id": "g1_simulacion_caida",
+      "title": "1. Simulación de Falla de Red",
+      "personaId": "mesero",
+      "order": 1,
+      "nodes": [
+        {
+          "id": "n1_desconexion",
+          "type": "negative",
+          "title": "Pérdida de Conexión en Caliente",
+          "description": "PASÓ = La app sigue funcionando aunque no haya internet.",
+          "steps": [
+            { "id": "s1", "label": "Estando dentro del panel POS de ventas, apagar el WiFi o desconectar el cable de red del dispositivo." },
+            { "id": "s2", "label": "Intentar interactuar con el menú (cambiar categorías, ver productos)." },
+            { "id": "s3", "label": "El sistema DEBE seguir cargando la interfaz gráfica fluidamente desde la caché sin pantallas en blanco." }
+          ]
+        },
+        {
+          "id": "n2_venta_offline",
+          "type": "check",
+          "title": "Creación de Orden Local",
+          "steps": [
+            { "id": "s1", "label": "Estando AÚN sin internet, crear una orden en mesa." },
+            { "id": "s2", "label": "Darle a facturar en 'Efectivo'." },
+            { "id": "s3", "label": "Validar que el sistema permita cerrar la mesa temporalmente, guardando la orden en la cola de sincronización interna." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g2_sincronizacion",
+      "title": "2. Restauración del Servicio",
+      "personaId": "admin",
+      "order": 2,
+      "nodes": [
+        {
+          "id": "n3_reconexion",
+          "type": "check",
+          "title": "Sincronización Transparente",
+          "steps": [
+            { "id": "s1", "label": "Volver a encender el WiFi o reconectar la red." },
+            { "id": "s2", "label": "Esperar 10-20 segundos a que Firebase detecte la conexión." },
+            { "id": "s3", "label": "Ir a la pestaña de 'Historial de Órdenes'." },
+            { "id": "s4", "label": "Validar que la orden creada durante el modo offline ahora aparezca subida en la nube correctamente." }
+          ]
+        }
+      ]
+    }
+  ]
+}

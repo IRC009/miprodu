@@ -1,0 +1,108 @@
+.theme-selector { padding: 0; }
+
+.theme-selector__header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;
+}
+.theme-selector__title { font-size: 1.35rem; font-weight: 700; margin: 0 0 0.25rem; }
+.theme-selector__subtitle { font-size: 0.875rem; color: var(--text-muted, #64748b); margin: 0; }
+.theme-selector__badge {
+  font-size: 0.75rem; font-weight: 600;
+  background: var(--primary-color, #2563eb); color: #fff;
+  padding: 0.3rem 0.8rem; border-radius: 20px; white-space: nowrap;
+}
+
+.theme-selector__grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem;
+}
+
+.theme-card {
+  border-radius: 14px; overflow: hidden; border: 2px solid transparent;
+  cursor: pointer; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  background: var(--card-bg, #fff); box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.theme-card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(0,0,0,0.15); }
+.theme-card--selected {
+  border-color: var(--primary-color, #2563eb) !important;
+  box-shadow: 0 0 0 4px rgba(37,99,235,0.15), 0 12px 28px rgba(0,0,0,0.15);
+}
+
+.theme-card__preview {
+  height: 220px; position: relative; overflow: hidden;
+  display: flex; flex-direction: column;
+}
+
+.tc-header {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 8px; flex-shrink: 0;
+}
+.tc-logo { width: 22px; height: 8px; border-radius: 4px; flex-shrink: 0; }
+.tc-nav { display: flex; gap: 8px; align-items: center; }
+
+.theme-card__overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.2s; z-index: 10;
+}
+.theme-card__overlay--visible { opacity: 1; }
+
+.theme-card__apply-btn {
+  padding: 0.5rem 1.2rem; border: none; border-radius: 20px;
+  font-size: 0.85rem; font-weight: 700; cursor: pointer;
+  transition: transform 0.15s; white-space: nowrap;
+}
+.theme-card__apply-btn:hover { transform: scale(1.05); }
+
+.theme-card__info { padding: 0.85rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.theme-card__info-row { display: flex; align-items: center; gap: 0.4rem; }
+.theme-card__emoji { font-size: 1.1rem; line-height: 1; }
+.theme-card__name { font-weight: 700; font-size: 0.95rem; flex: 1; }
+
+.theme-card__badge {
+  font-size: 0.65rem; font-weight: 600; padding: 0.15rem 0.5rem;
+  border-radius: 10px; text-transform: uppercase; letter-spacing: 0.05em;
+}
+.theme-card__badge--dark { background: #1e293b; color: #94a3b8; }
+.theme-card__badge--light { background: #f1f5f9; color: #64748b; }
+.theme-card__description { font-size: 0.78rem; color: var(--text-muted, #64748b); margin: 0; line-height: 1.4; }
+
+.theme-card__swatches { display: flex; gap: 5px; margin-top: 2px; }
+.theme-card__swatches span {
+  display: block; width: 16px; height: 16px; border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.theme-confirm-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(4px); z-index: 9999;
+  display: flex; align-items: center; justify-content: center; padding: 1rem;
+  animation: tcFadeIn 0.18s ease;
+}
+@keyframes tcFadeIn { from{opacity:0} to{opacity:1} }
+
+.theme-confirm-modal {
+  background: white; border-radius: 20px; padding: 2rem;
+  max-width: 440px; width: 100%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25); text-align: center;
+  animation: tcSlideUp 0.2s ease;
+}
+@keyframes tcSlideUp { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+
+.theme-confirm-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+.theme-confirm-title { font-size: 1.25rem; font-weight: 700; margin: 0 0 0.75rem; }
+.theme-confirm-text { font-size: 0.9rem; color: #475569; line-height: 1.6; margin: 0 0 0.5rem; }
+.theme-confirm-hint { font-size: 0.8rem; color: #94a3b8; font-style: italic; margin: 0 0 1.5rem; }
+.theme-confirm-actions { display: flex; gap: 0.75rem; justify-content: center; }
+
+.theme-confirm-cancel {
+  padding: 0.6rem 1.5rem; border: 1.5px solid #e2e8f0; border-radius: 10px;
+  background: transparent; color: #64748b; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+}
+.theme-confirm-cancel:hover { background: #f8fafc; }
+
+.theme-confirm-apply {
+  padding: 0.6rem 1.5rem; border: none; border-radius: 10px;
+  font-size: 0.9rem; font-weight: 700; cursor: pointer;
+}
+.theme-confirm-apply:hover { opacity: 0.9; transform: scale(1.02); }

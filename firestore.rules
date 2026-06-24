@@ -1,0 +1,172 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isStaff(restaurantId) {
+      // New system: custom token with isStaff claim and restaurantId claim
+      return request.auth.token.get('isStaff', false) == true &&
+             request.auth.token.get('restaurantId', '') == restaurantId;
+    }
+
+    function isStaffLegacy(restaurantId) {
+      // Legacy: users/{uid}.parentRestaurantId (kept for backward compat during migration)
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             getUserData().parentRestaurantId == restaurantId;
+    }
+
+    function isGlobalAdmin() {
+      return request.auth != null && request.auth.token.email == 'isaacrodas2001@gmail.com';
+    }
+
+    function isOwnerOrStaff(restaurantId) {
+      return request.auth != null && (
+        request.auth.uid == restaurantId ||
+        isStaff(restaurantId) ||
+        isStaffLegacy(restaurantId) ||
+        isGlobalAdmin()
+      );
+    }
+
+    match /platform_settings/{docId} {
+      // 'pricing' and 'version' docs must be publicly readable (unauthenticated)
+      allow read: if docId == 'pricing' || docId == 'version' || request.auth != null;
+      allow write: if isGlobalAdmin();
+    }
+
+    match /platform_analytics_buckets/{weekId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null; // increments come from both client apps
+    }
+
+    match /platform_analytics/{year} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null; // increments come from both client apps
+    }
+
+    match /admin_audit_buckets/{bucketId} {
+      allow read, write: if isGlobalAdmin();
+    }
+
+    match /debug_buckets/{bucketId} {
+      allow read, write: if true;
+    }
+
+    match /users/{userId} {
+      allow read: if request.auth != null && (
+        request.auth.uid == userId || 
+        (resource != null && isOwnerOrStaff(resource.data.parentRestaurantId)) || 
+        isGlobalAdmin()
+      );
+      allow write: if request.auth != null && (
+        request.auth.uid == userId || 
+        (resource != null && isOwnerOrStaff(resource.data.parentRestaurantId)) || 
+        (request.resource != null && isOwnerOrStaff(request.resource.data.parentRestaurantId)) || 
+        isGlobalAdmin()
+      );
+    }
+
+    // MÓDULO QA & PROCESOS
+    match /qa_templates/{templateId} {
+      allow read: if true;
+      allow write: if isGlobalAdmin();
+    }
+    match /qa_personas/{personaId} {
+      allow read: if true;
+      allow write: if isGlobalAdmin();
+    }
+    match /qa_results/{resultId} {
+      allow read: if request.auth != null;
+      allow write: if true; // Permite a testers externos NO autenticados guardar resultados
+    }
+
+    match /staff_assignments/{emailId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && (
+        request.auth.uid == resource.data.restaurantId ||
+        request.auth.uid == request.resource.data.restaurantId ||
+        isGlobalAdmin()
+      );
+    }
+
+    match /restaurants/{restaurantId} {
+      
+      allow read: if true;
+      allow create: if request.auth != null && (request.auth.uid == restaurantId || isGlobalAdmin());
+      allow update: if isOwnerOrStaff(restaurantId) 
+                    && (isGlobalAdmin() 
+                        || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['subscription'])
+                        || (request.resource.data.subscription.planLevel == 0)
+                       );
+      allow delete: if isGlobalAdmin(); 
+
+      // COLECCIONES DONDE EL CLIENTE PUEDE CREAR (Escribir) DESDE EL MENÚ PÚBLICO
+      match /active_orders/{orderId} {
+        allow read, create: if true; 
+        allow update: if isOwnerOrStaff(restaurantId) || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['receiptUrl', 'updatedAt']));
+        allow delete: if isOwnerOrStaff(restaurantId);
+      }
+      match /reservations/{reservationId} {
+        allow read, create: if true; 
+        allow update, delete: if isOwnerOrStaff(restaurantId);
+      }
+      match /customers/{customerId} {
+        allow read, create: if true; 
+        allow update: if isOwnerOrStaff(restaurantId) || (
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['totalPoints'])
+        );
+        allow delete: if isOwnerOrStaff(restaurantId);
+      }
+      match /loyalty_members/{memberId} {
+        allow read, create: if true;
+        allow update: if isOwnerOrStaff(restaurantId) || (
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['points'])
+        );
+        allow delete: if isOwnerOrStaff(restaurantId);
+      }
+      match /analytics/{docId} {
+        allow read, create, update: if true; 
+        allow delete: if isOwnerOrStaff(restaurantId);
+      }
+      match /waiter_calls/{callId} {
+        allow read, write: if true;
+      }
+      match /analytics_daily/{docId} {
+        allow read, create, update: if true; 
+        allow delete: if isOwnerOrStaff(restaurantId);
+      }
+      match /analytics_products_daily/{docId} {
+        allow read, create, update: if true; 
+        allow delete: if isOwnerOrStaff(restaurantId);
+      }
+      match /analytics_buckets/{docId} {
+        allow read, create, update: if true; 
+        allow delete: if isOwnerOrStaff(restaurantId);
+      }
+      match /analytics_buckets/{docId}/products/{productId} {
+        allow read, create, update: if true; 
+        allow delete: if isOwnerOrStaff(restaurantId);
+      }
+
+      // Sesiones activas de mesas (doc efímero, 1 por mesa abierta)
+      match /active_table_sessions/{sessionId} {
+        allow read, create, update, delete: if isOwnerOrStaff(restaurantId);
+      }
+
+      // Bucket anual de sesiones de mesas (reemplaza table_sessions plano)
+      match /table_session_buckets/{bucketId} {
+        allow read, create, update: if isOwnerOrStaff(restaurantId);
+        allow delete: if isGlobalAdmin();
+      }
+
+      // TODAS LAS DEMÁS COLECCIONES (Productos, Config, Inventario)
+      match /{document=**} {
+        allow read: if true; 
+        allow write: if isOwnerOrStaff(restaurantId);
+      }
+    }
+  }
+}

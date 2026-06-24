@@ -1,0 +1,113 @@
+.home-wrapper {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  overflow: hidden;
+}
+
+.home-bg-image {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+}
+
+.home-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 1;
+}
+
+/* Base tiles pattern specifically for Casa D'Amore example */
+.home-bg-pattern {
+  position: absolute;
+  inset: 0;
+  background-image: url('https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1200&q=80');
+  background-size: 300px;
+  background-repeat: repeat;
+  z-index: 0;
+}
+
+.home-content-box {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.home-logo-card {
+  background-color: white;
+  padding: 2.5rem 2rem;
+  border-radius: 4px;
+  text-align: center;
+  margin-bottom: 1rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.home-logo-card img {
+  max-width: 200px;
+  height: auto;
+  margin: 0 auto;
+}
+
+.home-link-btn {
+  display: block;
+  width: 100%;
+  background-color: white;
+  color: #334155;
+  text-align: center;
+  padding: 1.25rem 2rem;
+  border-radius: 9999px;
+  font-weight: 500;
+  font-size: 1.1rem;
+  transition: all 0.2s;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.home-link-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.home-link-btn.primary {
+  background-color: var(--primary-color);
+  color: white;
+  font-weight: 700;
+  border: none;
+}
+
+/* Izumi variant styles */
+.izumi-hero {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%; /* 16:9 aspect ratio */
+  background-image: url('https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=1200&q=80');
+  background-size: cover;
+  background-position: center;
+  margin-bottom: 2rem;
+}
+
+.izumi-hero-title {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0,0,0,0.5);
+  color: var(--primary-color);
+  font-size: 3rem;
+  font-family: var(--font-family);
+  letter-spacing: 0.2em;
+  margin: 0;
+  font-weight: 300;
+}

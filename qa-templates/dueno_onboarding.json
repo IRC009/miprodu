@@ -1,0 +1,163 @@
+{
+  "title": "🏢 Dueño: Onboarding y Setup Inicial",
+  "description": "Prueba End-to-End simulando un dueño de restaurante que se registra por primera vez y configura su menú.",
+  "icon": "🚀",
+  "order": 2,
+  "isExploratoryMode": false,
+  "groups": [
+    {
+      "id": "g1_registro",
+      "title": "1. Registro y Selección de Plan",
+      "personaId": "admin",
+      "order": 1,
+      "nodes": [
+        {
+          "id": "n1_landing",
+          "type": "check",
+          "title": "Registro desde Landing Page",
+          "steps": [
+            { "id": "s1", "label": "Entrar a la Landing Page de Carta y Mesa." },
+            { "id": "s2", "label": "Hacer clic en 'Comenzar Gratis' y rellenar datos válidos de registro." },
+            { "id": "s3", "label": "Verificar que el registro funciona y redirige al panel de bienvenida." }
+          ]
+        },
+        {
+          "id": "n2_suscripcion",
+          "type": "branch",
+          "title": "Activación de la Suscripción",
+          "description": "Prueba los diferentes flujos de 7 días de prueba inicial:",
+          "paths": [
+            {
+              "id": "path_plan_carta",
+              "label": "Plan Carta (Básico)",
+              "icon": "📱",
+              "steps": [
+                { "id": "s1", "label": "Elegir el 'Plan Carta'." },
+                { "id": "s2", "label": "Verificar que el sistema otorgue los 7 días de prueba sin pedir tarjeta de crédito." },
+                { "id": "s3", "label": "Validar que la pestaña de 'Caja / POS' y 'Personal' se muestren bloqueadas o limitadas." }
+              ]
+            },
+            {
+              "id": "path_plan_mesas",
+              "label": "Plan Carta y Mesa (Premium)",
+              "icon": "💎",
+              "steps": [
+                { "id": "s1", "label": "Elegir el 'Plan Carta y Mesa'." },
+                { "id": "s2", "label": "Verificar la activación correcta de la prueba gratuita." },
+                { "id": "s3", "label": "Validar que la pestaña de 'Caja / POS', 'Personal' y 'Analytics' estén 100% disponibles." }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g2_setup_inicial",
+      "title": "2. Configuración Core del Restaurante",
+      "personaId": "admin",
+      "order": 2,
+      "nodes": [
+        {
+          "id": "n3_diseno",
+          "type": "check",
+          "title": "Personalización de Marca",
+          "steps": [
+            { "id": "s1", "label": "Ir a la pestaña 'Diseño'." },
+            { "id": "s2", "label": "Cambiar el color principal (Hexadecimal) y el layout." },
+            { "id": "s3", "label": "Guardar. Abrir el Menú Público y validar que los colores del restaurante cambiaron al instante." }
+          ]
+        },
+        {
+          "id": "n4_menu_basico",
+          "type": "check",
+          "title": "Construcción del Menú",
+          "steps": [
+            { "id": "s1", "label": "Ir a la pestaña 'Menú'." },
+            { "id": "s2", "label": "Crear una nueva categoría (Ej. 'Prueba Inicial')." },
+            { "id": "s3", "label": "Crear un producto asignado a esa categoría, con precio mayor a 0 y foto." },
+            { "id": "s4", "label": "Activar el producto y verificar que aparezca inmediatamente en el Menú Público." }
+          ]
+        },
+        {
+          "id": "n5_pagos_seguridad",
+          "type": "negative",
+          "title": "Seguridad en Métodos de Pago",
+          "description": "PASÓ = El sistema evitó configuraciones rotas.",
+          "steps": [
+            { "id": "s1", "label": "Ir a Configuraciones -> Pagos (Pasarelas)." },
+            { "id": "s2", "label": "Intentar encender la pasarela de Mercado Pago / Bold SIN colocar el 'Access Token' / 'API Key'." },
+            { "id": "s3", "label": "El sistema DEBE dar error y no permitir la activación hasta que se ingresen las credenciales." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g3_sesion_configuraciones",
+      "title": "3. Sesión y Configuraciones Generales",
+      "personaId": "admin",
+      "order": 3,
+      "nodes": [
+        {
+          "id": "n6_ajustes_basicos",
+          "type": "check",
+          "title": "Ajustes Generales del Local",
+          "steps": [
+            { "id": "s1", "label": "Ir a la pestaña 'Configuración' -> 'Generales'." },
+            { "id": "s2", "label": "Cambiar el nombre del restaurante, la moneda local y el mensaje de bienvenida." },
+            { "id": "s3", "label": "Guardar cambios y recargar la página para asegurar que la información persista." }
+          ]
+        },
+        {
+          "id": "n7_auth_ciclo",
+          "type": "check",
+          "title": "Cierre e Inicio de Sesión",
+          "steps": [
+            { "id": "s1", "label": "Dar clic en el menú superior derecho y seleccionar 'Cerrar Sesión'." },
+            { "id": "s2", "label": "Validar redirección al Login. Intentar acceder a '/dashboard' escribiéndolo en la URL (Debe denegar el acceso)." },
+            { "id": "s3", "label": "Ingresar con el correo y contraseña registrados en el paso 1." },
+            { "id": "s4", "label": "Asegurar un ingreso exitoso y fluido al panel de control." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g4_preparacion_operativa",
+      "title": "4. Preparación Operativa (Mesas, Equipo y Enlaces)",
+      "personaId": "admin",
+      "order": 4,
+      "nodes": [
+        {
+          "id": "n8_enlaces_redes",
+          "type": "check",
+          "title": "Configuración de Redes Sociales",
+          "steps": [
+            { "id": "s1", "label": "Ir a la pestaña de 'Enlaces / Redes'." },
+            { "id": "s2", "label": "Agregar un enlace hacia Instagram y un número de WhatsApp." },
+            { "id": "s3", "label": "Abrir el Menú Público y validar que los iconos de redes sociales aparezcan funcionando en el pie de página." }
+          ]
+        },
+        {
+          "id": "n9_generacion_mesas",
+          "type": "check",
+          "title": "Generación de Mesas (QR)",
+          "steps": [
+            { "id": "s1", "label": "Ir al panel de 'Mesas' en el Dashboard." },
+            { "id": "s2", "label": "Hacer clic en agregar mesas y generar 5 mesas iniciales." },
+            { "id": "s3", "label": "Verificar que aparezca el botón para descargar/imprimir los códigos QR de esas mesas." }
+          ]
+        },
+        {
+          "id": "n10_verificacion_admin_alta",
+          "type": "check",
+          "title": "Verificación del Dueño y Alta de Personal",
+          "steps": [
+            { "id": "s1", "label": "Ir al módulo de 'Personal' (Mi Equipo)." },
+            { "id": "s2", "label": "Verificar que el Dueño (Admin) aparezca automáticamente como el primer miembro en la tabla." },
+            { "id": "s3", "label": "Dar clic en 'Añadir Persona' y crear un usuario secundario con rol de 'Cajero'." },
+            { "id": "s4", "label": "Asignarle un PIN de 4 dígitos y validar que el nuevo empleado aparezca correctamente junto al administrador." }
+          ]
+        }
+      ]
+    }
+  ]
+}

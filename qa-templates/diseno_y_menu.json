@@ -1,0 +1,69 @@
+{
+  "title": "🎨 Menú Avanzado y Marca Blanca (Diseño)",
+  "description": "Prueba de profundidad sobre el constructor de menús (variantes complejas) y la inyección de CSS para la personalización de la marca.",
+  "icon": "🍔",
+  "order": 15,
+  "isExploratoryMode": true,
+  "groups": [
+    {
+      "id": "g1_gestion_menu",
+      "title": "1. Creación de Menú Complejo",
+      "personaId": "admin",
+      "order": 1,
+      "nodes": [
+        {
+          "id": "n1_variantes_producto",
+          "type": "check",
+          "title": "Productos con Modificadores",
+          "steps": [
+            { "id": "s1", "label": "Ir a la pestaña de 'Menú' y crear un producto (Ej: Pizza)." },
+            { "id": "s2", "label": "Añadirle un grupo de modificadores OBLIGATORIO (Ej: 'Tamaño': Personal, Mediana, Familiar) con diferentes precios adicionales." },
+            { "id": "s3", "label": "Añadirle un grupo de modificadores OPCIONAL MÚLTIPLE (Ej: 'Adiciones': Queso extra, Tocineta)." },
+            { "id": "s4", "label": "Guardar el producto, ir al Menú Público y validar que los precios extra se sumen correctamente al seleccionar las opciones." }
+          ]
+        },
+        {
+          "id": "n2_visibilidad",
+          "type": "negative",
+          "title": "Visibilidad y Agotados (Sold Out)",
+          "description": "PASÓ = El producto no se puede comprar en el menú.",
+          "steps": [
+            { "id": "s1", "label": "En el Dashboard, apagar el switch del producto o marcarlo como 'Agotado'." },
+            { "id": "s2", "label": "Abrir el Menú Público como cliente y buscar el producto." },
+            { "id": "s3", "label": "El sistema DEBE ocultar el producto o mostrarlo en gris con el botón de compra deshabilitado." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g2_diseno_marca",
+      "title": "2. Personalización de Marca",
+      "personaId": "admin",
+      "order": 2,
+      "nodes": [
+        {
+          "id": "n3_configuracion_visual",
+          "type": "check",
+          "title": "Diseño y Estilos Globales",
+          "steps": [
+            { "id": "s1", "label": "Ir a la pestaña de 'Diseño'." },
+            { "id": "s2", "label": "Cambiar el Logo, la imagen de Banner Principal y el Color Primario (Ej: a un verde intenso)." },
+            { "id": "s3", "label": "Cambiar el tipo de Layout (Ej: Tarjetas vs Lista)." },
+            { "id": "s4", "label": "Abrir el Menú Público y validar que los botones, bordes y estructura obedezcan inmediatamente la nueva directriz visual." }
+          ]
+        },
+        {
+          "id": "n4_inyeccion_css",
+          "type": "check",
+          "title": "Editor CSS Avanzado",
+          "steps": [
+            { "id": "s1", "label": "Abrir el editor de CSS personalizado en el panel de Diseño." },
+            { "id": "s2", "label": "Inyectar una regla sencilla (Ej: body { background-color: #222 !important; color: #fff; })." },
+            { "id": "s3", "label": "Guardar, recargar el Menú Público y verificar que los estilos en cascada se apliquen y fuercen un fondo oscuro." },
+            { "id": "s4", "label": "Limpiar el CSS, guardar y verificar que el menú vuelva a la normalidad (Prevenir que el local quede roto permanentemente)." }
+          ]
+        }
+      ]
+    }
+  ]
+}

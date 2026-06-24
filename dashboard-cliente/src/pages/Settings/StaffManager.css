@@ -1,0 +1,72 @@
+/* StaffManager.css — Premium Vino theme */
+
+.staff-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.staff-header {
+  margin-bottom: 0.5rem;
+}
+
+.staff-content {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .staff-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+.options-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.option-chip {
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  border: 1.5px solid var(--border-light);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.option-chip:hover {
+  border-color: var(--border-medium);
+  background: var(--bg-subtle);
+}
+
+.option-chip.active {
+  background: var(--primary-light);
+  color: var(--primary);
+  border-color: var(--primary);
+  box-shadow: 0 2px 4px rgba(139, 26, 46, 0.1);
+}
+
+.btn-delete {
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  background: var(--danger-light);
+  color: var(--danger);
+  border: 1px solid var(--danger-border);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-delete:hover {
+  background: var(--danger);
+  color: white;
+}

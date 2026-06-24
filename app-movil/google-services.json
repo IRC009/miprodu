@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "169255016651",
+    "project_id": "webexplora-2ab9a",
+    "storage_bucket": "webexplora-2ab9a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:169255016651:android:c7c985768c89b814a9e34e",
+        "android_client_info": {
+          "package_name": "com.cartaymesa.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "169255016651-9sgicq2fb65jv20vp7j9g1uvputdgi6t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDHJJo2rtL0jQTP9da1k2WU64T7i9azk-A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "169255016651-9sgicq2fb65jv20vp7j9g1uvputdgi6t.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

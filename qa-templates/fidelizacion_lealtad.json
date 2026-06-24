@@ -1,0 +1,73 @@
+{
+  "title": "⭐ Programa de Lealtad y Puntos",
+  "description": "Prueba exhaustiva del motor de fidelización. Configuración de recompensas, acumulación matemática y canje de puntos en caja.",
+  "icon": "⭐",
+  "order": 14,
+  "isExploratoryMode": false,
+  "groups": [
+    {
+      "id": "g1_configuracion_lealtad",
+      "title": "1. Configuración del Programa",
+      "personaId": "admin",
+      "order": 1,
+      "nodes": [
+        {
+          "id": "n1_activar_programa",
+          "type": "check",
+          "title": "Configurar Motor de Puntos",
+          "steps": [
+            { "id": "s1", "label": "Ir a la pestaña de 'Fidelidad' (Loyalty)." },
+            { "id": "s2", "label": "Encender el programa y configurar la equivalencia matemática (Ej: por cada $1.000 gastados, se otorga 1 Punto)." },
+            { "id": "s3", "label": "Guardar cambios y verificar que el módulo quede activo y listo para operar." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g2_acumulacion",
+      "title": "2. Acumulación (Earn)",
+      "personaId": "cajero",
+      "order": 2,
+      "nodes": [
+        {
+          "id": "n2_ganar_puntos",
+          "type": "check",
+          "title": "Venta y Asignación de Puntos",
+          "steps": [
+            { "id": "s1", "label": "Ir al POS y armar un pedido por un valor fácil de medir (Ej: $50.000)." },
+            { "id": "s2", "label": "Asociar el correo o teléfono de un cliente a la orden." },
+            { "id": "s3", "label": "Facturar la orden y validar en el módulo CRM/Lealtad que la billetera virtual del cliente ahora tenga exactamente 50 Puntos." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g3_canje",
+      "title": "3. Canje y Quema (Burn)",
+      "personaId": "cajero",
+      "order": 3,
+      "nodes": [
+        {
+          "id": "n3_uso_puntos",
+          "type": "check",
+          "title": "Pago Parcial con Puntos",
+          "steps": [
+            { "id": "s1", "label": "Hacer una segunda venta para el mismo cliente." },
+            { "id": "s2", "label": "Al facturar, usar el método de pago 'Puntos Carta y Mesa' e ingresar los 50 puntos acumulados." },
+            { "id": "s3", "label": "Validar que la caja reste el dinero equivalente del total, y que la billetera del cliente regrese a 0." }
+          ]
+        },
+        {
+          "id": "n4_fraude_puntos",
+          "type": "negative",
+          "title": "Fondo Insuficiente",
+          "description": "PASÓ = El sistema bloqueó el intento de fraude.",
+          "steps": [
+            { "id": "s1", "label": "Intentar redimir más puntos de los que el cliente tiene en su saldo actual." },
+            { "id": "s2", "label": "El sistema DEBE lanzar un error de 'Saldo Insuficiente' y no procesar la factura." }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,95 @@
+.modern-alert-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 21000;
+  animation: fadeIn 0.3s ease;
+}
+
+.modern-alert-modal {
+  background: white;
+  padding: 2rem;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 380px;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modern-alert-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin: 0 auto 1.5rem;
+}
+
+.modern-alert-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.modern-alert-message {
+  margin: 0 0 2rem;
+  color: #64748b;
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+.modern-alert-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.modern-alert-btn {
+  padding: 0.8rem 2rem;
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform 0.2s, filter 0.2s;
+  width: 100%;
+}
+
+.modern-alert-btn:active {
+  transform: scale(0.98);
+  filter: brightness(0.9);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Dark mode support if dashboard has it */
+.is-dark .modern-alert-modal {
+  background: #1e293b;
+}
+
+.is-dark .modern-alert-title {
+  color: #f8fafc;
+}
+
+.is-dark .modern-alert-message {
+  color: #94a3b8;
+}

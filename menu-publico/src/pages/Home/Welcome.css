@@ -1,0 +1,274 @@
+.welcome-desktop-container {
+  min-height: 100vh;
+  width: 100vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.8s ease;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10000;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.welcome-main-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 450px;
+  gap: 1.5rem;
+}
+
+.welcome-content-box {
+  background-color: var(--welcome-card-bg, rgba(255, 255, 255, 0.95));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 2.5rem 2rem;
+  border-radius: 20px;
+  width: 100%;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  animation: welcomeFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes welcomeFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.welcome-logo-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.welcome-logo {
+  max-width: 80%;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+.welcome-logo:hover {
+  transform: scale(1.03);
+}
+
+.welcome-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.welcome-btn-custom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 1.1rem;
+  text-align: center;
+  text-decoration: none;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border-radius: var(--welcome-btn-radius, 30px);
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+  /* Default: inherit theme colors so city/branch selectors also match */
+  background-color: var(--welcome-btn-bg, var(--primary-color));
+  color: var(--welcome-btn-text, #ffffff);
+}
+
+.welcome-btn-custom:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+  filter: brightness(1.08);
+}
+
+/* Primary highlighted button (Ver Menu) */
+.welcome-btn-primary-highlight {
+  background-color: var(--welcome-btn-bg, var(--primary-color));
+  color: var(--welcome-btn-text, #ffffff);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.welcome-btn-primary-highlight:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.22);
+  filter: brightness(1.08);
+}
+
+.welcome-btn-primary-highlight:active {
+  transform: translateY(0);
+}
+
+/* Secondary highlighted button (Reservar) */
+.welcome-btn-secondary-highlight {
+  background-color: var(--welcome-reserve-bg, transparent);
+  color: var(--welcome-reserve-text, var(--welcome-text-color));
+  border: 2px solid var(--welcome-reserve-border, var(--primary-color));
+  box-shadow: none;
+}
+
+.welcome-btn-secondary-highlight:hover {
+  background-color: var(--welcome-reserve-hover-bg, var(--primary-color));
+  color: var(--welcome-reserve-hover-text, var(--welcome-btn-text, #ffffff));
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* Additional customized links buttons */
+.welcome-btn-additional {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: var(--welcome-text-color);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: flex-start;
+  padding-left: 1.5rem;
+}
+
+.welcome-btn-additional:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+  border-color: var(--primary-color);
+}
+
+.welcome-btn-icon {
+  margin-right: 0.75rem;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+}
+
+.welcome-btn-label {
+  flex: 1;
+  text-align: left;
+}
+
+/* Branch selectors styling with photo option */
+.welcome-branch-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background-color: var(--welcome-btn-bg, var(--primary-color));
+  color: var(--welcome-btn-text, #ffffff);
+  padding: 0;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.welcome-branch-photo {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.5s ease;
+}
+
+.welcome-branch-item:hover .welcome-branch-photo {
+  transform: scale(1.05);
+}
+
+.welcome-branch-overlay-info {
+  padding: 0.85rem 1rem;
+  background-color: var(--welcome-btn-bg, var(--primary-color));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.welcome-branch-address {
+  font-size: 0.78rem;
+  opacity: 0.85;
+  margin-top: 0.2rem;
+  font-weight: 400;
+}
+
+/* Back Link buttons */
+.welcome-back-link {
+  background-color: transparent;
+  color: var(--welcome-text-color);
+  border: none;
+  margin-top: 1rem;
+  width: 100%;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  opacity: 0.8;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.welcome-back-link:hover {
+  opacity: 1;
+  transform: translateX(-2px);
+}
+
+/* Social media footer styling */
+.welcome-social-footer {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+  padding: 0.5rem;
+  border-radius: 30px;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  animation: welcomeFadeIn 0.8s ease forwards;
+}
+
+@keyframes welcomeFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.social-icon-btn {
+  color: white;
+  font-size: 1.3rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.social-icon-btn:hover {
+  background-color: var(--primary-color);
+  transform: translateY(-4px);
+  box-shadow: 0 6px 15px rgba(255, 255, 255, 0.2);
+}

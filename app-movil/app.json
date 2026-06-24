@@ -1,0 +1,65 @@
+{
+  "expo": {
+    "name": "Carta y Mesa",
+    "slug": "carta-y-mesa",
+    "version": "1.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icono.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash-image.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#12070b"
+    },
+    "androidNavigationBar": {
+      "visible": "always",
+      "barStyle": "light-content",
+      "backgroundColor": "#1c0d13"
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/splash-image.png",
+          "color": "#8b1a2e",
+          "androidMode": "default",
+          "androidCollapsedTitle": "Llamados de Mesero",
+          "iosDisplayInForeground": true,
+          "sounds": [
+            "./assets/waiter_bell.mp3"
+          ]
+        }
+      ]
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.cartaymesa.app",
+      "buildNumber": "1"
+    },
+    "android": {
+      "package": "com.cartaymesa.app",
+      "versionCode": 2,
+      "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/splash-image.png",
+        "backgroundColor": "#12070b"
+      },
+      "permissions": [
+        "NOTIFICATIONS",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "3ac54c27-6c7a-4e1d-9509-03404074626a"
+      }
+    },
+    "owner": "irc009"
+  }
+}

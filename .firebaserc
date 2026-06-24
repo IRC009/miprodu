@@ -1,0 +1,24 @@
+{
+  "projects": {
+    "default": "miprodu-fec00"
+  },
+  "targets": {
+    "miprodu-fec00": {
+      "hosting": {
+        "dashboard": [
+          "dashboardcliente"
+        ],
+        "menupublico": [
+          "menupublico-digital"
+        ],
+        "paneladmin": [
+          "dashboardadmincarta"
+        ],
+        "landing": [
+          "cartaymesa"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

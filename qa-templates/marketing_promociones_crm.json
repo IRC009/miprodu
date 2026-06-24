@@ -1,0 +1,73 @@
+{
+  "title": "🎁 Marketing: Cupones y CRM",
+  "description": "Valida la correcta aplicación matemática de los descuentos en la pasarela de pagos y la correcta visualización de la base de datos de clientes.",
+  "icon": "🏷️",
+  "order": 11,
+  "isExploratoryMode": false,
+  "groups": [
+    {
+      "id": "g1_creacion_promo",
+      "title": "1. Creación de Promoción",
+      "personaId": "admin",
+      "order": 1,
+      "nodes": [
+        {
+          "id": "n1_nuevo_cupon",
+          "type": "check",
+          "title": "Alta de Cupón de Descuento",
+          "steps": [
+            { "id": "s1", "label": "Navegar a la pestaña 'Promociones'." },
+            { "id": "s2", "label": "Crear un cupón con el código 'TEST20' para otorgar un 20% de descuento." },
+            { "id": "s3", "label": "Ponerle límite de fecha de expiración y guardarlo activo." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g2_aplicacion",
+      "title": "2. Validación Matemática",
+      "personaId": "cliente",
+      "order": 2,
+      "nodes": [
+        {
+          "id": "n2_checkout_cupon",
+          "type": "check",
+          "title": "Redención del Descuento",
+          "steps": [
+            { "id": "s1", "label": "Ir al menú público, agregar 2 productos que sumen $100.000." },
+            { "id": "s2", "label": "En el carrito de compras, ingresar el código 'TEST20'." },
+            { "id": "s3", "label": "Validar estrictamente que el sistema reste $20.000 y el total final a pagar sea $80.000." }
+          ]
+        },
+        {
+          "id": "n3_cupon_invalido",
+          "type": "negative",
+          "title": "Seguridad de Cupones",
+          "description": "PASÓ = No se aplicó el cupón.",
+          "steps": [
+            { "id": "s1", "label": "Intentar usar el cupón 'TEST20' dos veces en la misma orden o ingresar 'FALSO50'." },
+            { "id": "s2", "label": "El sistema DEBE mostrar error ('Cupón inválido' o 'Ya aplicado') y no descontar más dinero." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g3_crm",
+      "title": "3. Base de Datos de Clientes",
+      "personaId": "admin",
+      "order": 3,
+      "nodes": [
+        {
+          "id": "n4_ver_crm",
+          "type": "check",
+          "title": "Gestión de Audiencia",
+          "steps": [
+            { "id": "s1", "label": "Ir a la pestaña 'CRM' o 'Base de Clientes'." },
+            { "id": "s2", "label": "Verificar que el cliente de prueba que acaba de comprar usando el cupón aparezca en la tabla." },
+            { "id": "s3", "label": "Revisar su historial para comprobar que la venta quedó asociada a su perfil." }
+          ]
+        }
+      ]
+    }
+  ]
+}

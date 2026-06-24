@@ -1,0 +1,115 @@
+{
+  "title": "💳 Suscripciones SaaS, Prorrateo y Escudo Anti-Abuso",
+  "description": "Prueba del ciclo de facturación SaaS. Verifica el comportamiento de los paywalls, upgrades/downgrades, y la protección de días de prueba gratis.",
+  "icon": "💸",
+  "order": 5,
+  "isExploratoryMode": false,
+  "groups": [
+    {
+      "id": "g1_paywalls",
+      "title": "1. Paywalls y Restricciones de Plan",
+      "personaId": "admin",
+      "order": 1,
+      "nodes": [
+        {
+          "id": "n1_verificar_plan",
+          "type": "check",
+          "title": "Estado de Suscripción",
+          "steps": [
+            { "id": "s1", "label": "Ir a la pestaña 'Configuración' -> 'Suscripción'." },
+            { "id": "s2", "label": "Verificar que el estado de cuenta refleje correctamente el plan contratado y la fecha de expiración." }
+          ]
+        },
+        {
+          "id": "n2_limites_plan",
+          "type": "negative",
+          "title": "Límites del Plan Básico",
+          "description": "PASÓ = El sistema bloquea accesos premium.",
+          "steps": [
+            { "id": "s1", "label": "Estando en el 'Plan Carta' (Básico), intentar acceder a la pestaña de 'Analíticas'." },
+            { "id": "s2", "label": "Intentar usar el módulo de 'Personal / Mi Equipo'." },
+            { "id": "s3", "label": "El sistema DEBE bloquear estas acciones mostrando la oferta de Upgrade al plan 'Carta y Mesa'." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g2_upgrades",
+      "title": "2. Upgrades de Planes y Pruebas Gratis",
+      "personaId": "admin",
+      "order": 2,
+      "nodes": [
+        {
+          "id": "n3_cambios_plan",
+          "type": "branch",
+          "title": "Simulación de Cambio de Plan (Upgrade)",
+          "description": "Elige el momento de la vida de la cuenta en el que realizas el cambio:",
+          "paths": [
+            {
+              "id": "path_prueba_gratis",
+              "label": "Upgrade dentro del Período de Prueba (Escudo Anti-Abuso)",
+              "icon": "🛡️",
+              "steps": [
+                { "id": "s1", "label": "Estar en los primeros 7 días gratis de prueba." },
+                { "id": "s2", "label": "Solicitar el cambio al plan superior 'Carta y Mesa'." },
+                { "id": "s3", "label": "Verificar que los días restantes de prueba gratis se sumen al nuevo plan." },
+                { "id": "s4", "label": "Validar que la fecha del primer cobro real en Mercado Pago se mantenga intacta (Sin cobros anticipados)." }
+              ]
+            },
+            {
+              "id": "path_prorrateo",
+              "label": "Upgrade Fuera del Periodo Gratis (Prorrateo)",
+              "icon": "⚖️",
+              "steps": [
+                { "id": "s1", "label": "Realizar el Upgrade a mitad del ciclo de facturación mensual pago." },
+                { "id": "s2", "label": "Verificar que el sistema calcule el valor proporcional por los días restantes." },
+                { "id": "s3", "label": "Validar que Mercado Pago tome el saldo a favor para reducir el monto del primer cobro." }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g3_downgrades",
+      "title": "3. Downgrades y Cancelación",
+      "personaId": "admin",
+      "order": 3,
+      "nodes": [
+        {
+          "id": "n4_downgrade",
+          "type": "check",
+          "title": "Downgrade de Plan",
+          "steps": [
+            { "id": "s1", "label": "Hacer la solicitud para bajar del plan 'Carta y Mesa' al plan 'Carta'." },
+            { "id": "s2", "label": "Validar que el sistema programe el cambio para que ocurra exactamente al finalizar el ciclo de facturación pagado actual." },
+            { "id": "s3", "label": "Verificar que el restaurante siga disfrutando de las funciones premium hasta el último día contratado." }
+          ]
+        },
+        {
+          "id": "n5_cancelacion_antigua",
+          "type": "check",
+          "title": "Cancelación Automática en Mercado Pago",
+          "steps": [
+            { "id": "s1", "label": "Una vez procesado el cambio de plan, verificar los webhooks recibidos." },
+            { "id": "s2", "label": "Confirmar que la suscripción previa quedó marcada como 'cancelada' en la base de datos." },
+            { "id": "s3", "label": "Asegurar que se haya ejecutado el 'oldSubIdToCancel' para evitar que se le cobren ambas facturas al cliente." }
+          ]
+        },
+        {
+          "id": "n6_limite_sedes_downgrade",
+          "type": "negative",
+          "title": "Restricción y Modal de Sedes Excedentes",
+          "description": "PASÓ = El sistema bloquea el uso de sedes no pagadas y fuerza reasignación.",
+          "steps": [
+            { "id": "s1", "label": "Simular un downgrade donde el usuario reduce la cantidad de sedes contratadas (Ej: De tener 3 sedes activas, baja su suscripción a solo 1 sede)." },
+            { "id": "s2", "label": "Entrar a la plataforma. El sistema debe detectar que hay más sedes activas que las permitidas por el nuevo plan." },
+            { "id": "s3", "label": "Validar que salga un Modal de Alerta indicando que ha excedido el límite de sedes." },
+            { "id": "s4", "label": "Verificar que el sistema quite todos los planes de todas las sedes automáticamente (las desactive) y guarde el estado." },
+            { "id": "s5", "label": "Comprobar que el cliente ahora deba asignar manualmente el plan a las sedes que tenga disponibles, garantizando que nunca supere el límite pagado." }
+          ]
+        }
+      ]
+    }
+  ]
+}

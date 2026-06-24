@@ -1,0 +1,81 @@
+{
+  "title": "📉 Cierre de Caja y Control de Turnos",
+  "description": "Prueba de estrés para la seguridad financiera. Aperturas con base, retiros y cuadre matemático final.",
+  "icon": "🏦",
+  "order": 8,
+  "isExploratoryMode": false,
+  "groups": [
+    {
+      "id": "g1_apertura",
+      "title": "1. Inicio de Operaciones",
+      "personaId": "cajero",
+      "order": 1,
+      "nodes": [
+        {
+          "id": "n1_abrir_turno",
+          "type": "check",
+          "title": "Apertura de Caja",
+          "steps": [
+            { "id": "s1", "label": "Ir a la sección de 'Caja / Turnos'." },
+            { "id": "s2", "label": "Dar clic en 'Abrir Caja' e ingresar un Base Inicial de dinero en efectivo (Ej: $50.000)." },
+            { "id": "s3", "label": "Validar que la caja se marque como 'Abierta' con la hora correcta." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g2_movimientos",
+      "title": "2. Movimientos del Día",
+      "personaId": "cajero",
+      "order": 2,
+      "nodes": [
+        {
+          "id": "n2_ventas",
+          "type": "check",
+          "title": "Ingresos por Ventas",
+          "steps": [
+            { "id": "s1", "label": "Ir al POS y hacer 2 ventas que se paguen en Efectivo." },
+            { "id": "s2", "label": "Hacer 1 venta que se pague en Tarjeta." }
+          ]
+        },
+        {
+          "id": "n3_retiros",
+          "type": "check",
+          "title": "Egresos y Retiros Manuales",
+          "steps": [
+            { "id": "s1", "label": "Ir a la administración de la caja (Movimientos)." },
+            { "id": "s2", "label": "Registrar un 'Egreso' (Salida de dinero) por un valor de $10.000 con concepto 'Pago a Proveedor'." },
+            { "id": "s3", "label": "Validar que el movimiento se liste en color rojo (resta)." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g3_cierre_z",
+      "title": "3. Cuadre Matemático",
+      "personaId": "admin",
+      "order": 3,
+      "nodes": [
+        {
+          "id": "n4_cuadre_caja",
+          "type": "branch",
+          "title": "Cierre de Caja (Ticket Z)",
+          "description": "Finalización del turno contable:",
+          "paths": [
+            {
+              "id": "path_impresion_cierre",
+              "label": "Verificación del Balance",
+              "icon": "🧾",
+              "steps": [
+                { "id": "s1", "label": "Dar clic en 'Cerrar Caja'." },
+                { "id": "s2", "label": "Validar que el cálculo sea: (Base Inicial + Ventas Efectivo - Egresos)." },
+                { "id": "s3", "label": "Confirmar el cierre e imprimir el Ticket Z." },
+                { "id": "s4", "label": "Verificar que el ticket impreso separe claramente el total de Tarjetas vs Efectivo en Caja." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "title": "🛡️ Roles, Seguridad y Control de Acceso (RBAC)",
+  "description": "Prueba de permisos y accesos según el rol del empleado. Valida que el sistema reconozca la sesión y no pida PIN innecesario a usuarios personales.",
+  "icon": "🔐",
+  "order": 4,
+  "isExploratoryMode": false,
+  "groups": [
+    {
+      "id": "g1_preparacion_staff",
+      "title": "1. Creación de Roles de Prueba",
+      "personaId": "admin",
+      "order": 1,
+      "nodes": [
+        {
+          "id": "n1_creacion_roles",
+          "type": "check",
+          "title": "Preparar Usuarios y Permisos",
+          "steps": [
+            { "id": "s1", "label": "Como Admin, ir a 'Mi Equipo'." },
+            { "id": "s2", "label": "Crear un empleado 'Mesero' asignándole un correo electrónico para que tenga acceso personal." },
+            { "id": "s3", "label": "Crear un empleado con el rol personalizado 'Otro' (Ej: Hostess) asignándole otro correo, y restringir sus permisos solo a 'Mesas'." },
+            { "id": "s4", "label": "Cerrar la sesión del Administrador." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g2_accesos_personales",
+      "title": "2. Sesiones Personales (Sin PIN)",
+      "personaId": "mesero",
+      "order": 2,
+      "nodes": [
+        {
+          "id": "n2_login_personal",
+          "type": "check",
+          "title": "Reconocimiento de Sesión",
+          "steps": [
+            { "id": "s1", "label": "Iniciar sesión en el Dashboard con el correo del 'Mesero' creado en el paso anterior." },
+            { "id": "s2", "label": "Verificar que el menú lateral oculte las pestañas de 'Configuración' y 'Analíticas' según sus permisos." },
+            { "id": "s3", "label": "Ir a la pestaña 'Mesas' y abrir una orden." },
+            { "id": "s4", "label": "Validar que el sistema deje agregar productos y atender la orden DIRECTAMENTE, sin mostrar el modal de pedir PIN." }
+          ]
+        },
+        {
+          "id": "n3_limites_mesero",
+          "type": "negative",
+          "title": "Restricciones de Caja (Mesero)",
+          "description": "PASÓ = El sistema bloqueó acciones de cajero.",
+          "steps": [
+            { "id": "s1", "label": "Estando logueado como Mesero, intentar hacer clic en 'Pagar y Facturar'." },
+            { "id": "s2", "label": "El sistema DEBE denegar el acceso al módulo de pagos." },
+            { "id": "s3", "label": "Intentar liberar/cerrar la mesa y verificar que también esté restringido." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g3_rol_personalizado",
+      "title": "3. Pruebas de Rol Personalizado ('Otro')",
+      "personaId": "cajero",
+      "order": 3,
+      "nodes": [
+        {
+          "id": "n4_login_otro",
+          "type": "negative",
+          "title": "Restricción Absoluta (Hostess)",
+          "description": "Prueba extrema de los permisos configurables.",
+          "steps": [
+            { "id": "s1", "label": "Cerrar sesión e ingresar con el correo del rol 'Otro'." },
+            { "id": "s2", "label": "Verificar que la interfaz solo muestre los módulos estrictamente autorizados." },
+            { "id": "s3", "label": "Intentar crear una orden (si no se le dio permiso) o acceder al inventario." },
+            { "id": "s4", "label": "El sistema DEBE mantener el bloqueo férreo en cualquier acción fuera de su configuración." }
+          ]
+        }
+      ]
+    }
+  ]
+}

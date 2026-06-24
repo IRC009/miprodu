@@ -1,0 +1,141 @@
+{
+  "title": "🏪 Operación Diaria (Caja, Meseros y Casos Extremos)",
+  "description": "Prueba extrema del día a día del restaurante. Incluye pagos mixtos, devoluciones, roles no autorizados y bloqueos de seguridad.",
+  "icon": "💵",
+  "order": 3,
+  "isExploratoryMode": false,
+  "groups": [
+    {
+      "id": "g1_seguridad_piso",
+      "title": "1. Seguridad y Casos Negativos",
+      "personaId": "mesero",
+      "order": 1,
+      "nodes": [
+        {
+          "id": "n1_mesa_ocupada",
+          "type": "negative",
+          "title": "Choque de Mesas Ocupadas",
+          "description": "PASÓ = El sistema bloquea el doble uso de mesa.",
+          "steps": [
+            { "id": "s1", "label": "Tomar una mesa que ya esté ocupada (Color rojo)." },
+            { "id": "s2", "label": "Intentar crear un pedido NUEVO desde cero asignado a esa misma mesa." },
+            { "id": "s3", "label": "El sistema DEBE mostrar un error indicando que la mesa ya está en uso." }
+          ]
+        },
+        {
+          "id": "n2_rol_no_autorizado",
+          "type": "negative",
+          "title": "Intento de Facturación no Autorizada",
+          "description": "PASÓ = El mesero no puede cobrar ni abrir la caja.",
+          "steps": [
+            { "id": "s1", "label": "Ingresar al POS con el PIN de un Mesero (sin permisos de Cajero)." },
+            { "id": "s2", "label": "Abrir una mesa ocupada e intentar hacer clic en 'Pagar y Facturar'." },
+            { "id": "s3", "label": "El sistema DEBE ocultar el botón o mostrar 'Acceso Denegado'." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g2_manipulacion_piso",
+      "title": "2. Manipulación y Divisiones",
+      "personaId": "cajero",
+      "order": 2,
+      "nodes": [
+        {
+          "id": "n3_adiciones",
+          "type": "check",
+          "title": "Adiciones en Caliente",
+          "steps": [
+            { "id": "s1", "label": "El Cajero abre la orden de una mesa activa." },
+            { "id": "s2", "label": "Añadir 2 productos extra manualmente desde el POS." },
+            { "id": "s3", "label": "Validar que el Total se actualice inmediatamente en la vista de la mesa." }
+          ]
+        },
+        {
+          "id": "n4_division",
+          "type": "check",
+          "title": "Cobro Parcial / División de Cuenta",
+          "steps": [
+            { "id": "s1", "label": "Hacer clic en Pagar y Facturar." },
+            { "id": "s2", "label": "Simular que un comensal paga solo su parte usando el método mixto o parcial." },
+            { "id": "s3", "label": "Validar que el sistema refleje el saldo restante que falta por cubrir para cerrar la mesa." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g3_checkout_pagos",
+      "title": "3. Checkout, Pagos y Puntos",
+      "personaId": "cajero",
+      "order": 3,
+      "nodes": [
+        {
+          "id": "n5_tipos_pago",
+          "type": "branch",
+          "title": "Escenarios de Cierre de Caja",
+          "description": "Prueba los distintos métodos de pago en el POS:",
+          "paths": [
+            {
+              "id": "path_mixto",
+              "label": "Pago Mixto (Efectivo + Tarjeta)",
+              "icon": "🔀",
+              "steps": [
+                { "id": "s1", "label": "Seleccionar el método 'Mixto'." },
+                { "id": "s2", "label": "Distribuir el 50% en Tarjeta y el 50% en Efectivo." },
+                { "id": "s3", "label": "Intentar facturar cuando la suma es menor al total (Debe fallar)." },
+                { "id": "s4", "label": "Cuadrar el 100% y facturar. Validar impresión del ticket con desglose de métodos." }
+              ]
+            },
+            {
+              "id": "path_puntos",
+              "label": "Pago con Puntos (Fidelidad)",
+              "icon": "⭐",
+              "steps": [
+                { "id": "s1", "label": "Asociar el correo de un cliente frecuente a la orden." },
+                { "id": "s2", "label": "Usar saldo de puntos disponible para cubrir una parte de la factura." },
+                { "id": "s3", "label": "Pagar el restante con Tarjeta o Efectivo." },
+                { "id": "s4", "label": "Validar que los puntos se descuenten correctamente del historial del cliente." }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g4_devoluciones",
+      "title": "4. Devoluciones y Cancelaciones",
+      "personaId": "admin",
+      "order": 4,
+      "nodes": [
+        {
+          "id": "n6_devoluciones",
+          "type": "branch",
+          "title": "Anulación de Órdenes",
+          "description": "Prueba el sistema de reintegros de inventario y caja:",
+          "paths": [
+            {
+              "id": "path_devolucion_total",
+              "label": "Devolución Total",
+              "icon": "🗑️",
+              "steps": [
+                { "id": "s1", "label": "Ir a la pestaña de Órdenes Facturadas (Historial)." },
+                { "id": "s2", "label": "Buscar una orden pagada y darle a 'Devolución Total'." },
+                { "id": "s3", "label": "Validar que la caja reste el monto del cierre diario y la orden se marque anulada." }
+              ]
+            },
+            {
+              "id": "path_devolucion_parcial",
+              "label": "Devolución Parcial",
+              "icon": "✂️",
+              "steps": [
+                { "id": "s1", "label": "Abrir el modal de devolución en una orden pagada." },
+                { "id": "s2", "label": "Seleccionar únicamente 1 producto de la lista (Devolución parcial)." },
+                { "id": "s3", "label": "Confirmar y validar que la orden mantenga el resto de los productos intactos, devolviendo solo el precio de ese producto a la caja." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

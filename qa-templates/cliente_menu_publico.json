@@ -1,0 +1,98 @@
+{
+  "title": "📱 Experiencia del Cliente (Menú Público)",
+  "description": "Validación profunda de todo lo que el comensal puede ver, tocar y comprar en tu menú digital.",
+  "icon": "🍔",
+  "order": 1,
+  "isExploratoryMode": false,
+  "groups": [
+    {
+      "id": "g1_exploracion",
+      "title": "1. Exploración y Validaciones",
+      "personaId": "cliente",
+      "order": 1,
+      "nodes": [
+        {
+          "id": "n1_navegacion",
+          "type": "check",
+          "title": "Navegación del Catálogo",
+          "steps": [
+            { "id": "s1", "label": "Abrir el menú usando el link público." },
+            { "id": "s2", "label": "Usar la barra de búsqueda y encontrar un producto existente." },
+            { "id": "s3", "label": "Tocar una categoría en el menú superior para filtrar los productos." }
+          ]
+        },
+        {
+          "id": "n2_negativo",
+          "type": "negative",
+          "title": "Validación de Modificadores (Seguridad)",
+          "description": "PASÓ = El sistema bloqueó correctamente al cliente.",
+          "steps": [
+            { "id": "s1", "label": "Abrir un producto que tenga modificadores OBLIGATORIOS (ej. Término de carne)." },
+            { "id": "s2", "label": "Intentar añadir al carrito SIN seleccionar las opciones obligatorias." },
+            { "id": "s3", "label": "El sistema DEBE pintar de rojo la opción que falta y denegar el ingreso al carrito." }
+          ]
+        },
+        {
+          "id": "n3_carrito",
+          "type": "check",
+          "title": "Interacción con el Carrito",
+          "steps": [
+            { "id": "s1", "label": "Añadir 1 producto correctamente al carrito." },
+            { "id": "s2", "label": "Subir la cantidad a 2 dentro del modal del producto y ver que cambie el precio total del botón." },
+            { "id": "s3", "label": "Abrir el carrito general y eliminar un producto. Validar que la bolsa se actualice." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g2_checkout",
+      "title": "2. Tipos de Entrega y Checkout",
+      "personaId": "cliente",
+      "order": 2,
+      "nodes": [
+        {
+          "id": "n4_canales",
+          "type": "branch",
+          "title": "Canal de Venta",
+          "description": "Elige qué tipo de pedido simulará el cliente hoy:",
+          "paths": [
+            {
+              "id": "path_mesa",
+              "label": "Comer en Mesa",
+              "icon": "🪑",
+              "steps": [
+                { "id": "s1", "label": "Elegir 'Comer en el lugar'." },
+                { "id": "s2", "label": "Verificar que pida el Número de Mesa (si no estaba preasignado por QR)." },
+                { "id": "s3", "label": "Ingresar el nombre e intentar hacer el pedido con el carrito a $0 (Debe fallar)." },
+                { "id": "s4", "label": "Enviar orden con productos válidos. Validar pantalla de 'Tu orden está en preparación'." }
+              ]
+            },
+            {
+              "id": "path_domicilio",
+              "label": "Domicilio (Pago Online)",
+              "icon": "🛵",
+              "steps": [
+                { "id": "s1", "label": "Elegir 'A Domicilio'." },
+                { "id": "s2", "label": "Validar que la tarifa de domicilio se agregue automáticamente al subtotal." },
+                { "id": "s3", "label": "Rellenar nombre, dirección de entrega y teléfono (Obligatorios)." },
+                { "id": "s4", "label": "Seleccionar Mercado Pago / Bold." },
+                { "id": "s5", "label": "Completar pago con tarjeta de prueba y volver a la app. Validar pantalla de éxito." }
+              ]
+            },
+            {
+              "id": "path_recoger",
+              "label": "Para Recoger",
+              "icon": "🏃",
+              "steps": [
+                { "id": "s1", "label": "Elegir 'Recoger en Restaurante'." },
+                { "id": "s2", "label": "Validar que NO se cobre tarifa de envío extra." },
+                { "id": "s3", "label": "Ingresar Nombre y enviar pedido para pago en efectivo." },
+                { "id": "s4", "label": "Ver pantalla de orden exitosa con el resumen." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

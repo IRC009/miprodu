@@ -1,0 +1,105 @@
+.how-section {
+  padding: var(--section-py) 0;
+  background: radial-gradient(ellipse 80% 50% at 50% 100%, rgba(139,26,46,0.03) 0%, transparent 70%);
+}
+
+.how-header {
+  text-align: center;
+  margin-bottom: 80px;
+}
+
+.how-header .section-subtitle { margin: 0 auto; }
+
+.how-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  position: relative;
+}
+
+.how-connector-line {
+  position: absolute;
+  top: 48px;
+  left: 12.5%;
+  right: 12.5%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--wine-mid), var(--wine-light), var(--wine-mid), transparent);
+  z-index: 0;
+  opacity: 0.4;
+}
+
+.step-card {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 28px 20px;
+  background: var(--black-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--black-border);
+  transition: border-color 0.3s, transform 0.3s;
+}
+
+.step-card:hover {
+  border-color: rgba(139,26,46,0.25);
+  transform: translateY(-6px);
+}
+
+.step-number {
+  font-family: var(--font-serif);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--wine-mid);
+  letter-spacing: 0.1em;
+  margin-bottom: 16px;
+}
+
+.step-icon-wrap {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: rgba(139,26,46,0.08);
+  border: 1px solid rgba(139,26,46,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+.step-card:hover .step-icon-wrap {
+  background: rgba(139,26,46,0.15);
+  box-shadow: 0 0 20px rgba(139,26,46,0.1);
+}
+
+.step-icon { font-size: 1.8rem; }
+
+.step-title {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 12px;
+}
+
+.step-desc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.65;
+  margin-bottom: 16px;
+}
+
+.step-detail {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--wine-mid);
+  letter-spacing: 0.05em;
+}
+
+@media (max-width: 900px) {
+  .how-steps { grid-template-columns: 1fr 1fr; gap: 16px; }
+  .how-connector-line { display: none; }
+}
+
+@media (max-width: 520px) {
+  .how-steps { grid-template-columns: 1fr; }
+}

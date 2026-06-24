@@ -1,0 +1,140 @@
+/* ============================================================
+   GLOBAL DESIGN TOKENS — Carta y Mesa Landing Page v2
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght=0,400;0,700;0,900;1,400;1,700&family=Inter:wght=300;400;500;600;700;800&display=swap');
+
+:root {
+  /* Paleta principal: vino tinto */
+  --wine: #8B1A2E;
+  --wine-mid: #A52040;
+  --wine-light: #C23055;
+  --wine-glow: rgba(139, 26, 46, 0.35);
+
+  /* Fondos - Modo Claro */
+  --black: #FFFFFF;
+  --black-soft: #F8FAFC;
+  --black-card: #F1F5F9;
+  --black-border: rgba(0,0,0,0.08);
+
+  --white: #060608;
+  --text-muted: rgba(0,0,0,0.45);
+  --text-soft: rgba(0,0,0,0.75);
+
+  /* Tipografía */
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+
+  /* Espaciado */
+  --section-py: 130px;
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 40px;
+
+  --transition: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--black);
+  color: var(--white);
+  line-height: 1.6;
+  padding-right: 0 !important;
+}
+
+/* ── Container ── */
+.lp-container {
+  max-width: 1220px;
+  margin: 0 auto;
+  padding: 0 28px;
+}
+
+/* ── Badge ── */
+.section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(139, 26, 46, 0.12);
+  border: 1px solid rgba(139, 26, 46, 0.35);
+  border-radius: 999px;
+  padding: 6px 18px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #E8748A;
+  margin-bottom: 20px;
+}
+
+.section-badge::before {
+  content: '';
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--wine-light);
+  animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.5); }
+}
+
+/* ── Headings ── */
+.section-title {
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 5vw, 3.6rem);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--white);
+  margin-bottom: 20px;
+}
+
+.wine-text {
+  background: linear-gradient(135deg, #E8748A, var(--wine-mid), var(--wine));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.section-subtitle {
+  font-size: 1.05rem;
+  color: var(--text-soft);
+  max-width: 560px;
+  line-height: 1.75;
+}
+
+/* ── Utility Animations ── */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-14px); }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(1deg); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--black); }
+::-webkit-scrollbar-thumb { background: var(--wine-mid); border-radius: 4px; }
+
+/* ── Reveal helper classes (controlled by GSAP) ── */
+.reveal { opacity: 0; transform: translateY(50px); }
+.reveal-left { opacity: 0; transform: translateX(-60px); }
+.reveal-right { opacity: 0; transform: translateX(60px); }
+.reveal-scale { opacity: 0; transform: scale(0.85); }
