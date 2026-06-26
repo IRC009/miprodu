@@ -59,13 +59,13 @@ async function handleOnOrderCreated(event) {
       .map(it => `${it.quantity ?? 1}x ${it.name}`)
       .join(", ") || "Sin artículos";
     const total = (order.total || 0).toLocaleString("es-CO");
-    const orderType = order.orderType === "delivery" ? "🚚 Domicilio" : "🏪 Caja";
+    const orderType = order.orderType === "delivery" ? "Domicilio" : "Caja";
 
     const payload = {
       tokens: targets,
       notification: {
-        title: `💰 Nuevo Pedido — ${orderType}`,
-        body: `${customer}: ${itemsSummary} · $${total}`,
+        title: `Nuevo Pedido - ${orderType}`,
+        body: `Cliente: ${customer} | Total: $${total} | Productos: ${itemsSummary}`,
       },
       data: {
         screen: "restaurante",
@@ -77,7 +77,7 @@ async function handleOnOrderCreated(event) {
         priority: "high",
         notification: {
           sound: "order_chime",
-          channelId: "new-orders",
+          channelId: "miprodu-orders",
         }
       },
       apns: {

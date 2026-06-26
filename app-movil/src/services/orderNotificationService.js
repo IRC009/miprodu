@@ -13,7 +13,7 @@ const MUTE_KEY = 'order_notifications_muted';
 
 // ── Android notification channel for new orders ──────────────────────────────
 if (Platform.OS === 'android') {
-  Notifications.setNotificationChannelAsync('new-orders', {
+  Notifications.setNotificationChannelAsync('miprodu-orders', {
     name: 'Nuevos Pedidos',
     importance: Notifications.AndroidImportance.MAX,
     vibrationPattern: [0, 250, 250, 250],
