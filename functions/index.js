@@ -20,10 +20,13 @@ const { handleCreateSubscription, handleCancelSubscription, handleAdminRestore, 
 const { handleCreateOrderPreference, handleProcessMPBrickPayment, handleCreateBoldPendingOrder } = require("./src/orders/payments");
 const { handleWebhookMP, handleWebhookOrderPayment, handleWebhookOrderBold } = require("./src/webhooks/webhooks");
 const { handleOnOrderUpdated } = require("./src/orders/triggers");
+const { handleOnOrderCreated } = require("./src/orders/orderNotificationTrigger");
+
 const { handleCreateStaffMember, handleDeleteStaffMember, handleStaffLogin } = require("./src/staff/staffHandlers");
 const { handleArchiveInactiveReservation } = require("./src/reservations/triggers");
 // const { noShowSweep } = require("./src/reservations/scheduledNoShow");
 const { handleRegisterCustomDomain, handleCheckDomainStatus, handleDeleteCustomDomain } = require("./src/domains/domainHandlers");
+const { handleChatWithAi } = require("./src/ai/ai");
 const {
   dailyBackup,
   triggerManualBackup,
@@ -33,6 +36,24 @@ const {
   restoreRestaurantFromGlobalBackup
 } = require("./src/backup/backupHandlers");
 
+const {
+  onRestaurantCreatedForPublicInfo,
+  onRestaurantUpdatedForPublicInfo,
+  onDesignCreatedForPublicInfo,
+  onDesignUpdatedForPublicInfo,
+  onBranchCreatedForPublicInfo,
+  onBranchUpdatedForPublicInfo,
+  onBranchDeletedForPublicInfo,
+  onCategoryCreatedForPublicInfo,
+  onCategoryUpdatedForPublicInfo,
+  onCategoryDeletedForPublicInfo,
+  onPromotionCreatedForPublicInfo,
+  onPromotionUpdatedForPublicInfo,
+  onPromotionDeletedForPublicInfo
+} = require("./src/triggers/publicMenuUnification");
+
+const { onIngredientWritten } = require("./src/triggers/ingredientsBucketing");
+
 // ─────────────────────────────────────────────
 // SUSCRIPCIONES
 // ─────────────────────────────────────────────
@@ -41,6 +62,7 @@ exports.createSubscription       = onCall({ secrets: ["MP_ACCESS_TOKEN"] }, hand
 exports.cancelSubscription       = onCall({ secrets: ["MP_ACCESS_TOKEN"] }, handleCancelSubscription);
 exports.adminRestoreSubscription = onCall(handleAdminRestore);
 exports.verifySubscriptionExpiration = onCall({ secrets: ["MP_ACCESS_TOKEN"] }, verifySubscriptionExpiration);
+exports.chatWithAi                   = onCall(handleChatWithAi);
 
 // ─────────────────────────────────────────────
 // WEBHOOKS
@@ -65,6 +87,12 @@ exports.createBoldPendingOrder = onCall(handleCreateBoldPendingOrder);
 exports.onOrderUpdated = onDocumentUpdated(
   "restaurants/{restaurantId}/active_orders/{orderId}",
   handleOnOrderUpdated
+);
+
+// Sends FCM push notification to all devices of the branch when a new order arrives
+exports.onOrderCreated = onDocumentCreated(
+  "restaurants/{restaurantId}/active_orders/{orderId}",
+  handleOnOrderCreated
 );
 
 exports.onWaiterCallCreated = onDocumentCreated(
@@ -104,6 +132,28 @@ exports.restoreRestaurantFromGlobalBackup = restoreRestaurantFromGlobalBackup;
 // ─────────────────────────────────────────────
 // DOMINIOS PERSONALIZADOS
 // ─────────────────────────────────────────────
-exports.registerCustomDomain = onCall({ secrets: ["CF_API_TOKEN", "CF_ZONE_ID"] }, handleRegisterCustomDomain);
-exports.checkDomainStatus    = onCall({ secrets: ["CF_API_TOKEN", "CF_ZONE_ID"] }, handleCheckDomainStatus);
-exports.deleteCustomDomain   = onCall({ secrets: ["CF_API_TOKEN", "CF_ZONE_ID"] }, handleDeleteCustomDomain);
+exports.registerCustomDomain = onCall({ secrets: ["CF_API_TOKEN", "CF_ZONE_ID", "CF_EMAIL"] }, handleRegisterCustomDomain);
+exports.checkDomainStatus    = onCall({ secrets: ["CF_API_TOKEN", "CF_ZONE_ID", "CF_EMAIL"] }, handleCheckDomainStatus);
+exports.deleteCustomDomain   = onCall({ secrets: ["CF_API_TOKEN", "CF_ZONE_ID", "CF_EMAIL"] }, handleDeleteCustomDomain);
+
+// ─────────────────────────────────────────────
+// UNIFICACIÓN DEL MENÚ PÚBLICO
+// ─────────────────────────────────────────────
+exports.onRestaurantCreatedForPublicInfo = onRestaurantCreatedForPublicInfo;
+exports.onRestaurantUpdatedForPublicInfo = onRestaurantUpdatedForPublicInfo;
+exports.onDesignCreatedForPublicInfo = onDesignCreatedForPublicInfo;
+exports.onDesignUpdatedForPublicInfo = onDesignUpdatedForPublicInfo;
+exports.onBranchCreatedForPublicInfo = onBranchCreatedForPublicInfo;
+exports.onBranchUpdatedForPublicInfo = onBranchUpdatedForPublicInfo;
+exports.onBranchDeletedForPublicInfo = onBranchDeletedForPublicInfo;
+exports.onCategoryCreatedForPublicInfo = onCategoryCreatedForPublicInfo;
+exports.onCategoryUpdatedForPublicInfo = onCategoryUpdatedForPublicInfo;
+exports.onCategoryDeletedForPublicInfo = onCategoryDeletedForPublicInfo;
+exports.onPromotionCreatedForPublicInfo = onPromotionCreatedForPublicInfo;
+exports.onPromotionUpdatedForPublicInfo = onPromotionUpdatedForPublicInfo;
+exports.onPromotionDeletedForPublicInfo = onPromotionDeletedForPublicInfo;
+
+// ─────────────────────────────────────────────
+// COMPILACIÓN DE INGREDIENTES EN BUCKETS
+// ─────────────────────────────────────────────
+exports.onIngredientWritten = onIngredientWritten;
