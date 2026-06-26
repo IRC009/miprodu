@@ -153,12 +153,8 @@ export const getExpoPushToken = async () => {
     throw new Error('Permisos de notificación no otorgados.');
   }
 
-  const projectId =
-    Constants.expoConfig?.extra?.eas?.projectId ||
-    Constants.easConfig?.projectId ||
-    '3ac54c27-6c7a-4e1d-9509-03404074626a';
-
-  const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
+  // Fetch native device token (FCM for Android, APNs for iOS)
+  const tokenData = await Notifications.getDevicePushTokenAsync();
   return tokenData.data;
 };
 

@@ -95,33 +95,36 @@ async function handleOnWaiterCallCreated(event) {
 
     console.log(`[WaiterCallTrigger] Sending notifications to ${targets.length} devices...`);
 
-    // 3. Prepare messages for Expo's push notification service
-    const messages = targets.map(token => ({
-      to: token,
-      title: "🔔 ¡Llamado de Mesero!",
-      body: `Mesa ${newCall.tableNumber || 'N/A'} necesita atención`,
-      sound: "waiter_bell.mp3",
-      channelId: "waiter-calls-custom-sound",
+    const payload = {
+      tokens: targets,
+      notification: {
+        title: "🔔 ¡Llamado de Mesero!",
+        body: `Mesa ${newCall.tableNumber || 'N/A'} necesita atención`,
+      },
       data: {
         screen: "restaurante",
         restaurantId,
-        branchId,
-        callId
+        branchId: branchId || "",
+        callId,
       },
-      priority: "high"
-    }));
-
-    // 4. Send messages to Expo API using global fetch
-    const response = await fetch("https://exp.host/--/api/v2/push/send", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
+      android: {
+        priority: "high",
+        notification: {
+          sound: "waiter_bell",
+          channelId: "waiter-calls-custom-sound",
+        }
       },
-      body: JSON.stringify(messages)
-    });
+      apns: {
+        payload: {
+          aps: {
+            sound: "waiter_bell.caf",
+          }
+        }
+      }
+    };
 
-    const resJson = await response.json();
-    console.log(`[WaiterCallTrigger] Expo Response:`, JSON.stringify(resJson));
+    const response = await admin.messaging().sendEachForMulticast(payload);
+    console.log(`[WaiterCallTrigger] Firebase FCM Response:`, JSON.stringify(response));
 
   } catch (error) {
     console.error("[WaiterCallTrigger] Error sending push notifications:", error);

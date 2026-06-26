@@ -61,31 +61,36 @@ async function handleOnOrderCreated(event) {
     const total = (order.total || 0).toLocaleString("es-CO");
     const orderType = order.orderType === "delivery" ? "🚚 Domicilio" : "🏪 Caja";
 
-    const messages = targets.map(token => ({
-      to: token,
-      title: `💰 Nuevo Pedido — ${orderType}`,
-      body: `${customer}: ${itemsSummary} · $${total}`,
-      sound: "order_chime.mp3",   // mapped to res/raw/order_chime.mp3 on Android
-      channelId: "new-orders",    // must match the channel set in orderNotificationService.js
+    const payload = {
+      tokens: targets,
+      notification: {
+        title: `💰 Nuevo Pedido — ${orderType}`,
+        body: `${customer}: ${itemsSummary} · $${total}`,
+      },
       data: {
         screen: "restaurante",
         restaurantId,
         branchId: branchId || "",
         orderId,
       },
-      priority: "high",
-      badge: 1,
-    }));
+      android: {
+        priority: "high",
+        notification: {
+          sound: "order_chime",
+          channelId: "new-orders",
+        }
+      },
+      apns: {
+        payload: {
+          aps: {
+            sound: "order_chime.caf",
+          }
+        }
+      }
+    };
 
-    // 4. Send via Expo push service (handles FCM & APNs transparently)
-    const response = await fetch("https://exp.host/--/api/v2/push/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(messages),
-    });
-
-    const resJson = await response.json();
-    console.log(`[OrderTrigger] Expo Push Response:`, JSON.stringify(resJson));
+    const response = await admin.messaging().sendEachForMulticast(payload);
+    console.log(`[OrderTrigger] Firebase FCM Response:`, JSON.stringify(response));
   } catch (error) {
     console.error("[OrderTrigger] Error sending push notifications:", error);
   }
