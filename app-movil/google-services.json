@@ -1,33 +1,33 @@
 {
   "project_info": {
-    "project_number": "169255016651",
-    "project_id": "webexplora-2ab9a",
-    "storage_bucket": "webexplora-2ab9a.firebasestorage.app"
+    "project_number": "112703118753",
+    "project_id": "miprodu-fec00",
+    "storage_bucket": "miprodu-fec00.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:169255016651:android:c7c985768c89b814a9e34e",
+        "mobilesdk_app_id": "1:112703118753:android:94c51a721697dacb517fe0",
         "android_client_info": {
-          "package_name": "com.cartaymesa.app"
+          "package_name": "com.miprodu.app"
         }
       },
       "oauth_client": [
         {
-          "client_id": "169255016651-9sgicq2fb65jv20vp7j9g1uvputdgi6t.apps.googleusercontent.com",
+          "client_id": "112703118753-jqr1cn0spvk49qjmj3c7po4svvl3458h.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyDHJJo2rtL0jQTP9da1k2WU64T7i9azk-A"
+          "current_key": "AIzaSyAgShVZi8i6yHFLVbsuGTUl1sOxFehHnEo"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "169255016651-9sgicq2fb65jv20vp7j9g1uvputdgi6t.apps.googleusercontent.com",
+              "client_id": "112703118753-jqr1cn0spvk49qjmj3c7po4svvl3458h.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

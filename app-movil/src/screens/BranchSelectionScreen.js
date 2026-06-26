@@ -50,7 +50,7 @@ export default function BranchSelectionScreen({
           <View style={styles.logoCircle}>
             <Text style={styles.logoText}>CM</Text>
           </View>
-          <Text style={styles.title}>Carta y Mesa</Text>
+          <Text style={styles.title}>MiProdu</Text>
           <Text style={styles.subtitle}>Selecciona tu sede de trabajo</Text>
         </View>
 

@@ -2,13 +2,12 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   StyleSheet, Text, View, FlatList, TouchableOpacity, TextInput,
   ScrollView, Modal, Alert, ActivityIndicator, SafeAreaView, Image,
-  Linking
+  useColorScheme
 } from 'react-native';
 import {
   Search, ShoppingCart, Trash2, Check, X, User, Plus, Minus, Info,
   Award, MapPin, Phone, DollarSign, PlusCircle, CreditCard, RefreshCw
 } from 'lucide-react-native';
-import * as Clipboard from 'expo-clipboard';
 import {
   createOrderMobile,
   archiveOrderMobile,
@@ -20,6 +19,22 @@ import {
   redeemPointsMobile
 } from '../services/dbService';
 
+// ── THEME ─────────────────────────────────────────────────────────────────────
+const LIGHT = {
+  bg: '#f5f5f5', card: '#ffffff', header: '#ffffff', tabBar: '#ffffff',
+  border: '#e5e7eb', primary: '#C9A227', primaryText: '#1e293b',
+  text: '#1e293b', sub: '#64748b', muted: '#9ca3af',
+  online: '#10b981', offline: '#ef4444', inputBg: '#f8fafc',
+  badge: '#f1f5f9', badgeText: '#475569', shadow: '#00000010',
+};
+const DARK = {
+  bg: '#0f172a', card: '#1e293b', header: '#1e293b', tabBar: '#1e293b',
+  border: '#334155', primary: '#C9A227', primaryText: '#0f172a',
+  text: '#f1f5f9', sub: '#94a3b8', muted: '#475569',
+  online: '#10b981', offline: '#ef4444', inputBg: '#0f172a',
+  badge: '#334155', badgeText: '#94a3b8', shadow: '#00000030',
+};
+
 export default function CajaScreen({ 
   restaurantId, 
   profile, 
@@ -28,41 +43,28 @@ export default function CajaScreen({
   products, 
   branches, 
   selectedBranch,
-  waiters,
-  preselectedTableNumber,
-  setPreselectedTableNumber,
-  planLevel = 2,
-  tables = [],
-  customWaEnabled = false,
-  customWaPhone = ''
+  planLevel = 2
 }) {
+  const scheme = useColorScheme();
+  const t = scheme === 'dark' ? DARK : LIGHT;
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [cart, setCart] = useState([]);
   
   // Checkout Modal State
   const [checkoutVisible, setCheckoutVisible] = useState(false);
-  const [orderAction, setOrderAction] = useState('facturar'); // 'comandar' (solo enviar) | 'facturar' (cobrar y facturar)
-  const [orderType, setOrderType] = useState(() => {
-    return planLevel <= 0 ? 'table' : (planLevel === 1 ? 'fast' : 'table');
-  }); // 'table' | 'pickup' | 'delivery' | 'fast'
+  const [orderType, setOrderType] = useState('fast'); // 'fast' (Caja) | 'delivery' (Domicilio)
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
-  const [tableNumber, setTableNumber] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('efectivo'); // 'efectivo' | 'tarjeta' | 'transferencia' | 'mixed'
+  const [paymentMethod, setPaymentMethod] = useState('efectivo'); // 'efectivo' | 'tarjeta' | 'transferencia'
   
-  // Tip, Discount & Register
+  // Tip, Discount & Shift
   const [tip, setTip] = useState('');
   const [discount, setDiscount] = useState('');
   const [checkoutRegisterIndex, setCheckoutRegisterIndex] = useState(1);
   const [activeShift, setActiveShift] = useState(null);
-
-  // Mixed Payments state
-  const [mixedPayments, setMixedPayments] = useState([
-    { methodId: 'efectivo', amount: '' },
-    { methodId: 'tarjeta', amount: '' }
-  ]);
 
   // Loyalty states
   const [loyaltyConfig, setLoyaltyConfig] = useState(null);
@@ -75,9 +77,6 @@ export default function CajaScreen({
   const [loyaltyPointsToRedeem, setLoyaltyPointsToRedeem] = useState(0);
   const [isSearchingLoyalty, setIsSearchingLoyalty] = useState(false);
 
-  // Waiter PIN verification states
-  const [selectedWaiterId, setSelectedWaiterId] = useState('');
-  const [waiterPin, setWaiterPin] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   // Fetch Loyalty Config on mount/change if planLevel allows it
@@ -93,61 +92,14 @@ export default function CajaScreen({
 
   // Fetch active shift when branch, register, or modal visibility changes
   useEffect(() => {
-    if (checkoutVisible && restaurantId && selectedBranch?.id && planLevel > 0) {
+    if (checkoutVisible && restaurantId && selectedBranch?.id) {
       fetchActiveShiftMobile(restaurantId, selectedBranch.id, checkoutRegisterIndex)
         .then(setActiveShift)
         .catch(err => console.warn('[CajaScreen] Error loading active shift:', err));
     } else {
       setActiveShift(null);
     }
-  }, [checkoutVisible, restaurantId, selectedBranch?.id, checkoutRegisterIndex, planLevel]);
-
-  // Auto-populate table number from Restaurante Screen redirect
-  useEffect(() => {
-    if (preselectedTableNumber !== null && preselectedTableNumber !== undefined) {
-      if (planLevel === 1) {
-        Alert.alert('Servicio a Mesa Bloqueado', 'El servicio a mesas requiere el Plan Carta y Mesa.');
-        setPreselectedTableNumber(null);
-        return;
-      }
-      setTableNumber(String(preselectedTableNumber));
-      setOrderType('table');
-      setCheckoutVisible(true);
-      setPreselectedTableNumber(null);
-    }
-  }, [preselectedTableNumber, planLevel]);
-
-  const configObj = useMemo(() => {
-    return selectedBranch || restaurant || {};
-  }, [selectedBranch, restaurant]);
-
-  // Auto-select first available order type if current is not available or disabled by settings
-  useEffect(() => {
-    const isTableAvailable = (planLevel >= 2 && configObj.enableTableService !== false) || configObj.enableWhatsAppTableOrders === true;
-    const isBarEnabled = planLevel > 0 && configObj.enableBarService !== false;
-    const isDeliveryEnabled = (planLevel > 0 && configObj.enableWhatsAppOrders !== false) || configObj.enableWhatsAppDirectDelivery === true;
-    const isFastEnabled = planLevel > 0 && configObj.enableFastService !== false;
-
-    const isCurrentEnabled = 
-      (orderType === 'table' && isTableAvailable) ||
-      (orderType === 'bar' && isBarEnabled) ||
-      (orderType === 'fast' && isFastEnabled) ||
-      (orderType === 'delivery' && isDeliveryEnabled);
-
-    if (!isCurrentEnabled) {
-      if (isTableAvailable) setOrderType('table');
-      else if (isDeliveryEnabled) setOrderType('delivery');
-      else if (isBarEnabled) setOrderType('bar');
-      else if (isFastEnabled) setOrderType('fast');
-    }
-  }, [configObj, orderType, planLevel]);
-
-  // Check role permission
-  const canAccessCaja = useMemo(() => {
-    if (profile.role === 'owner' || profile.role === 'admin' || profile.role === 'mesero' || profile.role === 'waiter') return true;
-    if (profile.permissions?.includes('all')) return true;
-    return profile.permissions?.includes('orders');
-  }, [profile]);
+  }, [checkoutVisible, restaurantId, selectedBranch?.id, checkoutRegisterIndex]);
 
   // Filter products by category & search query
   const filteredProducts = useMemo(() => {
@@ -159,16 +111,6 @@ export default function CajaScreen({
     });
   }, [products, selectedCategory, searchQuery]);
 
-  if (!canAccessCaja) {
-    return (
-      <View style={styles.centerContainer}>
-        <Info size={48} color="#f59e0b" />
-        <Text style={styles.noAccessTitle}>Acceso Restringido</Text>
-        <Text style={styles.noAccessText}>Tu usuario no tiene permisos para acceder a la Caja (POS).</Text>
-      </View>
-    );
-  }
-
   // Cart operations
   const addToCart = (product) => {
     setCart(prevCart => {
@@ -178,10 +120,6 @@ export default function CajaScreen({
       }
       return [...prevCart, { ...product, quantity: 1 }];
     });
-  };
-
-  const removeFromCart = (productId) => {
-    setCart(prevCart => prevCart.filter(item => item.id !== productId));
   };
 
   const updateQuantity = (productId, delta) => {
@@ -216,16 +154,10 @@ export default function CajaScreen({
     return Math.max(0, (sub + tVal) - dVal - pointsDVal);
   }, [cartTotal, tip, discount, pointsDiscountValue]);
 
-  const useWhatsAppFlow = useMemo(() => {
-    return planLevel <= 0 || 
-      (orderType === 'table' && configObj.enableWhatsAppTableOrders === true) || 
-      (orderType === 'delivery' && configObj.enableWhatsAppDirectDelivery === true);
-  }, [planLevel, orderType, configObj]);
-
   // Search customer for Loyalty
   const handleSearchLoyaltyCustomer = async () => {
     if (!loyaltyCustomerId.trim()) {
-      Alert.alert('Falta ID', 'Ingresa la identificación o cédula del cliente.');
+      Alert.alert('Falta Identificación', 'Ingresa la identificación o cédula del cliente.');
       return;
     }
     setIsSearchingLoyalty(true);
@@ -250,217 +182,16 @@ export default function CajaScreen({
 
   // Order Submission
   const handleCheckoutSubmit = async () => {
-    if (cart.length === 0) {
-      Alert.alert('Carrito Vacío', 'Agrega productos para realizar un pedido.');
-      return;
-    }
+    if (cart.length === 0) return;
 
     if (!selectedBranch) {
       Alert.alert('Sede Requerida', 'Selecciona una sede en la sección de Perfil antes de cobrar.');
       return;
     }
 
-    if (orderType === 'table' && !tableNumber.trim()) {
-      Alert.alert('Mesa Requerida', 'Ingresa el número de mesa.');
+    if (orderType === 'delivery' && (!customerName.trim() || !customerAddress.trim() || !customerPhone.trim())) {
+      Alert.alert('Datos Incompletos', 'Para domicilios, el nombre, la dirección de entrega y el teléfono son obligatorios.');
       return;
-    }
-
-    if (orderType === 'delivery' && (!customerName.trim() || !customerAddress.trim())) {
-      Alert.alert('Datos Incompletos', 'Para domicilios, el nombre del cliente y la dirección de entrega son obligatorios.');
-      return;
-    }
-
-    if (useWhatsAppFlow) {
-      let targetWaNumber = '';
-      let assignedWaiterName = '';
-
-      if (customWaEnabled && customWaPhone.trim()) {
-        targetWaNumber = customWaPhone.replace(/\D/g, '');
-        
-        let finalWaiterId = selectedWaiterId;
-        if (!finalWaiterId && tableNumber) {
-          const matchedTable = tables.find(t => t.number?.toString().trim() === tableNumber.toString().trim());
-          if (matchedTable) {
-            finalWaiterId = matchedTable.assignedWaiterId;
-          }
-        }
-        if (finalWaiterId) {
-          const waiter = waiters.find(w => w.id === finalWaiterId || w.authUid === finalWaiterId);
-          if (waiter) {
-            assignedWaiterName = waiter.name;
-          }
-        }
-      } else if (orderType === 'table') {
-        const rawWaTableNumber = configObj.whatsappTableNumber || '';
-        const cleanRestaurantNumber = rawWaTableNumber.replace(/\D/g, '');
-        targetWaNumber = cleanRestaurantNumber;
-
-        let finalWaiterId = selectedWaiterId;
-        if (!finalWaiterId && tableNumber) {
-          const matchedTable = tables.find(t => t.number?.toString().trim() === tableNumber.toString().trim());
-          if (matchedTable) {
-            finalWaiterId = matchedTable.assignedWaiterId;
-          }
-        }
-
-        if (configObj.enableWaiterWhatsAppRouting && finalWaiterId) {
-          const waiter = waiters.find(w => w.id === finalWaiterId || w.authUid === finalWaiterId);
-          if (waiter) {
-            const waiterPhone = (waiter.phone || '').replace(/\D/g, '');
-            const isCheckedIn = waiter.isCheckedIn === true || waiter.excludeFromAttendance === true;
-            if (waiterPhone && isCheckedIn) {
-              targetWaNumber = waiterPhone;
-              assignedWaiterName = waiter.name;
-            }
-          }
-        }
-
-        if (!targetWaNumber) {
-          Alert.alert('WhatsApp no configurado', 'Este establecimiento no ha configurado su número de WhatsApp para pedidos en mesa.');
-          return;
-        }
-      } else if (orderType === 'delivery') {
-        if (!customerName.trim() || !customerAddress.trim() || !customerPhone.trim()) {
-          Alert.alert('Datos faltantes', 'Por favor completa los datos del cliente (Nombre, Dirección y Teléfono).');
-          return;
-        }
-
-        const rawWaNumber = configObj.whatsappNumber || '';
-        const cleanRestaurantNumber = rawWaNumber.replace(/\D/g, '');
-        targetWaNumber = cleanRestaurantNumber;
-
-        if (!targetWaNumber) {
-          Alert.alert('WhatsApp no configurado', 'Este establecimiento no ha configurado su número de WhatsApp para domicilios.');
-          return;
-        }
-      } else {
-        Alert.alert('Acción no permitida', 'El plan actual solo permite pedidos a la mesa o a domicilio vía WhatsApp.');
-        return;
-      }
-
-      if (!targetWaNumber) {
-        Alert.alert('Número de WhatsApp no válido', 'Por favor verifica la configuración del número de WhatsApp.');
-        return;
-      }
-
-      setSubmitting(true);
-      try {
-        let itemsText = '';
-        cart.forEach(item => {
-          itemsText += `• ${item.quantity}x ${item.name} - $${(item.price * item.quantity).toLocaleString()}\n`;
-        });
-
-        const formattedTotal = cartTotal.toLocaleString();
-        const waiterTag = assignedWaiterName ? `\n*Mesero:* ${assignedWaiterName}` : '';
-
-        let msg = '';
-        if (orderType === 'table') {
-          msg = `*PEDIDO DESDE LA MESA* 🪑\n` +
-                `----------------------------------\n` +
-                `*Mesa:* ${tableNumber}${waiterTag}\n` +
-                `*Cliente:* ${customerName.trim() || 'Cliente'}\n` +
-                `----------------------------------\n` +
-                `*Productos:*\n${itemsText}` +
-                `----------------------------------\n` +
-                `*TOTAL:* $${formattedTotal}\n`;
-        } else {
-          msg = `*NUEVO PEDIDO A DOMICILIO* 🛵\n` +
-                `----------------------------------\n` +
-                `*Cliente:* ${customerName.trim()}\n` +
-                `*Teléfono:* ${customerPhone.trim()}\n` +
-                `*Dirección:* ${customerAddress.trim()}\n` +
-                `----------------------------------\n` +
-                `*Productos:*\n${itemsText}` +
-                `----------------------------------\n` +
-                `*Subtotal:* $${formattedTotal}\n` +
-                `*TOTAL:* $${formattedTotal}\n`;
-        }
-
-        // Copiar pedido al portapapeles en caso de falla de red/conexión de WhatsApp
-        try {
-          await Clipboard.setStringAsync(msg);
-        } catch (clipErr) {
-          console.warn("No se pudo copiar al portapapeles:", clipErr);
-        }
-
-        const whatsappUrl = `https://wa.me/${targetWaNumber}?text=${encodeURIComponent(msg)}`;
-        await Linking.openURL(whatsappUrl);
-
-        Alert.alert(
-          'Pedido Copiado y Enviado',
-          'El texto del pedido ha sido copiado al portapapeles y se abrirá WhatsApp. Si tienes problemas de conexión, puedes pegarlo directamente en el chat.',
-          [{ text: 'Aceptar', onPress: () => {
-            clearCart();
-            setCheckoutVisible(false);
-            setCustomerName('');
-            setCustomerPhone('');
-            setCustomerAddress('');
-            setTableNumber('');
-            setWaiterPin('');
-            setSelectedWaiterId('');
-          }}]
-        );
-      } catch (err) {
-        console.error("Error en handleWhatsAppMobileOrder:", err);
-        Alert.alert('Error', 'Hubo un error al redirigir a WhatsApp. Intenta de nuevo.');
-      } finally {
-        setSubmitting(false);
-      }
-      return;
-    }
-
-    // Mixed Payments validation
-    if (orderAction === 'facturar' && paymentMethod === 'mixed') {
-      const mixedTotal = mixedPayments.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
-      if (Math.abs(mixedTotal - finalTotal) > 1) {
-        Alert.alert('Monto Incorrecto', 'La suma de los pagos mixtos debe coincidir exactamente con el total a pagar.');
-        return;
-      }
-    }
-
-    // Waiter Authentication check
-    let verifiedWaiter = null;
-    if (planLevel >= 2 && waiters && waiters.length > 0) {
-      if (!selectedWaiterId) {
-        Alert.alert('Mesero requerido', 'Por favor selecciona un mesero.');
-        return;
-      }
-      if (!waiterPin) {
-        Alert.alert('PIN requerido', 'Ingresa el PIN de seguridad del mesero.');
-        return;
-      }
-
-      // Verify PIN offline-resiliently against local waiters array
-      const waiter = waiters.find(w => w.id === selectedWaiterId);
-      if (waiter) {
-        if (waiter.pin !== waiterPin) {
-          Alert.alert('PIN Incorrecto', 'El PIN de seguridad del mesero no es válido.');
-          return;
-        }
-        verifiedWaiter = { id: waiter.id, name: waiter.name, role: waiter.role };
-      } else {
-        Alert.alert('Error', 'El mesero seleccionado no existe.');
-        return;
-      }
-    }
-
-    const waiterName = verifiedWaiter ? verifiedWaiter.name : (profile.name || 'Cajero Móvil');
-    const waiterId = verifiedWaiter ? verifiedWaiter.id : (profile.waiterId || 'pos-mobile');
-
-    // Enforce exclusive table assignment
-    if (orderType === 'table' && tableNumber.trim()) {
-      const targetTable = tables.find(t => t.number?.toString() === tableNumber.trim());
-      if (targetTable && targetTable.assignedWaiterId) {
-        const currentRole = verifiedWaiter ? verifiedWaiter.role : profile.role;
-        const isBypass = currentRole === 'owner' || currentRole === 'admin' || currentRole === 'dueño';
-        if (!isBypass && waiterId !== targetTable.assignedWaiterId) {
-          Alert.alert(
-            'Mesa Asignada',
-            `Esta mesa está asignada en exclusiva a ${targetTable.assignedWaiterName || 'otro mesero'}.`
-          );
-          return;
-        }
-      }
     }
 
     setSubmitting(true);
@@ -468,7 +199,7 @@ export default function CajaScreen({
     try {
       // 1. Resolve/register loyalty customer if active
       let finalLoyaltyCustomer = loyaltyCustomer;
-      if (orderAction === 'facturar' && loyaltyConfig?.enabled && loyaltyCustomerId.trim()) {
+      if (loyaltyConfig?.enabled && loyaltyCustomerId.trim()) {
         if (isNewLoyaltyCustomer) {
           if (!loyaltyCustomerName.trim()) {
             Alert.alert('Falta Nombre', 'El nombre del cliente para el programa de lealtad es obligatorio.');
@@ -484,23 +215,20 @@ export default function CajaScreen({
       }
 
       // 2. Perform points redemption if active
-      if (orderAction === 'facturar' && loyaltyConfig?.enabled && finalLoyaltyCustomer && loyaltyPointsToRedeem > 0) {
+      if (loyaltyConfig?.enabled && finalLoyaltyCustomer && loyaltyPointsToRedeem > 0) {
         try {
-          await redeemPointsMobile(restaurantId, finalLoyaltyCustomer.id, loyaltyPointsToRedeem, waiterName);
+          await redeemPointsMobile(restaurantId, finalLoyaltyCustomer.id, loyaltyPointsToRedeem, profile?.name || 'Vendedor');
         } catch (e) {
           console.warn('[CajaScreen] Points redemption error:', e.message);
         }
       }
 
       // 3. Assemble order payload
-      const isBilling = orderAction === 'facturar';
       const orderData = {
         branchId: selectedBranch.id,
         branchName: selectedBranch.name,
         orderType,
-        tableNumber: orderType === 'table' ? tableNumber.trim() : 
-                     orderType === 'delivery' ? 'Domicilio' : 
-                     orderType === 'bar' ? 'Barra' : 'Caja Fast',
+        tableNumber: orderType === 'delivery' ? 'Domicilio' : 'Caja Fast',
         customerName: customerName.trim() || 'Cliente POS',
         customerPhone: customerPhone.trim() || null,
         customerAddress: orderType === 'delivery' ? customerAddress.trim() : null,
@@ -512,31 +240,30 @@ export default function CajaScreen({
           categoryId: item.categoryId || ''
         })),
         subtotal: cartTotal,
-        tip: isBilling ? (Number(tip) || 0) : 0,
-        discount: isBilling ? ((Number(discount) || 0) + pointsDiscountValue) : 0,
-        total: isBilling ? finalTotal : cartTotal,
-        waiterId,
-        waiterName,
+        tip: Number(tip) || 0,
+        discount: (Number(discount) || 0) + pointsDiscountValue,
+        total: finalTotal,
+        waiterId: profile?.uid || 'pos-mobile',
+        waiterName: profile?.name || 'Vendedor',
         source: 'pos-mobile',
         origin: 'pos-mobile',
         shiftId: activeShift?.id || 'always_open',
 
         // Billing meta
-        isBilled: isBilling,
-        isCollected: isBilling,
-        billedAt: isBilling ? new Date().toISOString() : null,
-        billedByWaiterId: isBilling ? waiterId : null,
-        billedByWaiterName: isBilling ? waiterName : null,
-        billedById: isBilling ? waiterId : null,
-        billedByName: isBilling ? waiterName : null,
-        paymentMethod: isBilling ? paymentMethod : null,
-        mixedPayments: isBilling && paymentMethod === 'mixed' ? mixedPayments.filter(m => Number(m.amount) > 0) : null,
-        loyaltyPointsRedeemed: isBilling ? loyaltyPointsToRedeem : 0,
-        customerId: isBilling && finalLoyaltyCustomer ? finalLoyaltyCustomer.id : null,
-        loyaltyEarned: isBilling && finalLoyaltyCustomer ? true : false,
+        isBilled: true,
+        isCollected: true,
+        billedAt: new Date().toISOString(),
+        billedByWaiterId: profile?.uid || 'pos-mobile',
+        billedByWaiterName: profile?.name || 'Vendedor',
+        billedById: profile?.uid || 'pos-mobile',
+        billedByName: profile?.name || 'Vendedor',
+        paymentMethod,
+        loyaltyPointsRedeemed: loyaltyPointsToRedeem,
+        customerId: finalLoyaltyCustomer ? finalLoyaltyCustomer.id : null,
+        loyaltyEarned: finalLoyaltyCustomer ? true : false,
         cashRegister: Number(checkoutRegisterIndex || 1),
 
-        status: orderType === 'fast' ? 'completed' : 'pending'
+        status: orderType === 'fast' ? 'completed' : 'pending' // fast goes direct to completed/history, delivery starts in pending
       };
 
       // 4. Save to firestore (offline-cache compliant)
@@ -551,8 +278,8 @@ export default function CajaScreen({
         }
       }
 
-      // 5. Perform loyalty point earning
-      if (isBilling && finalLoyaltyCustomer) {
+      // 6. Perform loyalty point earning
+      if (finalLoyaltyCustomer) {
         let pointsEarned = 0;
         if (loyaltyConfig.rateType === 'spend') {
           pointsEarned = Math.floor(finalTotal / (loyaltyConfig.amountPerPoint || 1000));
@@ -563,32 +290,26 @@ export default function CajaScreen({
           }
         }
         if (pointsEarned > 0) {
-          await earnPointsMobile(restaurantId, finalLoyaltyCustomer.id, pointsEarned, createdOrder.id, waiterName);
+          await earnPointsMobile(restaurantId, finalLoyaltyCustomer.id, pointsEarned, createdOrder.id, profile?.name || 'Vendedor');
           Alert.alert('Puntos Acumulados', `⭐ El cliente acumuló +${pointsEarned} puntos correctamente.`);
         }
       }
 
       Alert.alert(
-        isBilling ? 'Pedido Facturado' : 'Pedido Enviado',
-        'La transacción ha sido guardada correctamente.',
+        'Venta Exitosa',
+        'La transacción ha sido guardada y facturada correctamente.',
         [{ text: 'Aceptar', onPress: () => {
           clearCart();
           setCheckoutVisible(false);
           setCustomerName('');
           setCustomerPhone('');
           setCustomerAddress('');
-          setTableNumber('');
           setTip('');
           setDiscount('');
-          setWaiterPin('');
           setLoyaltyCustomerId('');
           setLoyaltyCustomer(null);
           setLoyaltyPointsToRedeem(0);
           setIsNewLoyaltyCustomer(false);
-          setMixedPayments([
-            { methodId: 'efectivo', amount: '' },
-            { methodId: 'tarjeta', amount: '' }
-          ]);
         }}]
       );
     } catch (err) {
@@ -606,33 +327,27 @@ export default function CajaScreen({
 
     return (
       <TouchableOpacity
-        style={[styles.productCard, qty > 0 && styles.productCardActive]}
+        style={[styles.productCard, qty > 0 && { borderColor: t.primary, borderWidth: 1.5 }, { backgroundColor: t.card, shadowColor: t.shadow }]}
         onPress={() => addToCart(item)}
       >
-        {/* Product image (shown when available) */}
-        {imageUrl ? (
-          <Image
-            source={{ uri: imageUrl }}
-            style={styles.productImage}
-            resizeMode="cover"
-          />
-        ) : null}
-
+        {imageUrl && (
+          <Image source={{ uri: imageUrl }} style={styles.productImage} resizeMode="cover" />
+        )}
         <View style={styles.productInfo}>
-          <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
-          {item.description ? (
-            <Text style={styles.productDesc} numberOfLines={1}>{item.description}</Text>
-          ) : null}
-          <Text style={styles.productPrice}>${item.price?.toLocaleString() || '0'}</Text>
+          <Text style={[styles.productName, { color: t.text }]} numberOfLines={2}>{item.name}</Text>
+          {!!item.description && (
+            <Text style={[styles.productDesc, { color: t.sub }]} numberOfLines={1}>{item.description}</Text>
+          )}
+          <Text style={[styles.productPrice, { color: t.primary }]}>${item.price?.toLocaleString() || '0'}</Text>
         </View>
 
         {qty > 0 ? (
-          <View style={styles.qtyBadge}>
-            <Text style={styles.qtyBadgeText}>{qty}</Text>
+          <View style={[styles.qtyBadge, { backgroundColor: t.primary }]}>
+            <Text style={[styles.qtyBadgeText, { color: t.primaryText }]}>{qty}</Text>
           </View>
         ) : (
-          <View style={styles.plusIcon}>
-            <Plus size={16} color="#9a828a" />
+          <View style={[styles.plusIcon, { borderColor: t.border }]}>
+            <Plus size={16} color={t.muted} />
           </View>
         )}
       </TouchableOpacity>
@@ -640,15 +355,15 @@ export default function CajaScreen({
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: t.bg }]}>
       {/* Search bar */}
-      <View style={styles.headerControls}>
-        <View style={styles.searchContainer}>
-          <Search size={18} color="#9a828a" style={styles.searchIcon} />
+      <View style={[styles.headerControls, { borderBottomColor: t.border }]}>
+        <View style={[styles.searchContainer, { backgroundColor: t.card, borderColor: t.border }]}>
+          <Search size={18} color={t.muted} style={styles.searchIcon} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: t.text }]}
             placeholder="Buscar productos..."
-            placeholderTextColor="#6d535e"
+            placeholderTextColor={t.muted}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
@@ -656,21 +371,21 @@ export default function CajaScreen({
       </View>
 
       {/* Category List */}
-      <View style={styles.categoryScrollContainer}>
+      <View style={[styles.categoryScrollContainer, { borderBottomColor: t.border }]}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryScroll}>
           <TouchableOpacity 
-            style={[styles.categoryBtn, selectedCategory === 'ALL' && styles.categoryBtnActive]}
+            style={[styles.categoryBtn, selectedCategory === 'ALL' ? { backgroundColor: t.primary } : { backgroundColor: t.card, borderColor: t.border }]}
             onPress={() => setSelectedCategory('ALL')}
           >
-            <Text style={[styles.categoryBtnText, selectedCategory === 'ALL' && styles.categoryBtnTextActive]}>Todos</Text>
+            <Text style={[styles.categoryBtnText, { color: selectedCategory === 'ALL' ? t.primaryText : t.text }]}>Todos</Text>
           </TouchableOpacity>
           {categories.map(cat => (
             <TouchableOpacity 
               key={cat.id}
-              style={[styles.categoryBtn, selectedCategory === cat.id && styles.categoryBtnActive]}
+              style={[styles.categoryBtn, selectedCategory === cat.id ? { backgroundColor: t.primary } : { backgroundColor: t.card, borderColor: t.border }]}
               onPress={() => setSelectedCategory(cat.id)}
             >
-              <Text style={[styles.categoryBtnText, selectedCategory === cat.id && styles.categoryBtnTextActive]}>{cat.name}</Text>
+              <Text style={[styles.categoryBtnText, { color: selectedCategory === cat.id ? t.primaryText : t.text }]}>{cat.name}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -686,35 +401,32 @@ export default function CajaScreen({
         contentContainerStyle={styles.listContainer}
         ListEmptyComponent={
           <View style={styles.centerContainer}>
-            <Text style={styles.emptyText}>No se encontraron productos.</Text>
+            <Text style={[styles.emptyText, { color: t.sub }]}>No se encontraron productos.</Text>
           </View>
         }
       />
 
       {/* Floating Cart Footer */}
-      {cart.length > 0 ? (
-        <View style={styles.floatingCart}>
+      {cart.length > 0 && (
+        <View style={[styles.floatingCart, { backgroundColor: t.card, borderTopColor: t.border, shadowColor: t.shadow }]}>
           <View style={styles.cartHeaderInfo}>
-            <ShoppingCart size={20} color="#fceef2" />
-            <Text style={styles.cartItemsCount}>{cart.length} {cart.length === 1 ? 'item' : 'items'}</Text>
-            <Text style={styles.cartTotalText}>Total: ${cartTotal.toLocaleString()}</Text>
+            <ShoppingCart size={20} color={t.primary} />
+            <Text style={[styles.cartItemsCount, { color: t.text }]}>{cart.length} {cart.length === 1 ? 'item' : 'items'}</Text>
+            <Text style={[styles.cartTotalText, { color: t.primary }]}>Total: ${cartTotal.toLocaleString()}</Text>
           </View>
           
           <View style={styles.cartActions}>
-            <TouchableOpacity style={styles.clearCartBtn} onPress={clearCart}>
-              <Trash2 size={20} color="#fca5a5" />
+            <TouchableOpacity style={[styles.clearCartBtn, { borderColor: t.border }]} onPress={clearCart}>
+              <Trash2 size={20} color={t.offline} />
             </TouchableOpacity>
             
-            <TouchableOpacity 
-              style={styles.checkoutBtn}
-              onPress={() => setCheckoutVisible(true)}
-            >
-              <Text style={styles.checkoutBtnText}>Continuar</Text>
-              <Check size={18} color="#fceef2" style={styles.checkoutIcon} />
+            <TouchableOpacity style={[styles.checkoutBtn, { backgroundColor: t.primary }]} onPress={() => setCheckoutVisible(true)}>
+              <Text style={[styles.checkoutBtnText, { color: t.primaryText }]}>Facturar</Text>
+              <Check size={18} color={t.primaryText} style={styles.checkoutIcon} />
             </TouchableOpacity>
           </View>
         </View>
-      ) : null}
+      )}
 
       {/* Complete POS Checkout Modal */}
       <Modal
@@ -723,1243 +435,268 @@ export default function CajaScreen({
         visible={checkoutVisible}
         onRequestClose={() => setCheckoutVisible(false)}
       >
-        <SafeAreaView style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+        <SafeAreaView style={[styles.modalOverlay, { backgroundColor: '#000000aa' }]}>
+          <View style={[styles.modalContent, { backgroundColor: t.bg }]}>
             {/* Modal Header */}
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>POS Caja Registradora</Text>
+            <View style={[styles.modalHeader, { backgroundColor: t.card, borderBottomColor: t.border }]}>
+              <Text style={[styles.modalTitle, { color: t.text }]}>Registrar Venta</Text>
               <TouchableOpacity onPress={() => setCheckoutVisible(false)} style={styles.closeBtn}>
-                <X size={24} color="#fceef2" />
+                <X size={24} color={t.text} />
               </TouchableOpacity>
             </View>
 
             {/* Modal Body */}
             <ScrollView style={styles.modalBody} keyboardShouldPersistTaps="handled">
               
-              {/* Action Toggle (Solo Comandar vs Cobrar y Facturar) */}
-              {planLevel > 0 && (
-                <>
-                  <Text style={styles.sectionLabel}>Acción de Caja</Text>
-                  <View style={styles.toggleRow}>
-                    <TouchableOpacity 
-                      style={[styles.toggleBtn, orderAction === 'comandar' && styles.toggleBtnActive]} 
-                      onPress={() => setOrderAction('comandar')}
-                    >
-                      <Text style={[styles.toggleBtnText, orderAction === 'comandar' && styles.toggleBtnTextActive]}>Solo Comandar (Cocina)</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity 
-                      style={[styles.toggleBtn, orderAction === 'facturar' && styles.toggleBtnActive]} 
-                      onPress={() => setOrderAction('facturar')}
-                    >
-                      <Text style={[styles.toggleBtnText, orderAction === 'facturar' && styles.toggleBtnTextActive]}>Cobrar y Facturar</Text>
-                    </TouchableOpacity>
-                  </View>
-                </>
-              )}
+              {/* Type of Delivery */}
+              <Text style={[styles.sectionLabel, { color: t.sub }]}>Tipo de Pedido</Text>
+              <View style={styles.toggleRow}>
+                <TouchableOpacity 
+                  style={[styles.toggleBtn, { backgroundColor: t.card, borderColor: t.border }, orderType === 'fast' && { backgroundColor: t.primary, borderColor: t.primary }]} 
+                  onPress={() => setOrderType('fast')}
+                >
+                  <Text style={[styles.toggleBtnText, { color: orderType === 'fast' ? t.primaryText : t.text }]}>Caja (Entrega Inmediata)</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.toggleBtn, { backgroundColor: t.card, borderColor: t.border }, orderType === 'delivery' && { backgroundColor: t.primary, borderColor: t.primary }]} 
+                  onPress={() => setOrderType('delivery')}
+                >
+                  <Text style={[styles.toggleBtnText, { color: orderType === 'delivery' ? t.primaryText : t.text }]}>Logística (Domicilio / Envío)</Text>
+                </TouchableOpacity>
+              </View>
 
-              {/* Order Type */}
-              <Text style={styles.sectionLabel}>Tipo de Servicio</Text>
-               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.serviceTypesScroll}>
-                {(() => {
-                  const isTableEnabled = (planLevel > 0 && configObj.enableTableService !== false) || configObj.enableWhatsAppTableOrders === true;
-                  const isTableLocked = (planLevel > 0 && configObj.enableTableService !== false) && planLevel < 2 && !configObj.enableWhatsAppTableOrders;
-                  const isBarEnabled = planLevel > 0 && configObj.enableBarService !== false;
-                  const isDeliveryEnabled = (planLevel > 0 && configObj.enableWhatsAppOrders !== false) || configObj.enableWhatsAppDirectDelivery === true;
-                  const isFastEnabled = planLevel > 0 && configObj.enableFastService !== false;
-
-                  const availableTypes = [];
-                  if (isTableEnabled) availableTypes.push('table');
-                  if (isBarEnabled) availableTypes.push('bar');
-                  if (isDeliveryEnabled) availableTypes.push('delivery');
-                  if (isFastEnabled) availableTypes.push('fast');
-
-                  return availableTypes.map(type => {
-                    const isLocked = type === 'table' && isTableLocked;
-                    return (
-                      <TouchableOpacity
-                        key={type}
-                        style={[
-                          styles.typeBadge, 
-                          orderType === type && styles.typeBadgeActive,
-                          isLocked && { opacity: 0.6 }
-                        ]}
-                        onPress={() => {
-                          if (isLocked) {
-                            Alert.alert('Servicio a Mesa Bloqueado', 'El servicio a mesas requiere el Plan Carta y Mesa. Actualiza tu suscripción en el panel web para desbloquearlo.');
-                            return;
-                          }
-                          setOrderType(type);
-                        }}
-                      >
-                        <Text style={[styles.typeBadgeText, orderType === type && styles.typeBadgeTextActive]}>
-                          {type === 'table' ? (isLocked ? '🔒 Mesa' : '🪑 Mesa') : 
-                           type === 'bar' ? '🍺 Barra' : 
-                           type === 'delivery' ? '🏠 Domicilio' : '⚡ Rápido'}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  });
-                })()}
-              </ScrollView>
-
-              {/* Conditional Inputs based on Service Type */}
-              {orderType === 'table' && (
-                <View style={styles.modalInputContainer}>
-                  <TextInput
-                    style={styles.modalInput}
-                    placeholder="Número de Mesa (Ej: 5)"
-                    placeholderTextColor="#6d535e"
-                    keyboardType="numeric"
-                    value={tableNumber}
-                    onChangeText={setTableNumber}
-                  />
-                </View>
-              )}
-
-              {(orderType === 'bar' || orderType === 'delivery') && (
-                <View style={styles.modalInputContainer}>
-                  <TextInput
-                    style={styles.modalInput}
-                    placeholder="Nombre del Cliente"
-                    placeholderTextColor="#6d535e"
-                    value={customerName}
-                    onChangeText={setCustomerName}
-                  />
-                </View>
-              )}
-
-              {orderType === 'delivery' && (
-                <>
-                  <View style={styles.modalInputContainer}>
-                    <MapPin size={16} color="#9a828a" style={{ marginRight: 8 }} />
+              {/* Customer Info */}
+              <Text style={[styles.sectionLabel, { color: t.sub }]}>Datos de la Venta</Text>
+              <View style={[styles.inputsContainer, { backgroundColor: t.card, borderColor: t.border }]}>
+                <TextInput
+                  style={[styles.inputField, { backgroundColor: t.inputBg, color: t.text, borderColor: t.border }]}
+                  placeholder="Nombre del Cliente"
+                  placeholderTextColor={t.muted}
+                  value={customerName}
+                  onChangeText={setCustomerName}
+                />
+                
+                {orderType === 'delivery' && (
+                  <>
                     <TextInput
-                      style={[styles.modalInput, { flex: 1 }]}
-                      placeholder="Dirección de Entrega"
-                      placeholderTextColor="#6d535e"
-                      value={customerAddress}
-                      onChangeText={setCustomerAddress}
-                    />
-                  </View>
-                  <View style={styles.modalInputContainer}>
-                    <Phone size={16} color="#9a828a" style={{ marginRight: 8 }} />
-                    <TextInput
-                      style={[styles.modalInput, { flex: 1 }]}
-                      placeholder="Teléfono del Cliente"
-                      placeholderTextColor="#6d535e"
+                      style={[styles.inputField, { backgroundColor: t.inputBg, color: t.text, borderColor: t.border }]}
+                      placeholder="Teléfono Celular"
+                      placeholderTextColor={t.muted}
                       keyboardType="phone-pad"
                       value={customerPhone}
                       onChangeText={setCustomerPhone}
                     />
-                  </View>
-                </>
-              )}
+                    <TextInput
+                      style={[styles.inputField, { backgroundColor: t.inputBg, color: t.text, borderColor: t.border }]}
+                      placeholder="Dirección de Envío"
+                      placeholderTextColor={t.muted}
+                      value={customerAddress}
+                      onChangeText={setCustomerAddress}
+                    />
+                  </>
+                )}
+              </View>
 
-              {/* Cash Register count > 1 */}
-              {selectedBranch?.cashRegistersCount > 1 && orderAction === 'facturar' && (
-                <View style={{ marginBottom: 12 }}>
-                  <Text style={styles.sectionLabel}>Caja de Facturación</Text>
-                  <View style={styles.toggleRow}>
-                    {Array.from({ length: selectedBranch.cashRegistersCount }, (_, i) => (
-                      <TouchableOpacity
-                        key={i + 1}
-                        style={[styles.smallToggleBtn, checkoutRegisterIndex === i + 1 && styles.toggleBtnActive]}
-                        onPress={() => setCheckoutRegisterIndex(i + 1)}
-                      >
-                        <Text style={[styles.toggleBtnText, checkoutRegisterIndex === i + 1 && styles.toggleBtnTextActive]}>
-                          Caja {i + 1}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-              )}
+              {/* Payment Method */}
+              <Text style={[styles.sectionLabel, { color: t.sub }]}>Método de Pago</Text>
+              <View style={styles.toggleRow}>
+                {['efectivo', 'tarjeta', 'transferencia'].map(m => (
+                  <TouchableOpacity
+                    key={m}
+                    style={[styles.toggleBtn, { backgroundColor: t.card, borderColor: t.border }, paymentMethod === m && { backgroundColor: t.primary, borderColor: t.primary }]}
+                    onPress={() => setPaymentMethod(m)}
+                  >
+                    <Text style={[styles.toggleBtnText, { color: paymentMethod === m ? t.primaryText : t.text }]}>
+                      {m === 'efectivo' ? '💵 Efectivo' : m === 'tarjeta' ? '💳 Tarjeta' : '📲 Transf.'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
 
-              {/* Billing Details (Tip, Discount, Payment Method) */}
-              {!useWhatsAppFlow && planLevel > 0 && orderAction === 'facturar' && (
+              {/* Loyalty Config Section */}
+              {loyaltyConfig?.enabled && (
                 <>
-                  <Text style={styles.sectionLabel}>Propina y Descuentos</Text>
-                  <View style={styles.billingAdjustmentRow}>
-                    <View style={{ flex: 1, marginRight: 8 }}>
-                      <Text style={styles.inputSubLabel}>Propina ($)</Text>
-                      <View style={styles.adjustedInputContainer}>
-                        <TextInput
-                          style={styles.adjustedInput}
-                          placeholder="0"
-                          placeholderTextColor="#6d535e"
-                          keyboardType="numeric"
-                          value={tip}
-                          onChangeText={setTip}
-                        />
-                        {configObj.suggestedTipPercentage > 0 && (
-                          <TouchableOpacity
-                            style={styles.suggestedTipBtn}
-                            onPress={() => {
-                              const calculated = Math.round(cartTotal * (configObj.suggestedTipPercentage / 100));
-                              setTip(String(calculated));
-                            }}
-                          >
-                            <Text style={styles.suggestedTipBtnText}>{configObj.suggestedTipPercentage}%</Text>
-                          </TouchableOpacity>
-                        )}
-                      </View>
-                    </View>
-
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.inputSubLabel}>Descuento ($)</Text>
-                      <View style={styles.adjustedInputContainer}>
-                        <TextInput
-                          style={styles.adjustedInput}
-                          placeholder="0"
-                          placeholderTextColor="#6d535e"
-                          keyboardType="numeric"
-                          value={discount}
-                          onChangeText={setDiscount}
-                        />
-                      </View>
-                    </View>
-                  </View>
-
-                  {/* Payment Method */}
-                  <Text style={styles.sectionLabel}>Método de Pago</Text>
-                  <View style={styles.paymentMethodsGrid}>
-                    {[
-                      { id: 'efectivo', label: '💵 Efectivo' },
-                      { id: 'tarjeta', label: '💳 Tarjeta' },
-                      { id: 'transferencia', label: '📲 Transf.' },
-                      { id: 'mixed', label: '🔀 Mixto' }
-                    ].map(method => (
-                      <TouchableOpacity
-                        key={method.id}
-                        style={[styles.paymentBtn, paymentMethod === method.id && styles.paymentBtnActive]}
-                        onPress={() => setPaymentMethod(method.id)}
-                      >
-                        <Text style={[styles.paymentBtnText, paymentMethod === method.id && styles.paymentBtnTextActive]}>
-                          {method.label}
-                        </Text>
+                  <Text style={[styles.sectionLabel, { color: t.sub }]}>Programa de Lealtad (Puntos)</Text>
+                  <View style={[styles.inputsContainer, { backgroundColor: t.card, borderColor: t.border }]}>
+                    <View style={styles.loyaltySearchRow}>
+                      <TextInput
+                        style={[styles.inputField, { flex: 1, marginBottom: 0, backgroundColor: t.inputBg, color: t.text, borderColor: t.border }]}
+                        placeholder="Identificación / Cédula Cliente"
+                        placeholderTextColor={t.muted}
+                        value={loyaltyCustomerId}
+                        onChangeText={setLoyaltyCustomerId}
+                      />
+                      <TouchableOpacity style={[styles.loyaltySearchBtn, { backgroundColor: t.primary }]} onPress={handleSearchLoyaltyCustomer} disabled={isSearchingLoyalty}>
+                        {isSearchingLoyalty ? <ActivityIndicator size="small" color={t.primaryText} /> : <Text style={{ color: t.primaryText, fontWeight: '700' }}>Buscar</Text>}
                       </TouchableOpacity>
-                    ))}
-                  </View>
-
-                  {/* Mixed Payments Container */}
-                  {paymentMethod === 'mixed' && (
-                    <View style={styles.mixedPaymentsBox}>
-                      <Text style={styles.mixedPaymentsTitle}>Detalle de Pago Mixto:</Text>
-                      {mixedPayments.map((mp, index) => (
-                        <View key={index} style={styles.mixedPaymentRow}>
-                          <View style={styles.mixedSelectWrapper}>
-                            <Text style={styles.mixedPaymentLabel}>
-                              {mp.methodId === 'efectivo' ? 'Efectivo' : 
-                               mp.methodId === 'tarjeta' ? 'Tarjeta' : 'Transferencia'}
-                            </Text>
-                          </View>
-                          <TextInput
-                            style={styles.mixedAmountInput}
-                            placeholder="$ Monto"
-                            placeholderTextColor="#6d535e"
-                            keyboardType="numeric"
-                            value={mp.amount}
-                            onChangeText={(val) => {
-                              const newMp = [...mixedPayments];
-                              newMp[index].amount = val;
-                              setMixedPayments(newMp);
-                            }}
-                          />
-                          {mixedPayments.length > 2 && (
-                            <TouchableOpacity
-                              style={styles.removeMixedBtn}
-                              onPress={() => {
-                                setMixedPayments(mixedPayments.filter((_, idx) => idx !== index));
-                              }}
-                            >
-                              <Trash2 size={16} color="#ef4444" />
-                            </TouchableOpacity>
-                          )}
-                        </View>
-                      ))}
-
-                      <View style={styles.mixedFooterRow}>
-                        <TouchableOpacity
-                          style={styles.addMethodBtn}
-                          onPress={() => {
-                            const available = ['efectivo', 'tarjeta', 'transferencia'];
-                            const nextMethod = available.find(m => !mixedPayments.some(mp => mp.methodId === m)) || 'transferencia';
-                            setMixedPayments([...mixedPayments, { methodId: nextMethod, amount: '' }]);
-                          }}
-                        >
-                          <Text style={styles.addMethodBtnText}>+ Agregar método</Text>
-                        </TouchableOpacity>
-
-                        <Text style={styles.remainingAmountText}>
-                          Restante: ${Math.max(0, finalTotal - mixedPayments.reduce((acc, curr) => acc + Number(curr.amount || 0), 0)).toLocaleString()}
-                        </Text>
-                      </View>
                     </View>
-                  )}
 
-                  {/* Loyalty Panel */}
-                  {!useWhatsAppFlow && planLevel > 0 && loyaltyConfig?.enabled && (
-                    <View style={styles.loyaltyBox}>
-                      <View style={styles.loyaltyHeader}>
-                        <Award size={18} color="#f59e0b" />
-                        <Text style={styles.loyaltyTitle}>Club de Lealtad (Puntos)</Text>
+                    {loyaltyCustomer && (
+                      <View style={styles.loyaltyStatusBox}>
+                        <Award size={18} color={t.primary} />
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ color: t.text, fontWeight: 'bold' }}>{loyaltyCustomer.name}</Text>
+                          <Text style={{ color: t.sub, fontSize: 12 }}>Puntos Disponibles: {loyaltyCustomer.totalPoints || 0}</Text>
+                        </View>
                       </View>
+                    )}
 
-                      <View style={styles.loyaltySearchRow}>
+                    {isNewLoyaltyCustomer && (
+                      <View style={{ gap: 8, marginTop: 8 }}>
+                        <Text style={{ color: t.primary, fontWeight: '700', fontSize: 13 }}>Registrar nuevo cliente en Club:</Text>
                         <TextInput
-                          style={styles.loyaltyInput}
-                          placeholder="Cédula/Celular del cliente"
-                          placeholderTextColor="#6d535e"
-                          keyboardType="numeric"
-                          value={loyaltyCustomerId}
-                          onChangeText={(val) => {
-                            setLoyaltyCustomerId(val.replace(/[^a-zA-Z0-9]/g, ''));
-                            setLoyaltyCustomer(null);
-                            setIsNewLoyaltyCustomer(false);
-                          }}
+                          style={[styles.inputField, { backgroundColor: t.inputBg, color: t.text, borderColor: t.border }]}
+                          placeholder="Nombre Completo del Cliente"
+                          placeholderTextColor={t.muted}
+                          value={loyaltyCustomerName}
+                          onChangeText={setLoyaltyCustomerName}
                         />
-                        <TouchableOpacity style={styles.loyaltySearchBtn} onPress={handleSearchLoyaltyCustomer}>
-                          {isSearchingLoyalty ? (
-                            <ActivityIndicator size="small" color="#fff" />
-                          ) : (
-                            <Text style={styles.loyaltySearchBtnText}>Buscar</Text>
-                          )}
-                        </TouchableOpacity>
+                        <TextInput
+                          style={[styles.inputField, { backgroundColor: t.inputBg, color: t.text, borderColor: t.border }]}
+                          placeholder="Email (Opcional)"
+                          placeholderTextColor={t.muted}
+                          value={loyaltyCustomerEmail}
+                          onChangeText={setLoyaltyCustomerEmail}
+                        />
                       </View>
-
-                      {isNewLoyaltyCustomer && (
-                        <View style={styles.newLoyaltyContainer}>
-                          <Text style={styles.newLoyaltyTitle}>REGISTRAR NUEVO CLIENTE:</Text>
-                          <TextInput
-                            style={styles.newLoyaltyInput}
-                            placeholder="Nombre Completo"
-                            placeholderTextColor="#6d535e"
-                            value={loyaltyCustomerName}
-                            onChangeText={setLoyaltyCustomerName}
-                          />
-                          <View style={{ flexDirection: 'row', gap: 6, marginTop: 6 }}>
-                            <TextInput
-                              style={[styles.newLoyaltyInput, { flex: 1 }]}
-                              placeholder="Teléfono"
-                              placeholderTextColor="#6d535e"
-                              keyboardType="phone-pad"
-                              value={loyaltyCustomerPhone}
-                              onChangeText={setLoyaltyCustomerPhone}
-                            />
-                            <TextInput
-                              style={[styles.newLoyaltyInput, { flex: 1 }]}
-                              placeholder="Correo"
-                              placeholderTextColor="#6d535e"
-                              keyboardType="email-address"
-                              value={loyaltyCustomerEmail}
-                              onChangeText={setLoyaltyCustomerEmail}
-                            />
-                          </View>
-                        </View>
-                      )}
-
-                      {loyaltyCustomer && (
-                        <View style={styles.loyaltyCustomerCard}>
-                          <Text style={styles.loyaltyCustomerNameText}>
-                            👤 {loyaltyCustomer.name} · <Text style={{ color: '#f59e0b', fontWeight: 'bold' }}>⭐ {loyaltyCustomer.totalPoints || 0} pts</Text>
-                          </Text>
-                          {loyaltyCustomer.totalPoints > 0 && (
-                            <View style={styles.redeemRow}>
-                              <TextInput
-                                style={styles.redeemPointsInput}
-                                placeholder="Pts a Canjear"
-                                placeholderTextColor="#6d535e"
-                                keyboardType="numeric"
-                                value={loyaltyPointsToRedeem ? String(loyaltyPointsToRedeem) : ''}
-                                onChangeText={(val) => {
-                                  const num = Number(val);
-                                  if (num > (loyaltyCustomer.totalPoints || 0)) {
-                                    Alert.alert('Límite excedido', 'No se pueden canjear más puntos de los que el cliente posee.');
-                                    setLoyaltyPointsToRedeem(0);
-                                  } else {
-                                    setLoyaltyPointsToRedeem(num);
-                                  }
-                                }}
-                              />
-                              <Text style={styles.redeemValueText}>
-                                = -${(loyaltyPointsToRedeem * (loyaltyConfig.pointsValue || 50)).toLocaleString()} COP
-                              </Text>
-                            </View>
-                          )}
-                        </View>
-                      )}
-                    </View>
-                  )}
+                    )}
+                  </View>
                 </>
               )}
 
-              {/* Items Summary */}
-              <Text style={styles.sectionLabel}>Resumen de Comanda</Text>
-              <View style={styles.summaryBox}>
+              {/* Order Summary & Totals */}
+              <Text style={[styles.sectionLabel, { color: t.sub }]}>Resumen del Carrito</Text>
+              <View style={[styles.summaryBox, { backgroundColor: t.card, borderColor: t.border }]}>
                 {cart.map(item => (
                   <View key={item.id} style={styles.summaryItem}>
                     <View style={styles.summaryItemDetails}>
-                      <Text style={styles.summaryItemQty}>{item.quantity}x</Text>
-                      <Text style={styles.summaryItemName} numberOfLines={1}>{item.name}</Text>
+                      <Text style={[styles.summaryItemQty, { color: t.primary }]}>{item.quantity}x</Text>
+                      <Text style={[styles.summaryItemName, { color: t.text }]} numberOfLines={1}>{item.name}</Text>
                     </View>
                     <View style={styles.summaryItemPriceRow}>
-                      <TouchableOpacity style={styles.qtyControlBtn} onPress={() => updateQuantity(item.id, -1)}>
-                        <Minus size={14} color="#fceef2" />
+                      <TouchableOpacity style={[styles.qtyControlBtn, { backgroundColor: t.badge }]} onPress={() => updateQuantity(item.id, -1)}>
+                        <Minus size={12} color={t.text} />
                       </TouchableOpacity>
-                      <TouchableOpacity style={styles.qtyControlBtn} onPress={() => updateQuantity(item.id, 1)}>
-                        <Plus size={14} color="#fceef2" />
+                      <TouchableOpacity style={[styles.qtyControlBtn, { backgroundColor: t.badge }]} onPress={() => updateQuantity(item.id, 1)}>
+                        <Plus size={12} color={t.text} />
                       </TouchableOpacity>
-                      <Text style={styles.summaryItemSubtotal}>${((item.price || 0) * item.quantity).toLocaleString()}</Text>
+                      <Text style={[styles.summaryItemSubtotal, { color: t.text }]}>${(item.price * item.quantity).toLocaleString()}</Text>
                     </View>
                   </View>
                 ))}
-                
-                {/* Math breakdown */}
-                <View style={styles.breakdownBox}>
-                  <View style={styles.breakdownRow}>
-                    <Text style={styles.breakdownLabel}>Subtotal:</Text>
-                    <Text style={styles.breakdownValue}>${cartTotal.toLocaleString()}</Text>
-                  </View>
-                  {orderAction === 'facturar' && (Number(tip) > 0) && (
-                    <View style={styles.breakdownRow}>
-                      <Text style={[styles.breakdownLabel, { color: '#6366f1' }]}>(+) Propina:</Text>
-                      <Text style={[styles.breakdownValue, { color: '#6366f1' }]}>${Number(tip).toLocaleString()}</Text>
-                    </View>
-                  )}
-                  {orderAction === 'facturar' && (Number(discount) > 0) && (
-                    <View style={styles.breakdownRow}>
-                      <Text style={[styles.breakdownLabel, { color: '#ef4444' }]}>(−) Descuento:</Text>
-                      <Text style={[styles.breakdownValue, { color: '#ef4444' }]}>${Number(discount).toLocaleString()}</Text>
-                    </View>
-                  )}
-                  {orderAction === 'facturar' && (pointsDiscountValue > 0) && (
-                    <View style={styles.breakdownRow}>
-                      <Text style={[styles.breakdownLabel, { color: '#f59e0b' }]}>(−) Canje Puntos:</Text>
-                      <Text style={[styles.breakdownValue, { color: '#f59e0b' }]}>${pointsDiscountValue.toLocaleString()}</Text>
-                    </View>
-                  )}
-                </View>
 
-                <View style={styles.summaryTotalRow}>
-                  <Text style={styles.summaryTotalLabel}>Total a Pagar:</Text>
-                  <Text style={styles.summaryTotalVal}>
-                    ${(useWhatsAppFlow ? cartTotal : (orderAction === 'facturar' ? finalTotal : cartTotal)).toLocaleString()}
-                  </Text>
+                <View style={[styles.breakdownBox, { borderTopColor: t.border }]}>
+                  <View style={styles.breakdownRow}>
+                    <Text style={[styles.breakdownLabel, { color: t.sub }]}>Subtotal:</Text>
+                    <Text style={[styles.breakdownValue, { color: t.text }]}>${cartTotal.toLocaleString()}</Text>
+                  </View>
+                  <View style={styles.summaryTotalRow}>
+                    <Text style={[styles.summaryTotalLabel, { color: t.text }]}>Total a Pagar:</Text>
+                    <Text style={[styles.summaryTotalVal, { color: t.primary }]}>${finalTotal.toLocaleString()}</Text>
+                  </View>
                 </View>
               </View>
 
-              {/* Waiter Authorization PIN (Mandatory if waiters exist and plan allows it) */}
-              {!useWhatsAppFlow && planLevel >= 2 && waiters && waiters.length > 0 && (
-                <>
-                  <Text style={styles.sectionLabel}>Autorización de Turno</Text>
-                  <View style={styles.waitersContainer}>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                      {waiters.map(waiter => (
-                        <TouchableOpacity
-                          key={waiter.id}
-                          style={[styles.waiterBtn, selectedWaiterId === waiter.id && styles.waiterBtnActive]}
-                          onPress={() => setSelectedWaiterId(waiter.id)}
-                        >
-                          <User size={16} color={selectedWaiterId === waiter.id ? '#fceef2' : '#9a828a'} style={styles.waiterIcon} />
-                          <Text style={[styles.waiterBtnText, selectedWaiterId === waiter.id && styles.waiterBtnTextActive]}>
-                            {waiter.name}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </ScrollView>
-                  </View>
-
-                  <View style={styles.modalInputContainer}>
-                    <TextInput
-                      style={styles.modalInput}
-                      placeholder="PIN de Seguridad (4 - 6 dígitos)"
-                      placeholderTextColor="#6d535e"
-                      keyboardType="numeric"
-                      secureTextEntry
-                      maxLength={6}
-                      value={waiterPin}
-                      onChangeText={setWaiterPin}
-                    />
-                  </View>
-                </>
-              )}
-
-              {/* Waiter selector (no PIN) for Traditional Plan (level 0) or WhatsApp flow */}
-              {(planLevel === 0 || useWhatsAppFlow) && waiters && waiters.length > 0 && (
-                <>
-                  <Text style={styles.sectionLabel}>Mesero (Opcional)</Text>
-                  <View style={styles.waitersContainer}>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                      {waiters.map(waiter => (
-                        <TouchableOpacity
-                          key={waiter.id}
-                          style={[styles.waiterBtn, selectedWaiterId === waiter.id && styles.waiterBtnActive]}
-                          onPress={() => setSelectedWaiterId(waiter.id === selectedWaiterId ? '' : waiter.id)}
-                        >
-                          <User size={16} color={selectedWaiterId === waiter.id ? '#fceef2' : '#9a828a'} style={styles.waiterIcon} />
-                          <Text style={[styles.waiterBtnText, selectedWaiterId === waiter.id && styles.waiterBtnTextActive]}>
-                            {waiter.name}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </ScrollView>
-                  </View>
-                </>
-              )}
-
-              <View style={{ height: 40 }} />
             </ScrollView>
 
-            {/* Bottom Checkout Action */}
-            <View style={styles.modalFooter}>
+            {/* Modal Footer */}
+            <View style={[styles.modalFooter, { borderTopColor: t.border, backgroundColor: t.card }]}>
               <TouchableOpacity 
-                style={[
-                  styles.submitOrderBtn,
-                  useWhatsAppFlow && { backgroundColor: '#22c55e', shadowColor: '#22c55e' }
-                ]}
+                style={[styles.submitOrderBtn, { backgroundColor: t.primary }]} 
                 onPress={handleCheckoutSubmit}
-                disabled={submitting}
+                disabled={submitting || cart.length === 0}
               >
                 {submitting ? (
-                  <ActivityIndicator color="#fceef2" />
+                  <ActivityIndicator size="small" color={t.primaryText} />
                 ) : (
-                  <Text style={styles.submitOrderBtnText}>
-                    {useWhatsAppFlow ? '💬 Enviar a WhatsApp' : (orderAction === 'facturar' ? 'Confirmar Factura y Cobrar' : 'Enviar Comanda a Cocina')}
-                  </Text>
+                  <Text style={[styles.submitOrderBtnText, { color: t.primaryText }]}>Facturar Venta</Text>
                 )}
               </TouchableOpacity>
             </View>
+
           </View>
         </SafeAreaView>
       </Modal>
+
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#12070b',
-  },
-  headerControls: {
-    padding: 16,
-    paddingBottom: 8,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1c0d13',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#3a1923',
-    paddingHorizontal: 12,
-    height: 48,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    color: '#fceef2',
-    fontSize: 15,
-  },
-  categoryScrollContainer: {
-    height: 50,
-    marginBottom: 10,
-  },
-  categoryScroll: {
-    paddingHorizontal: 16,
-    alignItems: 'center',
-  },
-  categoryBtn: {
-    paddingHorizontal: 18,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#1c0d13',
-    marginRight: 10,
-    borderWidth: 1,
-    borderColor: '#3a1923',
-  },
-  categoryBtnActive: {
-    backgroundColor: '#8b1a2e',
-    borderColor: '#8b1a2e',
-  },
-  categoryBtnText: {
-    color: '#9a828a',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  categoryBtnTextActive: {
-    color: '#fceef2',
-  },
-  listContainer: {
-    paddingHorizontal: 10,
-    paddingBottom: 100,
-  },
-  rowWrapper: {
-    justifyContent: 'space-between',
-  },
-  productCard: {
-    backgroundColor: '#1c0d13',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#3a1923',
-    marginBottom: 12,
-    width: '48%',
-    minHeight: 125,
-    justifyContent: 'space-between',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  productCardActive: {
-    borderColor: '#8b1a2e',
-    borderWidth: 1.5,
-  },
-  productImage: {
-    width: '100%',
-    height: 90,
-    borderTopLeftRadius: 15,
-    borderTopRightRadius: 15,
-  },
-  productInfo: {
-    flex: 1,
-    justifyContent: 'space-between',
-    padding: 10,
-  },
-  productName: {
-    color: '#fceef2',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  productDesc: {
-    color: '#6d535e',
-    fontSize: 11,
-    marginTop: 2,
-  },
-  productPrice: {
-    color: '#10b981',
-    fontSize: 15,
-    fontWeight: 'bold',
-    marginTop: 4,
-  },
-  plusIcon: {
-    position: 'absolute',
-    bottom: 12,
-    right: 12,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#26121b',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#3a1923',
-  },
-  qtyBadge: {
-    position: 'absolute',
-    bottom: 10,
-    right: 10,
-    backgroundColor: '#8b1a2e',
-    borderRadius: 12,
-    width: 28,
-    height: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  qtyBadgeText: {
-    color: '#fceef2',
-    fontSize: 13,
-    fontWeight: 'bold',
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-    marginTop: 40,
-  },
-  emptyText: {
-    color: '#9a828a',
-    fontSize: 16,
-  },
-  floatingCart: {
-    position: 'absolute',
-    bottom: 15,
-    left: 15,
-    right: 15,
-    backgroundColor: '#1c0d13',
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: '#8b1a2e',
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    shadowColor: '#8b1a2e',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  cartHeaderInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  cartItemsCount: {
-    color: '#9a828a',
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginLeft: 8,
-    marginRight: 12,
-  },
-  cartTotalText: {
-    color: '#fceef2',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  cartActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  clearCartBtn: {
-    padding: 10,
-    marginRight: 8,
-    borderRadius: 10,
-    backgroundColor: '#2d1119',
-  },
-  checkoutBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#8b1a2e',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-  },
-  checkoutBtnText: {
-    color: '#fceef2',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  checkoutIcon: {
-    marginLeft: 6,
-  },
-  noAccessTitle: {
-    color: '#fca5a5',
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginTop: 15,
-    marginBottom: 8,
-  },
-  noAccessText: {
-    color: '#9a828a',
-    fontSize: 14,
-    textAlign: 'center',
-  },
+  container: { flex: 1 },
+  centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
+  emptyText: { fontSize: 14, fontWeight: '600' },
+  
+  // Header controls
+  headerControls: { paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 1 },
+  searchContainer: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: 12, height: 42, paddingHorizontal: 12 },
+  searchIcon: { marginRight: 8 },
+  searchInput: { flex: 1, fontSize: 14, height: '100%', padding: 0 },
 
-  // Modal styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: '#1c0d13',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    borderWidth: 1,
-    borderColor: '#3a1923',
-    maxHeight: '90%',
-    display: 'flex',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderColor: '#3a1923',
-  },
-  modalTitle: {
-    color: '#fceef2',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  closeBtn: {
-    padding: 4,
-  },
-  modalBody: {
-    padding: 20,
-  },
-  sectionLabel: {
-    color: '#fceef2',
-    fontSize: 15,
-    fontWeight: 'bold',
-    marginTop: 15,
-    marginBottom: 10,
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 12,
-  },
-  toggleBtn: {
-    flex: 1,
-    height: 44,
-    backgroundColor: '#26121b',
-    borderWidth: 1,
-    borderColor: '#3a1923',
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  toggleBtnActive: {
-    backgroundColor: '#8b1a2e',
-    borderColor: '#8b1a2e',
-  },
-  toggleBtnText: {
-    color: '#9a828a',
-    fontSize: 13,
-    fontWeight: 'bold',
-  },
-  toggleBtnTextActive: {
-    color: '#fceef2',
-  },
-  smallToggleBtn: {
-    paddingHorizontal: 12,
-    height: 38,
-    backgroundColor: '#26121b',
-    borderWidth: 1,
-    borderColor: '#3a1923',
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  serviceTypesScroll: {
-    gap: 8,
-    marginBottom: 14,
-  },
-  typeBadge: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: '#26121b',
-    borderWidth: 1,
-    borderColor: '#3a1923',
-    borderRadius: 20,
-  },
-  typeBadgeActive: {
-    backgroundColor: '#8b1a2e',
-    borderColor: '#8b1a2e',
-  },
-  typeBadgeText: {
-    color: '#9a828a',
-    fontWeight: 'bold',
-    fontSize: 13,
-  },
-  typeBadgeTextActive: {
-    color: '#fceef2',
-  },
-  modalInputContainer: {
-    backgroundColor: '#26121b',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#3a1923',
-    marginBottom: 12,
-    paddingHorizontal: 12,
-    height: 48,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  modalInput: {
-    color: '#fceef2',
-    fontSize: 15,
-    flex: 1,
-    height: '100%',
-  },
-  billingAdjustmentRow: {
-    flexDirection: 'row',
-    marginBottom: 12,
-  },
-  inputSubLabel: {
-    color: '#9a828a',
-    fontSize: 12,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  adjustedInputContainer: {
-    backgroundColor: '#26121b',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#3a1923',
-    height: 48,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-  },
-  adjustedInput: {
-    flex: 1,
-    color: '#fceef2',
-    fontSize: 14,
-    height: '100%',
-  },
-  suggestedTipBtn: {
-    backgroundColor: '#8b1a2e',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  suggestedTipBtnText: {
-    color: '#fceef2',
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  paymentMethodsGrid: {
-    flexDirection: 'row',
-    gap: 6,
-    marginBottom: 12,
-  },
-  paymentBtn: {
-    flex: 1,
-    height: 44,
-    backgroundColor: '#26121b',
-    borderWidth: 1,
-    borderColor: '#3a1923',
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  paymentBtnActive: {
-    backgroundColor: '#8b1a2e',
-    borderColor: '#8b1a2e',
-  },
-  paymentBtnText: {
-    color: '#9a828a',
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  paymentBtnTextActive: {
-    color: '#fceef2',
-  },
+  // Categories
+  categoryScrollContainer: { borderBottomWidth: 1, paddingVertical: 8 },
+  categoryScroll: { paddingHorizontal: 10 },
+  categoryBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 18, marginRight: 8, borderWidth: 1, borderColor: 'transparent' },
+  categoryBtnText: { fontSize: 13, fontWeight: '700' },
 
-  // Mixed Payments styles
-  mixedPaymentsBox: {
-    backgroundColor: '#16080e',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#3a1923',
-    padding: 12,
-    marginBottom: 12,
-  },
-  mixedPaymentsTitle: {
-    color: '#9a828a',
-    fontSize: 12,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  mixedPaymentRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
-  },
-  mixedSelectWrapper: {
-    flex: 1.2,
-    height: 38,
-    backgroundColor: '#26121b',
-    borderWidth: 1,
-    borderColor: '#3a1923',
-    borderRadius: 8,
-    justifyContent: 'center',
-    paddingHorizontal: 8,
-  },
-  mixedPaymentLabel: {
-    color: '#fceef2',
-    fontSize: 13,
-    fontWeight: 'bold',
-  },
-  mixedAmountInput: {
-    flex: 1,
-    height: 38,
-    backgroundColor: '#26121b',
-    borderWidth: 1,
-    borderColor: '#3a1923',
-    borderRadius: 8,
-    color: '#fceef2',
-    paddingHorizontal: 10,
-    fontSize: 13,
-  },
-  removeMixedBtn: {
-    padding: 8,
-  },
-  mixedFooterRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  addMethodBtn: {
-    backgroundColor: '#26121b',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#3a1923',
-  },
-  addMethodBtnText: {
-    color: '#fceef2',
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  remainingAmountText: {
-    color: '#10b981',
-    fontWeight: 'bold',
-    fontSize: 13,
-  },
+  // Grid
+  listContainer: { padding: 10, paddingBottom: 100 },
+  rowWrapper: { justifyContent: 'space-between', marginBottom: 10 },
+  productCard: { flex: 0.485, borderRadius: 14, overflow: 'hidden', minHeight: 180, elevation: 2, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 3, position: 'relative' },
+  productImage: { width: '100%', height: 100 },
+  productInfo: { padding: 10, gap: 4 },
+  productName: { fontSize: 13, fontWeight: '800', lineHeight: 16 },
+  productDesc: { fontSize: 11 },
+  productPrice: { fontSize: 14, fontWeight: '900', marginTop: 2 },
+  qtyBadge: { position: 'absolute', top: 8, right: 8, minWidth: 22, height: 22, borderRadius: 11, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4 },
+  qtyBadgeText: { fontSize: 11, fontWeight: '900' },
+  plusIcon: { position: 'absolute', top: 8, right: 8, width: 26, height: 26, borderRadius: 13, borderWidth: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#ffffffaa' },
 
-  // Loyalty Program styles
-  loyaltyBox: {
-    backgroundColor: '#2d1610',
-    borderWidth: 1,
-    borderColor: '#f59e0b55',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 12,
-  },
-  loyaltyHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 10,
-  },
-  loyaltyTitle: {
-    color: '#f59e0b',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  loyaltySearchRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  loyaltyInput: {
-    flex: 1,
-    height: 40,
-    backgroundColor: '#12070b',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#f59e0b',
-    color: '#fceef2',
-    paddingHorizontal: 12,
-    fontSize: 13,
-  },
-  loyaltySearchBtn: {
-    backgroundColor: '#f59e0b',
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loyaltySearchBtnText: {
-    color: '#12070b',
-    fontWeight: 'bold',
-    fontSize: 13,
-  },
-  newLoyaltyContainer: {
-    backgroundColor: '#1c0d13',
-    borderRadius: 10,
-    padding: 10,
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: '#3a1923',
-  },
-  newLoyaltyTitle: {
-    color: '#f59e0b',
-    fontSize: 11,
-    fontWeight: 'bold',
-    marginBottom: 6,
-  },
-  newLoyaltyInput: {
-    backgroundColor: '#12070b',
-    height: 36,
-    borderRadius: 6,
-    color: '#fceef2',
-    paddingHorizontal: 8,
-    fontSize: 12,
-    borderWidth: 1,
-    borderColor: '#3a1923',
-    marginBottom: 6,
-  },
-  loyaltyCustomerCard: {
-    backgroundColor: '#1c0d13',
-    borderRadius: 10,
-    padding: 10,
-    marginTop: 8,
-  },
-  loyaltyCustomerNameText: {
-    color: '#fceef2',
-    fontSize: 13,
-    fontWeight: 'bold',
-  },
-  redeemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 8,
-  },
-  redeemPointsInput: {
-    backgroundColor: '#12070b',
-    width: 100,
-    height: 36,
-    borderRadius: 6,
-    color: '#fceef2',
-    paddingHorizontal: 8,
-    fontSize: 12,
-    borderWidth: 1,
-    borderColor: '#f59e0b',
-  },
-  redeemValueText: {
-    color: '#f59e0b',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
+  // Floating Cart
+  floatingCart: { position: 'absolute', bottom: 0, left: 0, right: 0, borderTopWidth: 1, paddingHorizontal: 16, paddingVertical: 12, borderTopLeftRadius: 16, borderTopRightRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', elevation: 10 },
+  cartHeaderInfo: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  cartItemsCount: { fontSize: 13, fontWeight: '700' },
+  cartTotalText: { fontSize: 15, fontWeight: '900' },
+  cartActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  clearCartBtn: { borderWidth: 1, borderRadius: 10, padding: 8 },
+  checkoutBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 10 },
+  checkoutBtnText: { fontSize: 13, fontWeight: '800' },
+  checkoutIcon: { marginLeft: 2 },
 
-  summaryBox: {
-    backgroundColor: '#26121b',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#3a1923',
-    padding: 15,
-    marginBottom: 15,
-  },
-  summaryItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  summaryItemDetails: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  summaryItemQty: {
-    color: '#8b1a2e',
-    fontWeight: 'bold',
-    fontSize: 14,
-    marginRight: 8,
-  },
-  summaryItemName: {
-    color: '#fceef2',
-    fontSize: 14,
-    flex: 1,
-  },
-  summaryItemPriceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  qtyControlBtn: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#3a1923',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 6,
-  },
-  summaryItemSubtotal: {
-    color: '#fceef2',
-    fontWeight: '600',
-    fontSize: 14,
-    marginLeft: 12,
-    width: 70,
-    textAlign: 'right',
-  },
-  breakdownBox: {
-    borderTopWidth: 1,
-    borderColor: '#3a1923',
-    paddingTop: 10,
-    marginTop: 6,
-    gap: 4,
-  },
-  breakdownRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  breakdownLabel: {
-    color: '#9a828a',
-    fontSize: 13,
-  },
-  breakdownValue: {
-    color: '#fceef2',
-    fontSize: 13,
-  },
-  summaryTotalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    borderTopWidth: 1,
-    borderColor: '#3a1923',
-    paddingTop: 12,
-    marginTop: 8,
-  },
-  summaryTotalLabel: {
-    color: '#9a828a',
-    fontSize: 15,
-    fontWeight: 'bold',
-  },
-  summaryTotalVal: {
-    color: '#10b981',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  waitersContainer: {
-    height: 50,
-    marginBottom: 12,
-  },
-  waiterBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#26121b',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#3a1923',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    marginRight: 8,
-    height: 38,
-  },
-  waiterBtnActive: {
-    backgroundColor: '#8b1a2e',
-    borderColor: '#8b1a2e',
-  },
-  waiterIcon: {
-    marginRight: 6,
-  },
-  waiterBtnText: {
-    color: '#9a828a',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  waiterBtnTextActive: {
-    color: '#fceef2',
-  },
-  modalFooter: {
-    padding: 20,
-    borderTopWidth: 1,
-    borderColor: '#3a1923',
-  },
-  submitOrderBtn: {
-    backgroundColor: '#10b981',
-    borderRadius: 14,
-    height: 56,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#10b981',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 3,
-  },
-  submitOrderBtnText: {
-    color: '#fceef2',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+  // Modals
+  modalOverlay: { flex: 1, justifyContent: 'flex-end' },
+  modalContent: { borderTopLeftRadius: 20, borderTopRightRadius: 20, height: '90%', width: '100%' },
+  modalHeader: { height: 56, borderBottomWidth: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20 },
+  modalTitle: { fontSize: 16, fontWeight: '900' },
+  closeBtn: { padding: 4 },
+  modalBody: { flex: 1, padding: 20 },
+  sectionLabel: { fontSize: 12, fontWeight: '800', uppercase: true, letterSpacing: 0.5, marginBottom: 8, marginTop: 15 },
+  toggleRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  toggleBtn: { flex: 1, height: 40, borderRadius: 10, borderWidth: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 6 },
+  toggleBtnText: { fontSize: 12, fontWeight: '800', textAlign: 'center' },
+  inputsContainer: { borderRadius: 12, borderWidth: 1, padding: 12, marginBottom: 12 },
+  inputField: { height: 42, borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, fontSize: 13, marginBottom: 8 },
+  loyaltySearchRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  loyaltySearchBtn: { height: 42, paddingHorizontal: 16, borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
+  loyaltyStatusBox: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 },
+
+  // Summary box
+  summaryBox: { borderRadius: 14, borderWidth: 1, padding: 12, marginBottom: 20 },
+  summaryItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  summaryItemDetails: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  summaryItemQty: { fontWeight: '900', fontSize: 13, marginRight: 6 },
+  summaryItemName: { fontSize: 13, flex: 1 },
+  summaryItemPriceRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  qtyControlBtn: { width: 22, height: 22, borderRadius: 11, justifyContent: 'center', alignItems: 'center' },
+  summaryItemSubtotal: { fontWeight: '700', fontSize: 13, width: 70, textAlign: 'right' },
+  breakdownBox: { borderTopWidth: 1, paddingTop: 10, marginTop: 6, gap: 4 },
+  breakdownRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  breakdownLabel: { fontSize: 12 },
+  breakdownValue: { fontSize: 12, fontWeight: '600' },
+  summaryTotalRow: { flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, paddingTop: 10, marginTop: 6 },
+  summaryTotalLabel: { fontSize: 14, fontWeight: '800' },
+  summaryTotalVal: { fontSize: 18, fontWeight: '900' },
+  modalFooter: { padding: 20, borderTopWidth: 1 },
+  submitOrderBtn: { height: 50, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  submitOrderBtnText: { fontSize: 15, fontWeight: '900' },
 });

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useColorScheme } from 'react-native';
 import { 
   StyleSheet, 
   Text, 
@@ -11,16 +12,30 @@ import {
   Alert,
   Platform
 } from 'react-native';
+
+// ── Theme ────────────────────────────────────────────────────────────────────
+const LIGHT = {
+  bg: '#f5f5f5', card: '#ffffff', header: '#ffffff', tabBar: '#ffffff',
+  border: '#e5e7eb', primary: '#C9A227', primaryText: '#1e293b',
+  text: '#1e293b', sub: '#64748b', muted: '#9ca3af',
+  online: '#10b981', offline: '#ef4444',
+};
+const DARK = {
+  bg: '#0f172a', card: '#1e293b', header: '#1e293b', tabBar: '#1e293b',
+  border: '#334155', primary: '#C9A227', primaryText: '#0f172a',
+  text: '#f1f5f9', sub: '#94a3b8', muted: '#475569',
+  online: '#10b981', offline: '#ef4444',
+};
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Wifi, WifiOff, ShoppingBag, User, Bell } from 'lucide-react-native';
 import { 
   requestNotificationPermissions,
-  playWaiterAlertSound,
-  showWaiterCallNotification,
+  playOrderAlertSound,
+  showOrderNotification,
   isMuted,
   setMuted as persistMuted,
   getExpoPushToken,
-} from './src/services/waiterNotificationService';
+} from './src/services/orderNotificationService';
 
 // Services & Components
 import { 
@@ -47,6 +62,8 @@ import OfflineBanner from './src/components/OfflineBanner';
 import LockedFeatureScreen from './src/components/LockedFeatureScreen';
 
 export default function App() {
+  const scheme = useColorScheme();
+  const t = scheme === 'dark' ? DARK : LIGHT;
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -71,15 +88,15 @@ export default function App() {
   const [muted, setMuted] = useState(false);
   const [customWaEnabled, setCustomWaEnabled] = useState(false);
   const [customWaPhone, setCustomWaPhone] = useState('');
-  const prevCallIdsRef = useRef(new Set());
+  const prevOrderIdsRef = useRef(new Set());
   const isFirstLoadRef = useRef(true);
-  const hasFetchedCallsRef = useRef(false);
+  const hasFetchedOrdersRef = useRef(false);
   const pendingStaffProfileRef = useRef(null);
 
   // Reset first load refs when selected branch changes
   useEffect(() => {
     isFirstLoadRef.current = true;
-    hasFetchedCallsRef.current = false;
+    hasFetchedOrdersRef.current = false;
   }, [selectedBranch?.id]);
 
   // Compute active branch's planLevel
@@ -90,7 +107,7 @@ export default function App() {
       
       // Is subscription active?
       const isActive = (() => {
-        if (sub.status === 'cancelled' || sub.status === 'explore') return false;
+        if (sub.status === 'cancelled') return false;
         
         // Check expiration
         if (sub.cycleEndDate || sub.endDate) {
@@ -105,14 +122,7 @@ export default function App() {
         return sub.status === 'authorized' || sub.status === 'active';
       })();
       
-      if (sub.status === 'explore' || sub.isExplore === true) {
-        if (selectedBranch?.planLevel !== undefined && selectedBranch?.planLevel !== null) {
-          const pl = parseInt(selectedBranch.planLevel);
-          if (!isNaN(pl)) return pl;
-        }
-        return 0; // Explore mode defaults to Plan 0 (Tradicional)
-      }
-      
+
       if (!isActive) return 0; // If inactive/expired, act as Plan 0 (or restrict)
       
       if (selectedBranch?.planLevel !== undefined && selectedBranch?.planLevel !== null) {
@@ -160,36 +170,33 @@ export default function App() {
     })();
   }, []);
 
-  // 0b. Detect NEW waiter calls and trigger sound + notification
+  // 0b. Detect NEW orders and trigger cash-register sound + notification
   useEffect(() => {
     if (loading) return;
-    if (!hasFetchedCallsRef.current) return;
-    if (!waiterCalls) return;
+    if (!hasFetchedOrdersRef.current) return;
+    if (!orders) return;
 
-    const currentIds = new Set(waiterCalls.map(c => c.id));
+    const currentIds = new Set(orders.map(o => o.id));
 
     if (isFirstLoadRef.current) {
-      prevCallIdsRef.current = currentIds;
+      prevOrderIdsRef.current = currentIds;
       isFirstLoadRef.current = false;
       return;
     }
 
-    const newCalls = waiterCalls.filter(c => !prevCallIdsRef.current.has(c.id));
-    prevCallIdsRef.current = currentIds;
+    const newOrders = orders.filter(o => !prevOrderIdsRef.current.has(o.id));
+    prevOrderIdsRef.current = currentIds;
 
-    if (newCalls.length === 0) return;
+    if (newOrders.length === 0) return;
 
-    newCalls.forEach(async (call) => {
+    newOrders.forEach(async (order) => {
       if (!muted) {
-        await playWaiterAlertSound();
+        await playOrderAlertSound();
       }
-      const branch = branches.find(b => b.id === call.branchId);
-      await showWaiterCallNotification(
-        call.tableNumber || 'N/A',
-        branch?.name || selectedBranch?.name || ''
-      );
+      const branch = branches.find(b => b.id === order.branchId);
+      await showOrderNotification(order, branch?.name || selectedBranch?.name || '');
     });
-  }, [waiterCalls, loading]);
+  }, [orders, loading]);
 
   // 1. Connection Status Monitor
   useEffect(() => {
@@ -349,15 +356,14 @@ export default function App() {
     }
   };
 
-  // 4. Real-time subscriptions (orders + waiter calls)
+  // 4. Real-time subscriptions (orders only — waiter calls not needed in logistics mode)
   useEffect(() => {
     if (!profile?.restaurantId) return;
-    const unsubOrders = subscribeToActiveOrders(profile.restaurantId, setOrders);
-    const unsubCalls  = subscribeToWaiterCalls(profile.restaurantId, selectedBranch?.id || null, (calls) => {
-      hasFetchedCallsRef.current = true;
-      setWaiterCalls(calls);
+    const unsubOrders = subscribeToActiveOrders(profile.restaurantId, (incoming) => {
+      hasFetchedOrdersRef.current = true;
+      setOrders(incoming);
     });
-    return () => { unsubOrders(); unsubCalls(); };
+    return () => { unsubOrders(); };
   }, [profile?.restaurantId, selectedBranch?.id]);
 
   // 5. Fetch tables when branch changes
@@ -482,39 +488,42 @@ export default function App() {
       />
     );
   } else {
+    const pendingCount = orders.filter(o => o.status === 'pending').length;
+    const iconActive   = t.primary;
+    const iconInactive = t.muted;
+
     content = (
       <>
         {/* App Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { backgroundColor: t.header, borderBottomColor: t.border }]}>
           <View style={styles.headerInfo}>
-            <Text style={styles.appTitle}>Carta y Mesa</Text>
-            <Text style={styles.branchSubtitle}>
+            <Text style={[styles.appTitle, { color: t.primary }]}>MiProdu</Text>
+            <Text style={[styles.branchSubtitle, { color: t.sub }]}>
               {selectedBranch ? selectedBranch.name : 'Selecciona una sede'}
             </Text>
           </View>
-          
-          {/* Connection status indicator */}
-          <View style={[styles.connectionBadge, isConnected ? styles.bgOnline : styles.bgOffline]}>
-            {isConnected ? (
-              <Wifi size={14} color="#fceef2" />
-            ) : (
-              <WifiOff size={14} color="#fceef2" />
-            )}
-            <Text style={styles.connectionText}>{isConnected ? 'Online' : 'Offline'}</Text>
+          <View style={[styles.connectionBadge, {
+            backgroundColor: isConnected ? `${t.online}22` : `${t.offline}22`,
+            borderColor: isConnected ? t.online : t.offline,
+          }]}>
+            {isConnected
+              ? <Wifi size={14} color={t.online} />
+              : <WifiOff size={14} color={t.offline} />}
+            <Text style={[styles.connectionText, { color: isConnected ? t.online : t.offline }]}>
+              {isConnected ? 'Online' : 'Offline'}
+            </Text>
           </View>
         </View>
 
-        {/* Offline Banner alert */}
         <OfflineBanner isConnected={isConnected} />
 
-        {/* Active Screen Render */}
         <View style={styles.mainContent}>
           {activeTab === 'caja' && (
             effectivePlanLevel < 0 ? (
               <LockedFeatureScreen
                 featureName="Caja (POS)"
-                requiredPlan="Carta"
-                currentPlan={effectivePlanLevel === 0 ? 'Tradicional' : 'Desconocido'}
+                requiredPlan="MiProdu Pro"
+                currentPlan="Plan Básico"
                 onSwitchBranch={() => setActiveTab('perfil')}
               />
             ) : (
@@ -536,25 +545,17 @@ export default function App() {
               />
             )
           )}
-          
+
           {activeTab === 'restaurante' && (
             <RestauranteScreen
               restaurantId={profile.restaurantId}
               profile={profile}
               orders={orders}
-              waiterCalls={waiterCalls}
-              tables={tables}
               selectedBranch={selectedBranch}
-              waiters={waiters}
-              onAddProductsToTable={(tableNum) => {
-                setPreselectedTableNumber(tableNum);
-                setActiveTab('caja');
-              }}
               planLevel={effectivePlanLevel}
-              callsOnlyMode={true}
             />
           )}
-          
+
           {activeTab === 'perfil' && (
             <PerfilScreen
               profile={profile}
@@ -563,10 +564,7 @@ export default function App() {
               onSelectBranch={handleSelectBranch}
               onLogout={handleLogout}
               muted={muted}
-              onToggleMute={async (val) => {
-                setMuted(val);
-                await persistMuted(val);
-              }}
+              onToggleMute={async (val) => { setMuted(val); await persistMuted(val); }}
               customWaEnabled={customWaEnabled}
               customWaPhone={customWaPhone}
               onToggleCustomWa={async (val) => {
@@ -581,39 +579,34 @@ export default function App() {
           )}
         </View>
 
-        {/* Bottom Navigation Tab Bar */}
-        <View style={styles.tabBar}>
-          <TouchableOpacity 
-            style={[styles.tabItem, activeTab === 'caja' && styles.tabItemActive]}
-            onPress={() => setActiveTab('caja')}
-          >
-            <ShoppingBag size={20} color={activeTab === 'caja' ? '#fceef2' : '#9a828a'} />
-            <Text style={[styles.tabLabel, activeTab === 'caja' && styles.tabLabelActive]}>Caja (POS)</Text>
+        {/* Bottom Navigation */}
+        <View style={[styles.tabBar, { backgroundColor: t.tabBar, borderTopColor: t.border }]}>
+          {/* Caja */}
+          <TouchableOpacity style={styles.tabItem} onPress={() => setActiveTab('caja')}>
+            <ShoppingBag size={22} color={activeTab === 'caja' ? iconActive : iconInactive} />
+            <Text style={[styles.tabLabel, { color: activeTab === 'caja' ? iconActive : iconInactive }]}>Caja</Text>
+            {activeTab === 'caja' && <View style={[styles.tabActiveLine, { backgroundColor: t.primary }]} />}
           </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={[styles.tabItem, activeTab === 'restaurante' && styles.tabItemActive]}
-            onPress={() => setActiveTab('restaurante')}
-          >
+          {/* Pedidos */}
+          <TouchableOpacity style={styles.tabItem} onPress={() => setActiveTab('restaurante')}>
             <View style={{ position: 'relative' }}>
-              <Bell size={20} color={activeTab === 'restaurante' ? '#fceef2' : '#9a828a'} />
-              {waiterCalls.length > 0 && (
+              <Bell size={22} color={activeTab === 'restaurante' ? iconActive : iconInactive} />
+              {pendingCount > 0 && (
                 <View style={styles.tabCallBadge}>
-                  <Text style={styles.tabCallBadgeText}>{waiterCalls.length}</Text>
+                  <Text style={styles.tabCallBadgeText}>{pendingCount > 9 ? '9+' : pendingCount}</Text>
                 </View>
               )}
             </View>
-            <Text style={[styles.tabLabel, activeTab === 'restaurante' && styles.tabLabelActive]}>
-              Llamados
-            </Text>
+            <Text style={[styles.tabLabel, { color: activeTab === 'restaurante' ? iconActive : iconInactive }]}>Pedidos</Text>
+            {activeTab === 'restaurante' && <View style={[styles.tabActiveLine, { backgroundColor: t.primary }]} />}
           </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={[styles.tabItem, activeTab === 'perfil' && styles.tabItemActive]}
-            onPress={() => setActiveTab('perfil')}
-          >
-            <User size={20} color={activeTab === 'perfil' ? '#fceef2' : '#9a828a'} />
-            <Text style={[styles.tabLabel, activeTab === 'perfil' && styles.tabLabelActive]}>Perfil</Text>
+          {/* Perfil */}
+          <TouchableOpacity style={styles.tabItem} onPress={() => setActiveTab('perfil')}>
+            <User size={22} color={activeTab === 'perfil' ? iconActive : iconInactive} />
+            <Text style={[styles.tabLabel, { color: activeTab === 'perfil' ? iconActive : iconInactive }]}>Perfil</Text>
+            {activeTab === 'perfil' && <View style={[styles.tabActiveLine, { backgroundColor: t.primary }]} />}
           </TouchableOpacity>
         </View>
       </>
@@ -621,8 +614,11 @@ export default function App() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#12070b" />
+    <SafeAreaView style={[styles.container, { backgroundColor: t.bg }]}>
+      <StatusBar
+        barStyle={scheme === 'dark' ? 'light-content' : 'dark-content'}
+        backgroundColor={t.header}
+      />
       {content}
     </SafeAreaView>
   );
@@ -631,42 +627,35 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#12070b',
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#12070b',
     justifyContent: 'center',
     alignItems: 'center',
   },
   loadingText: {
-    color: '#9a828a',
     marginTop: 15,
     fontSize: 14,
     fontWeight: '600',
   },
   header: {
-    height: 60,
-    backgroundColor: '#1c0d13',
+    height: 62,
     borderBottomWidth: 1,
-    borderColor: '#3a1923',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: 18,
   },
-  headerInfo: {
-    flex: 1,
-  },
+  headerInfo: { flex: 1 },
   appTitle: {
-    color: '#fceef2',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: 0.5,
   },
   branchSubtitle: {
-    color: '#9a828a',
     fontSize: 12,
+    marginTop: 1,
   },
   connectionBadge: {
     flexDirection: 'row',
@@ -676,50 +665,36 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
   },
-  bgOnline: {
-    backgroundColor: '#10b98122',
-    borderColor: '#10b981',
-  },
-  bgOffline: {
-    backgroundColor: '#ef444422',
-    borderColor: '#ef4444',
-  },
   connectionText: {
-    color: '#fceef2',
     fontSize: 11,
-    fontWeight: 'bold',
-    marginLeft: 4,
+    fontWeight: '700',
+    marginLeft: 5,
   },
-  mainContent: {
-    flex: 1,
-  },
+  mainContent: { flex: 1 },
   tabBar: {
-    height: Platform.OS === 'ios' ? 65 : 78,
-    backgroundColor: '#1c0d13',
+    height: Platform.OS === 'ios' ? 70 : 72,
     borderTopWidth: 1,
-    borderColor: '#3a1923',
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-around',
-    paddingBottom: Platform.OS === 'ios' ? 5 : 18,
+    paddingTop: 10,
+    paddingBottom: Platform.OS === 'ios' ? 12 : 16,
   },
   tabItem: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
-  },
-  tabItemActive: {
-    // optional design highlight
+    gap: 3,
   },
   tabLabel: {
-    color: '#9a828a',
-    fontSize: 11,
-    marginTop: 4,
-    fontWeight: '600',
+    fontSize: 10,
+    fontWeight: '700',
   },
-  tabLabelActive: {
-    color: '#fceef2',
+  tabActiveLine: {
+    height: 2,
+    width: 24,
+    borderRadius: 2,
+    marginTop: 2,
   },
   tabCallBadge: {
     position: 'absolute',
@@ -736,6 +711,6 @@ const styles = StyleSheet.create({
   tabCallBadgeText: {
     color: '#fff',
     fontSize: 9,
-    fontWeight: 'bold',
+    fontWeight: '900',
   },
 });

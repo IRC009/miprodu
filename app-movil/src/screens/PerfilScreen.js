@@ -118,7 +118,7 @@ export default function PerfilScreen({
         </View>
 
         {/* ── Notification Settings ── */}
-        <Text style={styles.sectionLabel}>Notificaciones de Llamados</Text>
+        <Text style={styles.sectionLabel}>Notificaciones de Pedidos</Text>
         <View style={styles.sectionCard}>
           {/* Mute Toggle */}
           <View style={[styles.toggleRow, { borderBottomWidth: 0 }]}>
@@ -133,8 +133,8 @@ export default function PerfilScreen({
                 </Text>
                 <Text style={styles.toggleDesc}>
                   {localMuted
-                    ? 'Los llamados de mesero no emitirán sonido'
-                    : 'Suena una alerta cuando un cliente llama al mesero'}
+                    ? 'Los pedidos nuevos no emitirán sonido'
+                    : 'Suena una caja registradora cuando llega un pedido nuevo'}
                 </Text>
               </View>
             </View>
