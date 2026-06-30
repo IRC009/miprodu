@@ -3,6 +3,7 @@ import { addProduct, updateProduct, deleteProduct, uploadProductImage } from '..
 import { registerAction } from '../../../services/auditService';
 import { generateDishDescription } from '../../../services/aiService';
 import { useRestaurantData } from '../../../context/RestaurantDataContext';
+import { addIngredient, updateIngredient } from '../../../services/inventoryService';
 
 export function useMenuProducts(restaurantId, activeCategory, selectedAdminBranch, loadData, showAlert, availableIngredients) {
   const { updateLocalState } = useRestaurantData();
@@ -16,7 +17,9 @@ export function useMenuProducts(restaurantId, activeCategory, selectedAdminBranc
     subcategory: '', branchIds: [], imageFile: null, imageFiles: [], imageUrls: [], videoFile: null, recommended: false,
     priceLabel: '', variants: [], gridSpan: 1, cardLayout: 'global', customClass: '', recipe: [],
     borderTopShow: 'global', borderRightShow: 'global', borderBottomShow: 'global', borderLeftShow: 'global',
-    promoMinQty: '', promoDiscountPct: '', promoLabel: ''
+    promoMinQty: '', promoDiscountPct: '', promoLabel: '',
+    sku: '', linkedIngredientId: '',
+    autoInventory: false, autoInventoryUnit: 'Unidad', autoInventoryStock: '', autoInventoryMin: '', autoInventoryCost: ''
   });
   const [recipeItemForm, setRecipeItemForm] = useState({ ingredientId: '', quantity: '' });
  
@@ -41,6 +44,10 @@ export function useMenuProducts(restaurantId, activeCategory, selectedAdminBranc
   const openProdModal = (product = null) => {
     if (product) {
       setEditingProduct(product);
+      
+      const linkedIngId = product.linkedIngredientId || (product.recipe && product.recipe.length === 1 ? product.recipe[0].ingredientId : null);
+      const linkedIng = linkedIngId ? (availableIngredients || []).find(i => i.id === linkedIngId) : null;
+
       setProdForm({
         name: product.name,
         description: product.description || '',
@@ -56,7 +63,18 @@ export function useMenuProducts(restaurantId, activeCategory, selectedAdminBranc
         videoUrl: product.videoUrl || '',
         recommended: product.recommended || false,
         priceLabel: product.priceLabel || '',
-        variants: product.variants || [],
+        variants: (product.variants || []).map(v => ({
+          id: v.id || (Date.now().toString() + Math.random().toString()),
+          name: v.name || '',
+          price: String(v.price || ''),
+          available: v.available !== undefined ? v.available : true,
+          sku: v.sku || '',
+          inventoryEnabled: !!v.inventoryEnabled,
+          ingredientId: v.ingredientId || '',
+          inventoryVariantId: v.inventoryVariantId || '',
+          quantity: v.quantity !== undefined ? String(v.quantity) : '1',
+          linkType: v.linkType || (v.quantity && Number(v.quantity) !== 1 ? 'ingredient' : 'product')
+        })),
         gridSpan: product.gridSpan || 1,
         cardLayout: product.cardLayout || 'global',
         customClass: product.customClass || '',
@@ -76,7 +94,14 @@ export function useMenuProducts(restaurantId, activeCategory, selectedAdminBranc
         borderLeftShow: product.borderLeftShow || 'global',
         promoMinQty: product.promoMinQty || '',
         promoDiscountPct: product.promoDiscountPct || '',
-        promoLabel: product.promoLabel || ''
+        promoLabel: product.promoLabel || '',
+        sku: product.sku || '',
+        autoInventory: !!linkedIng,
+        autoInventoryUnit: linkedIng ? (linkedIng.unit || 'Unidad') : 'Unidad',
+        autoInventoryStock: linkedIng ? (linkedIng.currentStock !== undefined ? String(linkedIng.currentStock) : '') : '',
+        autoInventoryMin: linkedIng ? (linkedIng.minAlertThreshold !== undefined ? String(linkedIng.minAlertThreshold) : '') : '',
+        autoInventoryCost: linkedIng ? (linkedIng.costPerUnit !== undefined ? String(linkedIng.costPerUnit) : '') : '',
+        linkedIngredientId: linkedIngId || ''
       });
     } else {
       setEditingProduct(null);
@@ -86,7 +111,9 @@ export function useMenuProducts(restaurantId, activeCategory, selectedAdminBranc
         imageFile: null, imageFiles: [], imageUrls: [], videoFile: null, videoUrl: '', recommended: false, priceLabel: '', variants: [], 
         gridSpan: 1, cardLayout: 'global', customClass: '', recipe: [],
         borderTopShow: 'global', borderRightShow: 'global', borderBottomShow: 'global', borderLeftShow: 'global',
-        promoMinQty: '', promoDiscountPct: '', promoLabel: ''
+        promoMinQty: '', promoDiscountPct: '', promoLabel: '',
+        sku: '', linkedIngredientId: '',
+        autoInventory: false, autoInventoryUnit: 'Unidad', autoInventoryStock: '', autoInventoryMin: '', autoInventoryCost: ''
       });
     }
     setShowProdModal(true);
@@ -143,9 +170,16 @@ export function useMenuProducts(restaurantId, activeCategory, selectedAdminBranc
         available: editingProduct ? (editingProduct.available !== undefined ? editingProduct.available : true) : true,
         priceLabel: prodForm.priceLabel || null,
         variants: (prodForm.variants || []).map(v => ({ 
+          id: v.id || (Date.now().toString() + Math.random().toString()),
           name: v.name || '',
           price: cleanPrice(v.price),
-          available: v.available !== undefined ? v.available : true
+          available: v.available !== undefined ? v.available : true,
+          sku: v.sku || '',
+          inventoryEnabled: !!v.inventoryEnabled,
+          ingredientId: v.ingredientId || '',
+          inventoryVariantId: v.inventoryVariantId || '',
+          quantity: v.linkType === 'product' ? 1 : (Number(v.quantity) || 1),
+          linkType: v.linkType || 'product'
         })),
         gridSpan: Number(prodForm.gridSpan || 1),
         cardLayout: prodForm.cardLayout || 'global',
@@ -166,8 +200,58 @@ export function useMenuProducts(restaurantId, activeCategory, selectedAdminBranc
         borderLeftShow: prodForm.borderLeftShow || 'global',
         promoMinQty: prodForm.promoMinQty ? Number(prodForm.promoMinQty) : null,
         promoDiscountPct: prodForm.promoDiscountPct ? Number(prodForm.promoDiscountPct) : null,
-        promoLabel: prodForm.promoLabel || null
+        promoLabel: prodForm.promoLabel || null,
+        sku: prodForm.sku || ''
       };
+
+      if (prodForm.autoInventory) {
+        const parsedCost = prodForm.autoInventoryCost ? Number(String(prodForm.autoInventoryCost).replace(/\./g, '').replace(/,/g, '.')) : 0;
+        const parsedStock = parseFloat(prodForm.autoInventoryStock) || 0;
+        const parsedMin = parseFloat(prodForm.autoInventoryMin) || 0;
+        const parsedUnit = prodForm.autoInventoryUnit || 'Unidad';
+
+        const ingredientData = {
+          name: prodForm.name,
+          sku: prodForm.sku || '',
+          category: 'Reventa',
+          unit: parsedUnit,
+          costPerUnit: parsedCost,
+          trackInventory: true,
+          currentStock: parsedStock,
+          minAlertThreshold: parsedMin,
+          isDigital: false,
+          branchId: prodForm.branchIds && prodForm.branchIds.length === 1 ? prodForm.branchIds[0] : 'ALL',
+          location: ''
+        };
+
+        let targetIngredientId = prodForm.linkedIngredientId;
+        if (targetIngredientId) {
+          await updateIngredient(restaurantId, targetIngredientId, ingredientData);
+        } else {
+          targetIngredientId = await addIngredient(restaurantId, ingredientData);
+        }
+
+        productData.linkedIngredientId = targetIngredientId;
+        productData.recipe = [{
+          ingredientId: targetIngredientId,
+          name: prodForm.name,
+          unit: parsedUnit,
+          quantity: 1,
+          costPerUnit: parsedCost
+        }];
+      } else {
+        if (prodForm.linkedIngredientId) {
+          try {
+            await updateIngredient(restaurantId, prodForm.linkedIngredientId, { trackInventory: false });
+          } catch (err) {
+            console.warn('[useMenuProducts] Could not disable trackInventory on unlinked ingredient:', err.message);
+          }
+          productData.linkedIngredientId = null;
+          productData.recipe = (prodForm.recipe || []).filter(r => r.ingredientId !== prodForm.linkedIngredientId);
+        } else {
+          productData.linkedIngredientId = null;
+        }
+      }
 
       if (editingProduct) {
         await updateProduct(restaurantId, editingProduct.id, editingProduct.bucketId, productData);

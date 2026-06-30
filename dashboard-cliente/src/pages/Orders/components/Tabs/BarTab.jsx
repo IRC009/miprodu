@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock } from 'lucide-react';
+import { Lock, Printer, X, RotateCcw, RefreshCw, Upload, Eye, User, Phone, Clock, ExternalLink, MessageSquare, Check } from 'lucide-react';
 import { useDashboard } from '../../context/DashboardContext';
 import { printTicket } from '../../../../utils/printTicket';
 import { updateOrder } from '../../../../services/orderService';
@@ -57,7 +57,7 @@ export default function BarTab() {
           La sede seleccionada tiene el plan <strong>Tradicional</strong>.<br/><br/>
           Para habilitar el registro de pedidos en barra/mostrador, comandar y facturar, debes cambiar al <strong>Plan Carta</strong> o superior.
         </p>
-        <button className="btn-primary" style={{ padding: '0.85rem 2rem', borderRadius: '12px', fontWeight: 700, background: '#8b1a2e', color: 'white', border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(139, 26, 46, 0.2)' }} onClick={() => navigate('/subscription')}>🚀 Mejorar Plan</button>
+        <button className="btn-primary" style={{ padding: '0.85rem 2rem', borderRadius: '12px', fontWeight: 700, background: '#8b1a2e', color: 'white', border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(139, 26, 46, 0.2)' }} onClick={() => navigate('/subscription')}>Mejorar Plan</button>
       </div>
     );
   }
@@ -66,7 +66,7 @@ export default function BarTab() {
     <div className="bar-section">
       <div style={{ marginBottom: '1.5rem', textAlign: 'right' }}>
         <button className="btn-primary" onClick={() => handleNewOrder({ tableNumber: 'Barra' })}>
-          🍸 Nuevo Pedido Barra
+          Nuevo Pedido Barra
         </button>
       </div>
 
@@ -95,34 +95,34 @@ export default function BarTab() {
             <div key={order.id} className="rd-order-ticket bar">
                 <div className="rd-ticket-meta">
                    <div>
-                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                       <span className="rd-ticket-id" style={{ background: '#f1f5f9', color: '#334155', padding: '4px 10px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 900 }}>#{order.id.slice(-6).toUpperCase()}</span>
-                       <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700 }}>⏱️ {order.createdAt ? new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Reciente'}</span>
-                     </div>
-                     <span className="rd-ticket-waiter" style={{ fontSize: '0.85rem', color: '#475569', fontWeight: 700, display: 'block' }}>👤 {order.waiterName || 'Mesero'} {order.isReturn && <span style={{ color: '#ef4444', fontWeight: 800 }}> (Devolución)</span>}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                        <span className="rd-ticket-id" style={{ background: '#f1f5f9', color: '#334155', padding: '4px 10px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 900 }}>#{order.id.slice(-6).toUpperCase()}</span>
+                        <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Clock size={12} /> {order.createdAt ? new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Reciente'}</span>
+                      </div>
+                      <span className="rd-ticket-waiter" style={{ fontSize: '0.85rem', color: '#475569', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}><User size={14} /> {order.waiterName || 'Mesero'} {order.isReturn && <span style={{ color: '#ef4444', fontWeight: 800 }}> (Devolución)</span>}</span>
                    </div>
                    <div style={{ display: 'flex', gap: '6px' }}>
-                     <button className="rd-print-comanda" style={{ padding: '6px 10px', background: '#f1f5f9', borderRadius: '8px', border: '1px solid #cbd5e1', cursor: 'pointer' }} onClick={() => handlePrintComanda(order)} title="Imprimir Comanda">🖨️</button>
-                     {(!order.items || order.items.some(item => item.quantity > 0 && getItemNetQty(order, item) > 0) || order.total < 0) && (
-                       <button className="rd-print-comanda" style={{ padding: '6px 10px', background: '#fee2e2', color: '#b91c1c', borderRadius: '8px', border: '1px solid #fca5a5', cursor: 'pointer' }} 
-                               onClick={() => {
-                                 const isReturn = order.isBilled && order.total > 0;
-                                 setAuthModal({ 
-                                   type: 'cancel_action', 
-                                   action: (waiterObj) => isReturn ? handleReturnOrder(order) : handleCancelOrder(order), 
-                                   order 
-                                 });
-                               }} 
-                               title={order.total < 0 ? "Reponer Anulación/Devolución" : (order.isBilled ? "Hacer Devolución" : "Cancelar Pedido")}>
-                         {order.total < 0 ? '♻️' : (order.isBilled ? '↩️' : '❌')}
-                       </button>
-                     )}
-                   </div>
+                      <button className="rd-print-comanda" style={{ padding: '6px 10px', background: '#f1f5f9', borderRadius: '8px', border: '1px solid #cbd5e1', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => handlePrintComanda(order)} title="Imprimir Comanda"><Printer size={14} /></button>
+                      {(!order.items || order.items.some(item => item.quantity > 0 && getItemNetQty(order, item) > 0) || order.total < 0) && (
+                        <button className="rd-print-comanda" style={{ padding: '6px 10px', background: '#fee2e2', color: '#b91c1c', borderRadius: '8px', border: '1px solid #fca5a5', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} 
+                                onClick={() => {
+                                  const isReturn = order.isBilled && order.total > 0;
+                                  setAuthModal({ 
+                                    type: 'cancel_action', 
+                                    action: (waiterObj) => isReturn ? handleReturnOrder(order) : handleCancelOrder(order), 
+                                    order 
+                                  });
+                                }} 
+                                title={order.total < 0 ? "Reponer Anulación/Devolución" : (order.isBilled ? "Hacer Devolución" : "Cancelar Pedido")}>
+                          {order.total < 0 ? <RefreshCw size={14} /> : (order.isBilled ? <RotateCcw size={14} /> : <X size={14} />)}
+                        </button>
+                      )}
+                    </div>
                 </div>
                 {order.customerName && (
                   <div className="rd-customer-info" style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '0.75rem', marginTop: '0.75rem' }}>
-                    <div className="rd-customer-name" style={{ fontWeight: 800, fontSize: '0.85rem', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '6px' }}>👤 {order.customerName} {(order.orderType === 'pickup' || order.orderType === 'counter') && <span style={{ fontSize: '0.7rem', background: '#fef3c7', color: '#92400e', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>Para Recoger</span>}</div>
-                    {order.customerPhone && <div style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '4px' }}>📞 {order.customerPhone}</div>}
+                    <div className="rd-customer-name" style={{ fontWeight: 800, fontSize: '0.85rem', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '6px' }}><User size={14} /> {order.customerName} {(order.orderType === 'pickup' || order.orderType === 'counter') && <span style={{ fontSize: '0.7rem', background: '#fef3c7', color: '#92400e', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>Para Recoger</span>}</div>
+                    {order.customerPhone && <div style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}><Phone size={12} /> {order.customerPhone}</div>}
                   </div>
                 )}
                 <ul className="rd-ticket-items">
@@ -130,7 +130,10 @@ export default function BarTab() {
                     <li key={iIdx} className="rd-ticket-item" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                         <span className="qty">{item.quantity}x</span>
-                        <span className="name">{item.name}</span>
+                        <span className="name">
+                          {item.name}
+                          {item.sku && <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block', fontWeight: 600 }}>SKU: {item.sku}</span>}
+                        </span>
                       </div>
                       {item.quantity > 0 && getItemNetQty(order, item) > 0 && (
                         <button className="cancel-item-btn" onClick={() => setAuthModal({ type: 'cancel_action', action: (waiterObj) => handleCancelItem(order, iIdx), order, itemIndex: iIdx })} title="Cancelar Item" style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '1.25rem', cursor: 'pointer', opacity: 0.6 }}>&times;</button>
@@ -148,21 +151,21 @@ export default function BarTab() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', width: '100%' }}>
                    {order.paymentStatus === 'pending_verification' && (
                      <div style={{ width: '100%', padding: '0.6rem', background: '#fee2e2', color: '#b91c1c', borderRadius: '10px', fontSize: '0.825rem', fontWeight: 800, textAlign: 'center', border: '1px solid #fca5a5' }}>
-                       🔴 PAGO POR VALIDAR
+                       PAGO POR VALIDAR
                      </div>
                    )}
 
                    {/* Acciones principales de Pago y Comprobante */}
                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', width: '100%' }}>
                      {order.receiptUrl && (
-                       <button className="btn-secondary" style={{ flex: 1, minWidth: '120px', padding: '0.6rem 1rem', background: '#f8fafc', color: '#16a34a', border: '1px solid #16a34a', fontWeight: 700, borderRadius: '10px' }} onClick={() => window.open(order.receiptUrl, '_blank')}>
-                         📸 Ver Comprobante
+                       <button className="btn-secondary" style={{ flex: 1, minWidth: '120px', padding: '0.6rem 1rem', background: '#f8fafc', color: '#16a34a', border: '1px solid #16a34a', fontWeight: 700, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }} onClick={() => window.open(order.receiptUrl, '_blank')}>
+                         <Eye size={14} /> Ver Comprobante
                        </button>
                      )}
                      {order.paymentMethod === 'transfer' && !order.receiptUrl && (
                         <div style={{ width: '100%' }}>
-                          <label className="btn-secondary" style={{ display: 'block', textAlign: 'center', padding: '0.65rem', cursor: 'pointer', background: '#fef3c7', color: '#92400e', border: '1px solid #f59e0b', fontSize: '0.8rem', fontWeight: 800, borderRadius: '10px' }}>
-                            📤 Subir Comprobante (Personal)
+                          <label className="btn-secondary" style={{ display: 'block', textAlign: 'center', padding: '0.65rem', cursor: 'pointer', background: '#fef3c7', color: '#92400e', border: '1px solid #f59e0b', fontSize: '0.8rem', fontWeight: 800, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                            <Upload size={14} /> Subir Comprobante (Personal)
                             <input 
                               type="file" 
                               accept="image/*" 
@@ -179,10 +182,10 @@ export default function BarTab() {
                    {hasBillingPermission && order.paymentStatus === 'pending_verification' && (
                      <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
                        <button className="btn-primary" style={{ flex: 1, padding: '0.7rem', background: '#10b981', borderRadius: '10px', fontWeight: 800 }} onClick={() => handleValidatePayment(order.id)}>
-                         ✅ Validar
+                         Validar
                        </button>
                        <button className="btn-secondary" style={{ flex: 1, padding: '0.7rem', background: '#fee2e2', color: '#b91c1c', border: '1px solid #fca5a5', borderRadius: '10px', fontWeight: 800 }} onClick={() => handleInvalidatePayment(order.id)}>
-                         ❌ Rechazar
+                         Rechazar
                        </button>
                      </div>
                    )}
@@ -190,15 +193,15 @@ export default function BarTab() {
                    {/* Botones de acción del flujo del pedido */}
                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%' }}>
                      {order.paymentStatus !== 'pending_verification' && !order.isBilled && (
-                       <button className="btn-primary" style={{ width: '100%', padding: '0.75rem', borderRadius: '10px', fontWeight: 800, fontSize: '0.9rem', background: '#8b1a2e', color: 'white', border: 'none', cursor: 'pointer' }} onClick={() => handleConsolidateAndBill([order], 'Barra')}>💰 Facturar Pedido</button>
+                       <button className="btn-primary" style={{ width: '100%', padding: '0.75rem', borderRadius: '10px', fontWeight: 800, fontSize: '0.9rem', background: '#8b1a2e', color: 'white', border: 'none', cursor: 'pointer' }} onClick={() => handleConsolidateAndBill([order], 'Barra')}>Facturar Pedido</button>
                      )}
                      {order.paymentStatus !== 'pending_verification' && order.status === 'preparing' && (
                        <button style={{ width: '100%', padding: '0.75rem', background: '#10b981', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 800, fontSize: '0.9rem', cursor: 'pointer' }} onClick={() => handleMarkReady(order.id)}>
-                         ✅ Marcar como Listo
+                         Marcar como Listo
                        </button>
                      )}
                      {order.paymentStatus !== 'pending_verification' && order.status !== 'dispatched' && order.status !== 'ready_for_pickup' && (
-                       <button className="btn-primary" style={{ width: '100%', padding: '0.75rem', borderRadius: '10px', fontWeight: 800, fontSize: '0.9rem', background: '#3b82f6', color: 'white', border: 'none', cursor: 'pointer' }} onClick={() => handleDispatchOrder(order.id)}>🚀 Despachar Pedido</button>
+                       <button className="btn-primary" style={{ width: '100%', padding: '0.75rem', borderRadius: '10px', fontWeight: 800, fontSize: '0.9rem', background: '#3b82f6', color: 'white', border: 'none', cursor: 'pointer' }} onClick={() => handleDispatchOrder(order.id)}>Despachar Pedido</button>
                      )}
                      {order.paymentStatus !== 'pending_verification' && showCallClient && order.status !== 'dispatched' && (
                        <button
@@ -206,19 +209,19 @@ export default function BarTab() {
                          style={{ width: '100%', padding: '0.75rem', background: '#f59e0b', color: '#fff', fontWeight: 800, fontSize: '0.9rem', border: 'none', borderRadius: '10px', cursor: 'pointer' }}
                          onClick={() => handleCallClient(order.id)}
                        >
-                         🔔 Llamar Cliente
+                         Llamar Cliente
                        </button>
                      )}
                      {order.paymentStatus !== 'pending_verification' && (order.status === 'dispatched' || order.status === 'ready_for_pickup') && (
-                       <div style={{ textAlign: 'center', padding: '0.6rem', background: '#ecfdf5', color: '#10b981', borderRadius: '10px', fontWeight: 800, fontSize: '0.85rem' }}>
-                         ✅ {order.status === 'ready_for_pickup' ? 'Cliente Notificado' : 'Pedido Despachado'}
+                       <div style={{ textAlign: 'center', padding: '0.6rem', background: '#ecfdf5', color: '#10b981', borderRadius: '10px', fontWeight: 800, fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                         <Check size={14} /> {order.status === 'ready_for_pickup' ? 'Cliente Notificado' : 'Pedido Despachado'}
                        </div>
                      )}
                    </div>
 
                    <div style={{ display: 'flex', gap: '6px', width: '100%', borderTop: '1px solid #f1f5f9', paddingTop: '0.6rem', marginTop: '0.2rem' }}>
-                     <a href={getTrackingUrl(order.id)} target="_blank" rel="noopener noreferrer" title="Ver seguimiento del pedido" style={{ flex: 1, padding: '0.6rem', background: '#ede9fe', color: '#7c3aed', border: '1px solid #c4b5fd', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 600 }}>🔗 Seguimiento</a>
-                     {getWhatsAppUrl(order) && <a href={getWhatsAppUrl(order)} target="_blank" rel="noopener noreferrer" title="WhatsApp al cliente" style={{ flex: 1, padding: '0.6rem', background: '#dcfce7', color: '#15803d', border: '1px solid #86efac', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 700 }}>💬 WhatsApp</a>}
+                     <a href={getTrackingUrl(order.id)} target="_blank" rel="noopener noreferrer" title="Ver seguimiento del pedido" style={{ flex: 1, padding: '0.6rem', background: '#ede9fe', color: '#7c3aed', border: '1px solid #c4b5fd', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 600, gap: '4px' }}><ExternalLink size={14} /> Seguimiento</a>
+                     {getWhatsAppUrl(order) && <a href={getWhatsAppUrl(order)} target="_blank" rel="noopener noreferrer" title="WhatsApp al cliente" style={{ flex: 1, padding: '0.6rem', background: '#dcfce7', color: '#15803d', border: '1px solid #86efac', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 700, gap: '4px' }}><MessageSquare size={14} /> WhatsApp</a>}
                    </div>
                 </div>
             </div>

@@ -17,7 +17,7 @@ import ColorPalettesTab from './components/ColorPalettesTab';
 export default function DesignSettings() {
   const { restaurantId, planLevel } = useSubscription();
   const { showAlert } = useAlert();
-  const { design: globalDesign, loading: globalLoading, restaurant, refreshData, branches, categories = [] } = useRestaurantData();
+  const { design: globalDesign, loading: globalLoading, restaurant, refreshData, branches, categories = [], products = [] } = useRestaurantData();
   const menuIdentifier = restaurant?.slug || restaurantId;
 
   const {
@@ -25,7 +25,8 @@ export default function DesignSettings() {
     loading, saving, uploading,
     viewMode, setViewMode,
     iframeKey, setIframeKey,
-    handleChange, handleSave, handleExport, handleImport, handleApplyTheme, handleFileUpload
+    handleChange, handleSave, handleExport, handleImport, handleApplyTheme, handleFileUpload,
+    handleSlideImageUpload, handleSlideImageDelete, handleDeleteSlide, handleAddSlide
   } = useDesignData(restaurantId, globalDesign, globalLoading, showAlert);
 
   const renderLockOverlay = (requiredPlan, featureName, description = '', borderRadius = '14px') => {
@@ -115,10 +116,10 @@ export default function DesignSettings() {
         <div className="flex-row-wrap" style={{ gap: '0.75rem' }}>
           <input id="import-theme-input" type="file" accept=".json" style={{ display: 'none' }} onChange={handleImport} />
           <button className="btn-secondary" onClick={() => document.getElementById('import-theme-input').click()} title="Importar tema desde archivo .json">
-             📥 Importar
+             Importar
           </button>
           <button className="btn-secondary" onClick={handleExport} title="Exportar tema actual como archivo .json">
-             📤 Exportar
+             Exportar
           </button>
           <button className="btn-secondary" onClick={() => { window.hasUnsavedDesignChanges = false; window.hasUnsavedCssChanges = false; window.location.reload(); }}>Descartar</button>
           <button className="btn-primary" onClick={handleSave} disabled={saving}>
@@ -129,10 +130,10 @@ export default function DesignSettings() {
 
       <nav className="design-tabs">
         <button className={`tab-btn ${viewMode === 'themes' ? 'active' : ''}`} onClick={() => setViewMode('themes')}>
-          ✨ Plantillas
+          Plantillas
         </button>
         <button className={`tab-btn ${viewMode === 'palettes' ? 'active' : ''}`} onClick={() => setViewMode('palettes')}>
-          🎨 Paletas de Colores
+          Paletas de Colores
         </button>
         <button className={`tab-btn ${viewMode === 'basic' ? 'active' : ''}`} onClick={() => setViewMode('basic')}>
           Básico
@@ -141,7 +142,7 @@ export default function DesignSettings() {
           Avanzado
         </button>
         <button className={`tab-btn ${viewMode === 'customCss' ? 'active' : ''}`} onClick={() => setViewMode('customCss')}>
-          🛠️ CSS Personalizado
+          CSS Personalizado
         </button>
       </nav>
 
@@ -167,6 +168,12 @@ export default function DesignSettings() {
               handleChange={handleChange} 
               handleFileUpload={handleFileUpload} 
               uploading={uploading} 
+              handleSlideImageUpload={handleSlideImageUpload}
+              handleSlideImageDelete={handleSlideImageDelete}
+              handleDeleteSlide={handleDeleteSlide}
+              handleAddSlide={handleAddSlide}
+              categories={categories}
+              products={products}
             />
           )}
 
@@ -182,7 +189,7 @@ export default function DesignSettings() {
 
           {viewMode === 'customCss' && (
             <div className="design-section-card" style={{ padding: 0, overflow: 'hidden', position: 'relative' }}>
-              {planLevel < 2 && renderLockOverlay('Carta y Mesa', 'Editor CSS Avanzado', 'Personaliza el diseño de tu menú usando código CSS propio para cambiar colores, márgenes, fuentes y más de forma avanzada.', '18px')}
+              {planLevel < 2 && renderLockOverlay('Pro', 'Editor CSS Avanzado', 'Personaliza el diseño de tu menú usando código CSS propio para cambiar colores, márgenes, fuentes y más de forma avanzada.', '18px')}
               <div style={{ opacity: planLevel < 2 ? 0.6 : 1, pointerEvents: planLevel < 2 ? 'none' : 'auto' }}>
                 <CssEditor embedded={true} />
               </div>

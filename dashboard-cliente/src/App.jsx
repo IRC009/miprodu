@@ -20,7 +20,6 @@ const DashboardHome = lazyWithRetry(() => import('./pages/Home/DashboardHome'));
 const DesignSettings = lazyWithRetry(() => import('./pages/Design/DesignSettings'));
 const MenuManager = lazyWithRetry(() => import('./pages/Menu/MenuManager'));
 const BranchesManager = lazyWithRetry(() => import('./pages/Branches/BranchesManager'));
-const ReservationsList = lazyWithRetry(() => import('./pages/Reservations/ReservationsList'));
 const CustomerList = lazyWithRetry(() => import('./pages/CRM/CustomerList'));
 const CampaignManager = lazyWithRetry(() => import('./pages/Campaigns/CampaignManager'));
 const AnalyticsCenter = lazyWithRetry(() => import('./pages/Analytics/AnalyticsCenter'));
@@ -33,8 +32,7 @@ const POSView = lazyWithRetry(() => import('./pages/POS/POSView'));
 const ShiftHistory = lazyWithRetry(() => import('./pages/POS/ShiftHistory'));
 const IngredientsManager = lazyWithRetry(() => import('./pages/Inventory/IngredientsManager'));
 const LinksManager = lazyWithRetry(() => import('./pages/Links/LinksManager'));
-const TablesManager = lazyWithRetry(() => import('./pages/Tables/TablesManager'));
-const WaitersManager = lazyWithRetry(() => import('./pages/Waiters/WaitersManager'));
+
 const LoyaltyManager = lazyWithRetry(() => import('./pages/Loyalty/LoyaltyManager'));
 const AuditView = lazyWithRetry(() => import('./pages/Audit/AuditView'));
 
@@ -183,16 +181,14 @@ function App() {
             <Route path="pos" element={<LockedFeature feature="orders"><POSView /></LockedFeature>} />
             <Route path="shifts" element={<LockedFeature feature="shift_history"><ShiftHistory /></LockedFeature>} />
             <Route path="inventory" element={<LockedFeature feature="inventory"><IngredientsManager /></LockedFeature>} />
-            <Route path="reservations" element={<LockedFeature feature="reservations"><ReservationsList /></LockedFeature>} />
             <Route path="branches" element={<LockedFeature feature="branches"><BranchesManager /></LockedFeature>} />
             <Route path="crm" element={<LockedFeature feature="crm"><CustomerList /></LockedFeature>} />
             <Route path="analytics" element={<LockedFeature feature="analytics"><AnalyticsCenter /></LockedFeature>} />
-            <Route path="waiters" element={<LockedFeature feature="meseros"><WaitersManager /></LockedFeature>} />
+
 
             {/* 🔒 Plan Enterprise (3) */}
             <Route path="campaigns" element={<LockedFeature feature="campaigns"><CampaignManager /></LockedFeature>} />
             <Route path="promotions" element={<LockedFeature feature="promotions"><PromotionsManager /></LockedFeature>} />
-            <Route path="tables" element={<LockedFeature feature="tables"><TablesManager /></LockedFeature>} />
             <Route path="loyalty" element={<LockedFeature feature="loyalty"><LoyaltyManager /></LockedFeature>} />
           </Route>
 

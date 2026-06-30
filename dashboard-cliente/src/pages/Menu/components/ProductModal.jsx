@@ -45,7 +45,7 @@ const VideoFilePreview = ({ file, onRemove }) => {
 };
 
 import { useSubscription } from '../../../context/SubscriptionContext';
-import { Lock } from 'lucide-react';
+import { Lock, Sparkles, Tag, Settings, ClipboardList, ChefHat, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
 
 const formatNumberWithDots = (value) => {
   if (value === undefined || value === null || value === '') return '';
@@ -103,9 +103,15 @@ export default function ProductModal({
           <div className="modal-body" style={{ padding: '1.5rem', overflowY: 'auto' }}>
             
             <div style={{ display: activeTab === 'basic' ? 'block' : 'none' }}>
-              <div className="form-group">
-                <label className="form-label">Nombre del Plato</label>
-                <input required type="text" className="form-input" value={prodForm.name} onChange={e => setProdForm({...prodForm, name: e.target.value})} placeholder="Ej: Hamburguesa Especial, Mojito..." />
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                <div className="form-group" style={{ flex: 2, minWidth: '200px' }}>
+                  <label className="form-label">Nombre del Plato / Artículo</label>
+                  <input required type="text" className="form-input" value={prodForm.name} onChange={e => setProdForm({...prodForm, name: e.target.value})} placeholder="Ej: Hamburguesa Especial, Mojito..." />
+                </div>
+                <div className="form-group" style={{ flex: 1, minWidth: '120px' }}>
+                  <label className="form-label">SKU / Referencia</label>
+                  <input type="text" className="form-input" value={prodForm.sku || ''} onChange={e => setProdForm({...prodForm, sku: e.target.value})} placeholder="Ej: SKU-001" />
+                </div>
               </div>
               <div className="form-group">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
@@ -116,7 +122,7 @@ export default function ProductModal({
                     onClick={handleGenerateAiDescription}
                     disabled={isGeneratingAI || !prodForm.name}
                   >
-                    {isGeneratingAI ? 'Generando...' : '✨ Generar con IA'}
+                    {isGeneratingAI ? 'Generando...' : <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Sparkles size={13} /> Generar con IA</span>}
                   </button>
                 </div>
                 <textarea className="form-input" rows="3" value={prodForm.description} onChange={e => setProdForm({...prodForm, description: e.target.value})} placeholder="Describe los ingredientes, preparación..." />
@@ -153,7 +159,7 @@ export default function ProductModal({
               {/* Campo de precio con descuento — solo cuando type=discount */}
               {prodForm.promotionType === 'discount' && (
                 <div className="form-group" style={{ background: '#fff8f0', border: '1px solid #fed7aa', borderRadius: '8px', padding: '0.75rem' }}>
-                  <label className="form-label" style={{ color: '#ea580c' }}>🏷️ Precio de Oferta (COP)</label>
+                  <label className="form-label" style={{ color: '#ea580c', display: 'flex', alignItems: 'center', gap: '6px' }}><Tag size={14} /> Precio de Oferta (COP)</label>
                   <input 
                     type="text" 
                     className="form-input" 
@@ -173,7 +179,6 @@ export default function ProductModal({
               {/* Info 2x1 */}
               {prodForm.promotionType === '2x1' && (
                 <div style={{ background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '8px', padding: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ fontSize: '1.25rem' }}>🔥</span>
                   <div>
                     <p style={{ margin: 0, fontWeight: 700, fontSize: '0.85rem', color: '#92400e' }}>Promoción 2x1 activada</p>
                     <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#78350f' }}>Al agregar 2 unidades, el cliente solo paga el precio de 1.</p>
@@ -184,9 +189,9 @@ export default function ProductModal({
               {/* Promoción Personalizada Condicionada */}
               {prodForm.promotionType === 'custom_condition' && (
                 <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                    <span style={{ fontSize: '1.25rem' }}>⚙️</span>
-                    <strong style={{ fontSize: '0.9rem', color: '#166534' }}>Configuración de Promoción Personalizada</strong>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem', color: '#166534' }}>
+                    <Settings size={18} />
+                    <strong style={{ fontSize: '0.9rem' }}>Configuración de Promoción Personalizada</strong>
                   </div>
                   
                   <div className="form-group" style={{ margin: 0 }}>
@@ -242,8 +247,29 @@ export default function ProductModal({
               
               <div className="variants-container">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                  <label className="form-label" style={{ margin: 0, color: 'var(--primary)' }}>📋 Variantes del Producto</label>
-                  <button type="button" className="btn-add-variant" onClick={() => setProdForm({...prodForm, variants: [...(prodForm.variants || []), { id: Date.now().toString(), name: '', price: '' }]})}>+ Añadir Variante</button>
+                  <label className="form-label" style={{ margin: 0, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '6px' }}><ClipboardList size={18} /> Variantes del Producto</label>
+                  <button 
+                    type="button" 
+                    className="btn-add-variant" 
+                    onClick={() => setProdForm({
+                      ...prodForm, 
+                      variants: [
+                        ...(prodForm.variants || []), 
+                        { 
+                          id: Date.now().toString() + Math.random().toString(), 
+                          name: '', 
+                          price: '', 
+                          sku: '', 
+                          inventoryEnabled: false, 
+                          ingredientId: '', 
+                          quantity: '1', 
+                          available: true 
+                        }
+                      ]
+                    })}
+                  >
+                    + Añadir Variante
+                  </button>
                 </div>
                 
                 {(!prodForm.variants || prodForm.variants.length === 0) ? (
@@ -251,43 +277,279 @@ export default function ProductModal({
                 ) : (
                   <>
                     {prodForm.variants.map((variant, idx) => (
-                      <div key={variant.id || idx} className="variant-row">
-                        <input 
-                          type="text" 
-                          className="form-input" 
-                          placeholder="Nombre (Ej: Don Julio)" 
-                          value={variant.name} 
-                          onChange={(e) => {
-                            const newVariants = [...prodForm.variants];
-                            newVariants[idx].name = e.target.value;
-                            setProdForm({...prodForm, variants: newVariants});
-                          }} 
-                          style={{ flex: 2 }} 
-                          required
-                        />
-                        <input 
-                          type="text" 
-                          className="form-input" 
-                          placeholder="Precio" 
-                          value={formatNumberWithDots(variant.price)} 
-                          onChange={(e) => {
-                            const newVariants = [...prodForm.variants];
-                            newVariants[idx].price = e.target.value.replace(/\D/g, '');
-                            setProdForm({...prodForm, variants: newVariants});
-                          }} 
-                          style={{ flex: 1 }} 
-                          required
-                        />
-                        <button 
-                          type="button" 
-                          className="btn-remove-variant"
-                          onClick={() => {
-                            const newVariants = prodForm.variants.filter((_, i) => i !== idx);
-                            setProdForm({...prodForm, variants: newVariants});
-                          }} 
-                        >
-                          ✖
-                        </button>
+                      <div key={variant.id || idx} style={{
+                        background: '#f8fafc',
+                        border: '1.5px solid #e2e8f0',
+                        borderRadius: '12px',
+                        padding: '1rem',
+                        marginBottom: '1rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.75rem'
+                      }}>
+                        {/* Cabecera / Fila Principal */}
+                        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                          <input 
+                            type="text" 
+                            className="form-input" 
+                            placeholder="Nombre (Ej: Don Julio)" 
+                            value={variant.name} 
+                            onChange={(e) => {
+                              const newVariants = [...prodForm.variants];
+                              newVariants[idx].name = e.target.value;
+                              setProdForm({...prodForm, variants: newVariants});
+                            }} 
+                            style={{ flex: 2, margin: 0 }} 
+                            required
+                          />
+                          <input 
+                            type="text" 
+                            className="form-input" 
+                            placeholder="Precio" 
+                            value={formatNumberWithDots(variant.price)} 
+                            onChange={(e) => {
+                              const newVariants = [...prodForm.variants];
+                              newVariants[idx].price = e.target.value.replace(/\D/g, '');
+                              setProdForm({...prodForm, variants: newVariants});
+                            }} 
+                            style={{ flex: 1, margin: 0 }} 
+                            required
+                          />
+                          <button 
+                            type="button" 
+                            className="btn-remove-variant"
+                            onClick={() => {
+                              const newVariants = prodForm.variants.filter((_, i) => i !== idx);
+                              setProdForm({...prodForm, variants: newVariants});
+                            }} 
+                            style={{ 
+                              padding: '0.5rem', 
+                              background: '#fee2e2', 
+                              color: '#ef4444', 
+                              border: '1px solid #fca5a5', 
+                              borderRadius: '8px', 
+                              cursor: 'pointer', 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'center',
+                              width: '32px',
+                              height: '32px',
+                              flexShrink: 0
+                            }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+
+                        {/* Fila secundaria: SKU & Checkbox de control de stock */}
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1, minWidth: '150px' }}>
+                            <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#475569' }}>SKU / Ref de Variante</span>
+                            <input 
+                              type="text" 
+                              className="form-input" 
+                              placeholder="Ej: SKU-VAR1"
+                              value={variant.sku || ''}
+                              onChange={(e) => {
+                                const newVariants = [...prodForm.variants];
+                                newVariants[idx].sku = e.target.value;
+                                setProdForm({...prodForm, variants: newVariants});
+                              }}
+                              style={{ fontSize: '0.8rem', padding: '6px 10px', margin: 0 }}
+                            />
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '14px' }}>
+                            <input 
+                              type="checkbox" 
+                              id={`variant-inv-${variant.id || idx}`}
+                              checked={variant.inventoryEnabled || false} 
+                              onChange={(e) => {
+                                const newVariants = [...prodForm.variants];
+                                newVariants[idx].inventoryEnabled = e.target.checked;
+                                if (e.target.checked && !newVariants[idx].quantity) {
+                                  newVariants[idx].quantity = '1';
+                                }
+                                setProdForm({...prodForm, variants: newVariants});
+                              }}
+                              style={{ width: '16px', height: '16px', accentColor: '#2563eb', cursor: 'pointer' }}
+                            />
+                            <label htmlFor={`variant-inv-${variant.id || idx}`} style={{ fontSize: '0.8rem', fontWeight: 700, color: '#1e3a8a', cursor: 'pointer', margin: 0 }}>
+                              Controlar Stock
+                            </label>
+                          </div>
+                        </div>
+
+                        {/* Panel de control de stock si está activo */}
+                        {variant.inventoryEnabled && (
+                          <div style={{ 
+                            background: '#eff6ff', 
+                            border: '1px solid #bfdbfe', 
+                            borderRadius: '8px', 
+                            padding: '0.75rem',
+                            marginTop: '0.25rem',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.5rem'
+                          }}>
+                            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                              <div style={{ flex: 1, minWidth: '150px' }}>
+                                <label style={{ fontSize: '0.7rem', fontWeight: 600, color: '#1e3a8a', display: 'block', marginBottom: '2px' }}>
+                                  Tipo de Relación
+                                </label>
+                                <select 
+                                  className="form-input" 
+                                  value={variant.linkType || 'product'}
+                                  onChange={(e) => {
+                                    const newVariants = [...prodForm.variants];
+                                    newVariants[idx].linkType = e.target.value;
+                                    if (e.target.value === 'product') newVariants[idx].quantity = '1';
+                                    setProdForm({...prodForm, variants: newVariants});
+                                  }}
+                                  style={{ fontSize: '0.8rem', padding: '6px', margin: 0 }}
+                                >
+                                  <option value="product">Producto (Venta Directa 1:1)</option>
+                                  <option value="ingredient">Insumo / Receta (Descuento Proporcional)</option>
+                                </select>
+                              </div>
+
+                              {/* Selector de Artículo Padre */}
+                              <div style={{ flex: 2, minWidth: '160px' }}>
+                                <label style={{ fontSize: '0.7rem', fontWeight: 600, color: '#1e3a8a', display: 'block', marginBottom: '2px' }}>
+                                  {(variant.linkType || 'product') === 'product' ? 'Artículo de Inventario (Producto)' : 'Artículo de Inventario (Insumo)'}
+                                </label>
+                                <select 
+                                  className="form-input" 
+                                  value={variant.ingredientId || ''}
+                                  onChange={(e) => {
+                                    const newVariants = [...prodForm.variants];
+                                    newVariants[idx].ingredientId = e.target.value;
+                                    newVariants[idx].inventoryVariantId = ''; // reset sub-variante
+                                    setProdForm({...prodForm, variants: newVariants});
+                                  }}
+                                  style={{ fontSize: '0.8rem', padding: '6px', margin: 0 }}
+                                  required={variant.inventoryEnabled}
+                                >
+                                  <option value="">Selecciona un artículo...</option>
+                                  {availableIngredients
+                                    .filter(ing => ing.hasVariants)
+                                    .map(ing => (
+                                      <option key={ing.id} value={ing.id}>
+                                        {ing.name} ({ing.unit})
+                                      </option>
+                                    ))
+                                  }
+                                </select>
+                              </div>
+
+                              {/* Selector de Sub-variante (solo si el artículo padre tiene variantes) */}
+                              {(() => {
+                                const selectedIng = availableIngredients.find(i => i.id === variant.ingredientId);
+                                if (!selectedIng?.hasVariants || !selectedIng?.variants?.length) return null;
+                                return (
+                                  <div style={{ flex: 2, minWidth: '150px' }}>
+                                    <label style={{ fontSize: '0.7rem', fontWeight: 600, color: '#1e3a8a', display: 'block', marginBottom: '2px' }}>
+                                      Variante de Inventario (Talla / Color…)
+                                    </label>
+                                    <select
+                                      className="form-input"
+                                      value={variant.inventoryVariantId || ''}
+                                      onChange={(e) => {
+                                        const newVariants = [...prodForm.variants];
+                                        newVariants[idx].inventoryVariantId = e.target.value;
+                                        setProdForm({...prodForm, variants: newVariants});
+                                      }}
+                                      style={{ fontSize: '0.8rem', padding: '6px', margin: 0 }}
+                                      required={variant.inventoryEnabled}
+                                    >
+                                      <option value="">Selecciona variante...</option>
+                                      {selectedIng.variants.map(sv => (
+                                        <option key={sv.id} value={sv.id}>
+                                          {sv.name}{sv.sku ? ` (${sv.sku})` : ''} — Stock: {parseFloat(sv.currentStock || 0).toLocaleString('es-CO', { maximumFractionDigits: 2 })} {selectedIng.unit}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                );
+                              })()}
+
+                              {/* Campo cantidad de consumo (solo para insumos/recetas) */}
+                              {(variant.linkType || 'product') === 'ingredient' ? (
+                                <div style={{ flex: 1, minWidth: '80px' }}>
+                                  <label style={{ fontSize: '0.7rem', fontWeight: 600, color: '#1e3a8a', display: 'block', marginBottom: '2px' }}>
+                                    Cant. Consumo
+                                  </label>
+                                  <input 
+                                    type="number" step="0.01" min="0.01"
+                                    className="form-input" 
+                                    placeholder="Ej: 1"
+                                    value={variant.quantity || '1'}
+                                    onChange={(e) => {
+                                      const newVariants = [...prodForm.variants];
+                                      newVariants[idx].quantity = e.target.value;
+                                      setProdForm({...prodForm, variants: newVariants});
+                                    }}
+                                    style={{ fontSize: '0.8rem', padding: '6px', margin: 0 }}
+                                    required={variant.inventoryEnabled}
+                                  />
+                                </div>
+                              ) : (
+                                <div style={{ flex: 1, minWidth: '100px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                  <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#1e3a8a' }}>Descuento</span>
+                                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0369a1', background: '#e0f2fe', border: '1px solid #bae6fd', padding: '6px 8px', borderRadius: '6px', textAlign: 'center', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}>
+                                    1 Unidad
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Mostrar Stock Actual y Estado de Manera Visual y Organizada */}
+                            {(() => {
+                              const ing = (availableIngredients || []).find(i => i.id === variant.ingredientId);
+                              if (!ing) return null;
+                              const stock = Number(ing.currentStock) || 0;
+                              const isOutOfStock = stock <= 0;
+                              const isLowStock = ing.minAlertThreshold !== undefined && stock <= Number(ing.minAlertThreshold);
+                              
+                              let badgeColor = '#10b981';
+                              let badgeBg = '#ecfdf5';
+                              let badgeIcon = <CheckCircle2 size={14} />;
+                              let badgeText = `En Stock: ${stock} ${ing.unit}`;
+                              
+                              if (isOutOfStock) {
+                                badgeColor = '#ef4444';
+                                badgeBg = '#fff1f2';
+                                badgeIcon = <XCircle size={14} />;
+                                badgeText = `Agotado (Stock: 0 ${ing.unit})`;
+                              } else if (isLowStock) {
+                                badgeColor = '#f59e0b';
+                                badgeBg = '#fffbeb';
+                                badgeIcon = <AlertTriangle size={14} />;
+                                badgeText = `Stock Bajo: ${stock} ${ing.unit} (Mín: ${ing.minAlertThreshold})`;
+                              }
+
+                              return (
+                                <div style={{ 
+                                  display: 'inline-flex', 
+                                  alignItems: 'center', 
+                                  gap: '6px',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 700,
+                                  color: badgeColor,
+                                  background: badgeBg,
+                                  padding: '4px 10px',
+                                  borderRadius: '6px',
+                                  marginTop: '4px',
+                                  alignSelf: 'flex-start',
+                                  border: `1px solid ${isOutOfStock ? '#fecaca' : isLowStock ? '#fde68a' : '#a7f3d0'}`
+                                }}>
+                                  {badgeIcon}
+                                  {badgeText}
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        )}
                       </div>
                     ))}
                     <p className="form-help" style={{ marginTop: '0.5rem' }}>Las variantes anulan el precio regular del producto.</p>
@@ -295,163 +557,264 @@ export default function ProductModal({
                 )}
               </div>
 
-              <div className="variants-container" style={{ position: 'relative', marginTop: '1.5rem', background: '#f8fafc', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
-                {isLocked && (
-                  <div style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(255, 255, 255, 0.65)',
-                    backdropFilter: 'blur(1.5px)',
-                    WebkitBackdropFilter: 'blur(1.5px)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '1.5rem',
-                    textAlign: 'center',
-                    zIndex: 10,
-                    borderRadius: '8px',
-                    userSelect: 'none',
-                    pointerEvents: 'auto'
-                  }}>
-                    <div style={{
-                      width: '40px', height: '40px', borderRadius: '50%',
-                      backgroundColor: '#fdf2f4', display: 'flex',
-                      alignItems: 'center', justifyContent: 'center',
-                      color: '#8b1a2e', marginBottom: '0.4rem',
-                      border: '1px solid #f9d5db',
-                      boxShadow: '0 4px 12px rgba(139, 26, 46, 0.15)'
-                    }}>
-                      <Lock size={18} strokeWidth={2} />
-                    </div>
-                    <h4 style={{ fontWeight: 800, fontSize: '0.85rem', color: '#1e293b', margin: '0 0 0.15rem 0' }}>
-                      Insumos Bloqueados
-                    </h4>
-                    <p style={{ fontSize: '0.68rem', color: '#475569', maxWidth: '280px', margin: '0 0 0.65rem 0', lineHeight: '1.4', fontWeight: 500 }}>
-                      Controla tus ingredientes, calcula el costo total de preparación de cada plato automáticamente y descuenta stock al vender. Requiere el <strong>Plan Carta y Mesa</strong>.
-                    </p>
-                    <a 
-                      href="/subscription" 
-                      onClick={(e) => { e.stopPropagation(); }}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        textDecoration: 'none',
-                        color: '#8b1a2e',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        padding: '4px 12px',
-                        background: '#fdf2f4',
-                        border: '1px solid #f9d5db',
-                        borderRadius: '6px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Mejorar Plan ✨
-                    </a>
-                  </div>
-                )}
-                <div style={{ opacity: isLocked ? 0.35 : 1, pointerEvents: isLocked ? 'none' : 'auto' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                    <label className="form-label" style={{ margin: 0, color: '#0f172a' }}>🥣 Ingredientes (Receta)</label>
-                  </div>
-                  <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '1rem' }}>Agrega los insumos para calcular el costo de este plato y (opcionalmente) descontarlos del inventario al vender.</p>
-                  
-                  <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-                    <select 
-                      className="form-input" 
-                      value={recipeItemForm.ingredientId}
-                      onChange={e => setRecipeItemForm({...recipeItemForm, ingredientId: e.target.value})}
-                      style={{ flex: 2 }}
-                    >
-                      <option value="">Selecciona un insumo...</option>
-                      {availableIngredients.map(ing => (
-                        <option key={ing.id} value={ing.id}>{ing.name} ({ing.unit})</option>
-                      ))}
-                    </select>
+              {(!prodForm.variants || prodForm.variants.length === 0) && !isLocked && (
+                <div style={{ marginTop: '1.5rem', background: '#eff6ff', padding: '1rem', borderRadius: '8px', border: '1px solid #bfdbfe' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <input 
-                      type="number" 
-                      step="0.01"
-                      className="form-input" 
-                      placeholder="Cant." 
-                      value={recipeItemForm.quantity}
-                      onChange={e => setRecipeItemForm({...recipeItemForm, quantity: e.target.value})}
-                      style={{ flex: 1 }}
+                      type="checkbox" 
+                      id="autoInventory" 
+                      checked={prodForm.autoInventory || false} 
+                      onChange={e => setProdForm({ 
+                        ...prodForm, 
+                        autoInventory: e.target.checked,
+                        autoInventoryUnit: prodForm.autoInventoryUnit || 'Unidad',
+                        autoInventoryStock: prodForm.autoInventoryStock || '',
+                        autoInventoryMin: prodForm.autoInventoryMin || '',
+                        autoInventoryCost: prodForm.autoInventoryCost || ''
+                      })} 
+                      style={{ width: '16px', height: '16px', accentColor: '#2563eb', cursor: 'pointer' }}
                     />
-                    <button 
-                      type="button" 
-                      onClick={() => {
-                        if(!recipeItemForm.ingredientId || !recipeItemForm.quantity) return;
-                        const ing = availableIngredients.find(i => i.id === recipeItemForm.ingredientId);
-                        if(ing) {
-                          const newItem = { 
-                            ingredientId: ing.id, 
-                            name: ing.name, 
-                            unit: ing.unit, 
-                            quantity: parseFloat(recipeItemForm.quantity),
-                            costPerUnit: ing.costPerUnit || 0
-                          };
-                          setProdForm({
-                            ...prodForm, 
-                            recipe: [...(prodForm.recipe || []), newItem]
-                          });
-                          setRecipeItemForm({ ingredientId: '', quantity: '' });
-                        }
-                      }}
-                      style={{ padding: '8px 16px', background: '#10b981', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                    >
-                      +
-                    </button>
+                    <label htmlFor="autoInventory" style={{ fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', margin: 0, color: '#1e3a8a' }}>
+                      📦 Controlar Inventario de este Producto (Crear/enlazar artículo de inventario y stock)
+                    </label>
                   </div>
-
-                  {(!prodForm.recipe || prodForm.recipe.length === 0) ? (
-                    <p style={{ fontSize: '0.75rem', color: '#64748b', textAlign: 'center' }}>No hay ingredientes en la receta.</p>
-                  ) : (
-                    <>
-                      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                        {prodForm.recipe.map((item, idx) => {
-                          const ing = (availableIngredients || []).find(i => i.id === item.ingredientId) || {};
-                          const name = item.name || ing.name || 'Insumo';
-                          const unit = item.unit || ing.unit || '';
-                          const costPerUnit = item.costPerUnit !== undefined && item.costPerUnit !== null ? item.costPerUnit : (ing.costPerUnit || 0);
-                          return (
-                            <li key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem', borderBottom: '1px solid var(--border-light)' }}>
-                              <span style={{ fontSize: '0.85rem' }}>{name} ({item.quantity} {unit})</span>
-                              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                                <span style={{ fontSize: '0.85rem', color: '#64748b' }}>${(item.quantity * (costPerUnit || 0)).toFixed(2)}</span>
-                                <button 
-                                  type="button" 
-                                  onClick={() => {
-                                    const newRecipe = prodForm.recipe.filter((_, i) => i !== idx);
-                                    setProdForm({...prodForm, recipe: newRecipe});
-                                  }}
-                                  style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '1rem' }}
-                                >
-                                  ×
-                                </button>
-                              </div>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1rem', paddingTop: '0.5rem', borderTop: '2px solid #cbd5e1' }}>
-                        <span style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Costo Teórico:</span>
-                        <span style={{ fontWeight: 'bold', color: '#ef4444', fontSize: '0.9rem' }}>
-                          ${prodForm.recipe.reduce((sum, item) => {
-                            const ing = (availableIngredients || []).find(i => i.id === item.ingredientId) || {};
-                            const costPerUnit = item.costPerUnit !== undefined && item.costPerUnit !== null ? item.costPerUnit : (ing.costPerUnit || 0);
-                            return sum + (item.quantity * (costPerUnit || 0));
-                          }, 0).toFixed(2)}
-                        </span>
+                  
+                  {prodForm.autoInventory && (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem', marginTop: '0.75rem' }}>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label className="form-label" style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1e3a8a', marginBottom: '4px' }}>Unidad de Medida</label>
+                        <select 
+                          className="form-input" 
+                          value={prodForm.autoInventoryUnit || 'Unidad'}
+                          onChange={e => setProdForm({ ...prodForm, autoInventoryUnit: e.target.value })}
+                          style={{ fontSize: '0.8rem', padding: '6px 10px' }}
+                        >
+                          <option value="Unidad">Unidad (Unid)</option>
+                          <option value="Porción">Porción (Porc)</option>
+                          <option value="g">Gramos (g)</option>
+                          <option value="kg">Kilogramos (kg)</option>
+                          <option value="ml">Mililitros (ml)</option>
+                          <option value="L">Litros (L)</option>
+                        </select>
                       </div>
-                    </>
+
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label className="form-label" style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1e3a8a', marginBottom: '4px' }}>
+                          {editingProduct ? 'Stock Actual' : 'Stock Inicial'}
+                        </label>
+                        <input 
+                          type="number" 
+                          step="0.01"
+                          min="0"
+                          required={prodForm.autoInventory}
+                          className="form-input" 
+                          placeholder="Ej: 50" 
+                          value={prodForm.autoInventoryStock || ''}
+                          onChange={e => setProdForm({ ...prodForm, autoInventoryStock: e.target.value })}
+                          style={{ fontSize: '0.8rem', padding: '6px 10px' }}
+                        />
+                      </div>
+
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label className="form-label" style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1e3a8a', marginBottom: '4px' }}>Alerta Mín. Stock</label>
+                        <input 
+                          type="number" 
+                          step="0.01"
+                          min="0"
+                          required={prodForm.autoInventory}
+                          className="form-input" 
+                          placeholder="Ej: 5" 
+                          value={prodForm.autoInventoryMin || ''}
+                          onChange={e => setProdForm({ ...prodForm, autoInventoryMin: e.target.value })}
+                          style={{ fontSize: '0.8rem', padding: '6px 10px' }}
+                        />
+                      </div>
+
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label className="form-label" style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1e3a8a', marginBottom: '4px' }}>Costo de Compra (COP)</label>
+                        <input 
+                          type="text" 
+                          className="form-input" 
+                          placeholder="Ej: 4.500" 
+                          value={formatNumberWithDots(prodForm.autoInventoryCost)}
+                          onChange={e => setProdForm({ ...prodForm, autoInventoryCost: e.target.value.replace(/\D/g, '') })}
+                          style={{ fontSize: '0.8rem', padding: '6px 10px' }}
+                        />
+                      </div>
+                    </div>
                   )}
                 </div>
-              </div>
+              )}
+
+              {(!prodForm.variants || prodForm.variants.length === 0) && (
+                <div className="variants-container" style={{ position: 'relative', marginTop: '1.5rem', background: '#f8fafc', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
+                  {isLocked && (
+                    <div style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backgroundColor: 'rgba(255, 255, 255, 0.65)',
+                      backdropFilter: 'blur(1.5px)',
+                      WebkitBackdropFilter: 'blur(1.5px)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '1.5rem',
+                      textAlign: 'center',
+                      zIndex: 10,
+                      borderRadius: '8px',
+                      userSelect: 'none',
+                      pointerEvents: 'auto'
+                    }}>
+                      <div style={{
+                        width: '40px', height: '40px', borderRadius: '50%',
+                        backgroundColor: '#fdf2f4', display: 'flex',
+                        alignItems: 'center', justifyContent: 'center',
+                        color: '#8b1a2e', marginBottom: '0.4rem',
+                        border: '1px solid #f9d5db',
+                        boxShadow: '0 4px 12px rgba(139, 26, 46, 0.15)'
+                      }}>
+                        <Lock size={18} strokeWidth={2} />
+                      </div>
+                      <h4 style={{ fontWeight: 800, fontSize: '0.85rem', color: '#1e293b', margin: '0 0 0.15rem 0' }}>
+                        Insumos Bloqueados
+                      </h4>
+                      <p style={{ fontSize: '0.68rem', color: '#475569', maxWidth: '280px', margin: '0 0 0.65rem 0', lineHeight: '1.4', fontWeight: 500 }}>
+                        Controla tus ingredientes, calcula el costo total de preparación de cada plato automáticamente y descuenta stock al vender. Requiere el <strong>Plan Pro</strong>.
+                      </p>
+                      <a 
+                        href="/subscription" 
+                        onClick={(e) => { e.stopPropagation(); }}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          textDecoration: 'none',
+                          color: '#8b1a2e',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          padding: '4px 12px',
+                          background: '#fdf2f4',
+                          border: '1px solid #f9d5db',
+                          borderRadius: '6px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>Mejorar Plan <Sparkles size={12} /></span>
+                      </a>
+                    </div>
+                  )}
+                  <div style={{ opacity: isLocked ? 0.35 : 1, pointerEvents: isLocked ? 'none' : 'auto' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                      <label className="form-label" style={{ margin: 0, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}><ChefHat size={18} /> Ingredientes (Receta)</label>
+                    </div>
+                    <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '1rem' }}>Agrega los insumos para calcular el costo de este plato y (opcionalmente) descontarlos del inventario al vender.</p>
+                    
+                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                      <select 
+                        className="form-input" 
+                        value={recipeItemForm.ingredientId}
+                        onChange={e => setRecipeItemForm({...recipeItemForm, ingredientId: e.target.value})}
+                        style={{ flex: 2 }}
+                      >
+                        <option value="">Selecciona un insumo...</option>
+                        {availableIngredients
+                          .filter(ing => !ing.hasVariants)
+                          .map(ing => (
+                            <option key={ing.id} value={ing.id}>
+                              {ing.name} ({ing.unit})
+                            </option>
+                          ))
+                        }
+                      </select>
+                      <input 
+                        type="number" 
+                        step="0.01"
+                        className="form-input" 
+                        placeholder="Cant." 
+                        value={recipeItemForm.quantity}
+                        onChange={e => setRecipeItemForm({...recipeItemForm, quantity: e.target.value})}
+                        style={{ flex: 1 }}
+                      />
+                      <button 
+                        type="button" 
+                        onClick={() => {
+                          if(!recipeItemForm.ingredientId || !recipeItemForm.quantity) return;
+                          const ing = availableIngredients.find(i => i.id === recipeItemForm.ingredientId);
+                          if(ing) {
+                            const isProductWithoutVariants = !prodForm.variants || prodForm.variants.length === 0;
+                            if (ing.hasVariants && isProductWithoutVariants) {
+                              alert("No puedes asignar este artículo de inventario porque contiene variantes y este producto no tiene variantes configuradas.");
+                              return;
+                            }
+                            const newItem = { 
+                              ingredientId: ing.id, 
+                              name: ing.name, 
+                              unit: ing.unit, 
+                              quantity: parseFloat(recipeItemForm.quantity),
+                              costPerUnit: ing.costPerUnit || 0
+                            };
+                            setProdForm({
+                              ...prodForm, 
+                              recipe: [...(prodForm.recipe || []), newItem]
+                            });
+                            setRecipeItemForm({ ingredientId: '', quantity: '' });
+                          }
+                        }}
+                        style={{ padding: '8px 16px', background: '#10b981', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    {(!prodForm.recipe || prodForm.recipe.length === 0) ? (
+                      <p style={{ fontSize: '0.75rem', color: '#64748b', textAlign: 'center' }}>No hay ingredientes en la receta.</p>
+                    ) : (
+                      <>
+                        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                          {prodForm.recipe.map((item, idx) => {
+                            const ing = (availableIngredients || []).find(i => i.id === item.ingredientId) || {};
+                            const name = item.name || ing.name || 'Insumo';
+                            const unit = item.unit || ing.unit || '';
+                            const costPerUnit = item.costPerUnit !== undefined && item.costPerUnit !== null ? item.costPerUnit : (ing.costPerUnit || 0);
+                            return (
+                              <li key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem', borderBottom: '1px solid var(--border-light)' }}>
+                                <span style={{ fontSize: '0.85rem' }}>{name} ({item.quantity} {unit})</span>
+                                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                  <span style={{ fontSize: '0.85rem', color: '#64748b' }}>${(item.quantity * (costPerUnit || 0)).toFixed(2)}</span>
+                                  <button 
+                                    type="button" 
+                                    onClick={() => {
+                                      const newRecipe = prodForm.recipe.filter((_, i) => i !== idx);
+                                      setProdForm({...prodForm, recipe: newRecipe});
+                                    }}
+                                    style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '1rem' }}
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1rem', paddingTop: '0.5rem', borderTop: '2px solid #cbd5e1' }}>
+                          <span style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Costo Teórico:</span>
+                          <span style={{ fontWeight: 'bold', color: '#ef4444', fontSize: '0.9rem' }}>
+                            ${prodForm.recipe.reduce((sum, item) => {
+                              const ing = (availableIngredients || []).find(i => i.id === item.ingredientId) || {};
+                              const costPerUnit = item.costPerUnit !== undefined && item.costPerUnit !== null ? item.costPerUnit : (ing.costPerUnit || 0);
+                              return sum + (item.quantity * (costPerUnit || 0));
+                            }, 0).toFixed(2)}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className="form-group" style={{ marginTop: '1rem' }}>
                 <label className="form-label">Subcategoría (Opcional)</label>

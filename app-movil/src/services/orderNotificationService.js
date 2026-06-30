@@ -11,16 +11,7 @@ import { Platform } from 'react-native';
 
 const MUTE_KEY = 'order_notifications_muted';
 
-// ── Android notification channel for new orders ──────────────────────────────
-if (Platform.OS === 'android') {
-  Notifications.setNotificationChannelAsync('miprodu-orders', {
-    name: 'Nuevos Pedidos',
-    importance: Notifications.AndroidImportance.MAX,
-    vibrationPattern: [0, 250, 250, 250],
-    lightColor: '#C9A22788',
-    sound: 'order_chime', // maps to assets/order_chime.mp3 in res/raw
-  });
-}
+
 
 // ── Configure how notifications appear when app is in foreground ─────────────
 Notifications.setNotificationHandler({
@@ -130,9 +121,23 @@ export const showOrderNotification = async (order, branchName = '') => {
  */
 export const requestNotificationPermissions = async () => {
   try {
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('miprodu-orders-v9', {
+        name: 'Nuevos Pedidos',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#C9A22788',
+        sound: 'order_chime', // filename WITHOUT extension — Android res/raw reference
+        audioAttributes: {
+          usage: Notifications.AndroidAudioUsage.NOTIFICATION,
+          contentType: Notifications.AndroidAudioContentType.SONIFICATION,
+        },
+      });
+    }
     const { status } = await Notifications.requestPermissionsAsync();
     return status === 'granted';
-  } catch {
+  } catch (err) {
+    console.warn('[orderNotificationService] Error creating channel or requesting permissions:', err);
     return false;
   }
 };
@@ -153,7 +158,7 @@ export const getExpoPushToken = async () => {
     throw new Error('Permisos de notificación no otorgados.');
   }
 
-  // Fetch native device token (FCM for Android, APNs for iOS)
+  // Fetch native device token (FCM for Android, APNs for iOS) to bypass Expo Push API
   const tokenData = await Notifications.getDevicePushTokenAsync();
   return tokenData.data;
 };
@@ -172,10 +177,3 @@ export const setMuted = async (value) => {
   await AsyncStorage.setItem(MUTE_KEY, value ? 'true' : 'false');
 };
 
-// ── Legacy aliases (backward compat with any remaining imports) ──────────────
-export const playWaiterAlertSound = playOrderAlertSound;
-export const stopWaiterAlertSound = stopOrderAlertSound;
-export const showWaiterCallNotification = async (tableNumber, branchName) => {
-  // Kept for backward compat; maps to generic order notification
-  await showOrderNotification({ customerName: `Mesa ${tableNumber}`, items: [], total: 0 }, branchName);
-};

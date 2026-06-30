@@ -8,7 +8,7 @@
 const PLAN_CONFIG = {
   0: { label: "Tradicional",  monthly: 29900, annualTotal: 299000, annualPerMonth: 24917 },
   1: { label: "Carta",        monthly: 64900, annualTotal: 649000, annualPerMonth: 54083 },
-  2: { label: "Carta y Mesa", monthly: 99900, annualTotal: 999000, annualPerMonth: 83250 },
+  2: { label: "Plan Pro",     monthly: 99900, annualTotal: 999000, annualPerMonth: 83250 },
 };
 
 /**

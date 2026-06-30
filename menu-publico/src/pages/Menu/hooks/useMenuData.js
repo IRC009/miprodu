@@ -5,7 +5,7 @@ import { engagementAnalytics } from '../../../services/analyticsService';
 import { getGeneralSettings } from '../../../services/settingsService';
 import { safeStorage, safeSessionStorage } from '../../../utils/safeStorage';
 
-export function useMenuData(restaurantId) {
+export function useMenuData(restaurantId, restaurantData = null) {
   const [searchParams, setSearchParams] = useSearchParams();
   const categoryParam = searchParams.get('category');
   const branchParam = searchParams.get('branch');
@@ -47,11 +47,68 @@ export function useMenuData(restaurantId) {
     }
   }, [promotions]);
 
+  // Real-time synchronization from restaurantData context (loaded via public_info onSnapshot)
+  useEffect(() => {
+    if (!restaurantData) return;
+    
+    if (restaurantData.branches) {
+      setBranches(restaurantData.branches);
+      
+      let effectiveBranch = null;
+      if (branchParam) {
+        effectiveBranch = restaurantData.branches.find(b => b.id === branchParam) || null;
+      }
+      
+      if (effectiveBranch) {
+        setSelectedBranch(effectiveBranch);
+      } else if (restaurantData.branches.length === 1) {
+        setSelectedBranch(restaurantData.branches[0]);
+      }
+    }
+    
+    if (restaurantData.categories) {
+      const tz = generalSettings?.timezone || 'America/Bogota';
+      const localTimeStr = new Date().toLocaleString("en-US", {timeZone: tz, hour12: false, hour: '2-digit', minute: '2-digit'});
+      
+      const cats = restaurantData.categories.map(cat => {
+        if (!cat.startTime || !cat.endTime) {
+          return { ...cat, isAvailable: true };
+        }
+        let isAvailable = false;
+        if (cat.startTime <= cat.endTime) {
+          isAvailable = localTimeStr >= cat.startTime && localTimeStr <= cat.endTime;
+        } else {
+          isAvailable = localTimeStr >= cat.startTime || localTimeStr <= cat.endTime;
+        }
+        return { ...cat, isAvailable };
+      });
+      setCategories(cats);
+    }
+    
+    if (restaurantData.promotions) {
+      const activePromos = restaurantData.promotions.filter(p => {
+        const now = new Date();
+        const isActive = p.isActive && new Date(p.startDate) <= now && new Date(p.endDate) >= now;
+        if (!isActive) return false;
+        const branchId = selectedBranch?.id || branchParam;
+        if (branchId && p.branchId && p.branchId !== branchId) return false;
+        return true;
+      });
+      setPromotions(activePromos);
+    }
+  }, [restaurantData, branchParam, selectedBranch?.id, generalSettings]);
+
   // Initial Fetch
   useEffect(() => {
     const fetchInit = async () => {
       if (!restaurantId) return;
-      const branchesData = await getBranches(restaurantId);
+      
+      let branchesData;
+      if (restaurantData && restaurantData.branches) {
+        branchesData = restaurantData.branches;
+      } else {
+        branchesData = await getBranches(restaurantId);
+      }
       setBranches(branchesData);
       
       let effectiveBranch = null;
@@ -84,12 +141,24 @@ export function useMenuData(restaurantId) {
 
   const loadMenuData = async (branchId, customSettings = null) => {
     setLoading(true);
-    const { categories: rawCats, products: prods } = await getPublicMenu(restaurantId, branchId);
+    
+    let catsToUse;
+    let prodsToUse;
+    
+    if (restaurantData && restaurantData.categories) {
+      catsToUse = restaurantData.categories;
+      const menuData = await getPublicMenu(restaurantId, branchId);
+      prodsToUse = menuData.products;
+    } else {
+      const menuData = await getPublicMenu(restaurantId, branchId);
+      catsToUse = menuData.categories;
+      prodsToUse = menuData.products;
+    }
     
     const tz = customSettings?.timezone || generalSettings?.timezone || 'America/Bogota';
     const localTimeStr = new Date().toLocaleString("en-US", {timeZone: tz, hour12: false, hour: '2-digit', minute: '2-digit'});
     
-    const cats = rawCats.map(cat => {
+    const cats = catsToUse.map(cat => {
       if (!cat.startTime || !cat.endTime) {
         return { ...cat, isAvailable: true };
       }
@@ -103,10 +172,16 @@ export function useMenuData(restaurantId) {
     });
 
     setCategories(cats);
-    setProducts(prods);
+    setProducts(prodsToUse);
     
-    const promos = await getPromotions(restaurantId);
-    const activePromos = promos.filter(p => {
+    let promosData;
+    if (restaurantData && restaurantData.promotions) {
+      promosData = restaurantData.promotions;
+    } else {
+      promosData = await getPromotions(restaurantId);
+    }
+    
+    const activePromos = promosData.filter(p => {
       const now = new Date();
       const isActive = p.isActive && new Date(p.startDate) <= now && new Date(p.endDate) >= now;
       if (!isActive) return false;

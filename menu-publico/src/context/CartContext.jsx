@@ -71,10 +71,17 @@ export function CartProvider({ children }) {
       import('../services/analyticsService').then(({ engagementAnalytics }) => {
         engagementAnalytics.trackEvent('add_to_cart', { productId: product.id, productName: product.name });
       });
+      if (window.trackPixelEvent) {
+        window.trackPixelEvent('add_to_cart', {
+          id: product.id,
+          name: product.name,
+          price: product.discountPrice || product.price,
+        });
+      }
     } catch (e) {}
 
     setCartItems(prev => {
-      const existing = prev.find(item => item.id === product.id && item.observations === observations);
+      const existing = prev.find(item => item.id === product.id && item.name === product.name && item.observations === observations);
       if (existing) {
         return prev.map(item => 
           item === existing 

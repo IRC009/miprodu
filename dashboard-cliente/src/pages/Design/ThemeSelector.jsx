@@ -14,6 +14,15 @@ const FOOD_IMAGES = [
   'https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=200&q=70',
 ];
 
+const FASHION_IMAGES = [
+  'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=200&q=70',
+  'https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=200&q=70',
+  'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=200&q=70',
+  'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=200&q=70',
+  'https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=200&q=70',
+  'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=200&q=70',
+];
+
 export default function ThemeSelector({ currentConfig, onApplyTheme, refreshData, categories = [] }) {
   const [selectedId, setSelectedId] = useState(null);
   const [hoveredId, setHoveredId] = useState(null);
@@ -94,7 +103,9 @@ export default function ThemeSelector({ currentConfig, onApplyTheme, refreshData
           const isRow = cfg.cardLayout?.startsWith('row-');
           const isTraditional = cfg.cardLayout === 'row-traditional';
           const cols = parseInt(cfg.gridColumns) || 2;
-          const imgs = FOOD_IMAGES.slice(0, isRow ? 3 : (cols === 3 ? 6 : 4));
+          const isEcommerce = cfg.ecommerceMode;
+          const sourceImgs = isEcommerce ? FASHION_IMAGES : FOOD_IMAGES;
+          const imgs = sourceImgs.slice(0, isRow ? 3 : (cols === 3 ? 6 : 4));
 
           return (
             <div
@@ -132,7 +143,7 @@ export default function ThemeSelector({ currentConfig, onApplyTheme, refreshData
                     fontFamily: cfg.fontFamily,
                     textTransform: cfg.titleUppercase ? 'uppercase' : 'none',
                     letterSpacing: cfg.titleLetterSpacing || '0',
-                  }}>Subcategoría</span>
+                  }}>{isEcommerce ? 'Colección' : 'Subcategoría'}</span>
                 </div>
 
                 {/* Product grid */}
@@ -159,7 +170,7 @@ export default function ThemeSelector({ currentConfig, onApplyTheme, refreshData
                           background: cardBg,
                           borderBottom: `1px ${cfg.cardSeparatorStyle || 'dashed'} ${cfg.cardSeparatorColor || '#ffffff22'}`,
                         }}>
-                          <span style={{ color: cfg.titleColor, fontSize: '7px', fontWeight: 600 }}>Plato {i+1}</span>
+                          <span style={{ color: cfg.titleColor, fontSize: '7px', fontWeight: 600 }}>{isEcommerce ? `Artículo ${i+1}` : `Plato ${i+1}`}</span>
                           <span style={{ color: cfg.priceColor, fontSize: '7px', fontWeight: 700 }}>${(15+i*3)}.00</span>
                         </div>
                       );
@@ -185,8 +196,8 @@ export default function ThemeSelector({ currentConfig, onApplyTheme, refreshData
                             flexShrink: 0,
                           }} />
                           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '1px' }}>
-                            <span style={{ color: cfg.titleColor, fontSize: '7px', fontWeight: 600, textTransform: cfg.titleUppercase?'uppercase':'none' }}>Plato {i+1}</span>
-                            <span style={{ color: cfg.descColor, fontSize: '5px' }}>Desc breve</span>
+                            <span style={{ color: cfg.titleColor, fontSize: '7px', fontWeight: 600, textTransform: cfg.titleUppercase?'uppercase':'none' }}>{isEcommerce ? `Artículo ${i+1}` : `Plato ${i+1}`}</span>
+                            <span style={{ color: cfg.descColor, fontSize: '5px' }}>{isEcommerce ? 'Detalles prenda' : 'Desc breve'}</span>
                             <span style={{ color: cfg.priceColor, fontSize: '7px', fontWeight: 700 }}>${(15+i*3)}.00</span>
                           </div>
                         </div>
@@ -210,8 +221,8 @@ export default function ThemeSelector({ currentConfig, onApplyTheme, refreshData
                           padding: isCircle ? '4px' : '0',
                         }} />
                         <div style={{ padding: '3px 4px', display: 'flex', flexDirection: 'column', gap: '1px' }}>
-                          <span style={{ color: cfg.titleColor, fontSize: '6.5px', fontWeight: 600, textTransform: cfg.titleUppercase?'uppercase':'none', letterSpacing: cfg.titleLetterSpacing||'0' }}>Plato {i+1}</span>
-                          <span style={{ color: cfg.descColor, fontSize: '5px' }}>Descripción</span>
+                          <span style={{ color: cfg.titleColor, fontSize: '6.5px', fontWeight: 600, textTransform: cfg.titleUppercase?'uppercase':'none', letterSpacing: cfg.titleLetterSpacing||'0' }}>{isEcommerce ? `Artículo ${i+1}` : `Plato ${i+1}`}</span>
+                          <span style={{ color: cfg.descColor, fontSize: '5px' }}>{isEcommerce ? 'Descripción artículo' : 'Descripción'}</span>
                           <span style={{ color: cfg.priceColor, fontSize: '7px', fontWeight: 700 }}>${(15+i*3)}.00</span>
                         </div>
                       </div>
@@ -297,7 +308,11 @@ export default function ThemeSelector({ currentConfig, onApplyTheme, refreshData
                 />
                 <span>
                   <strong>También crear categorías y productos de ejemplo</strong>
-                  <br/><span style={{ fontSize: '0.75rem', color: '#15803d' }}>Con fotos reales de platillos listos para usar.</span>
+                  <br/><span style={{ fontSize: '0.75rem', color: '#15803d' }}>
+                    {pendingTheme.config.ecommerceMode 
+                      ? 'Con fotos reales de prendas y accesorios listos para usar.' 
+                      : 'Con fotos reales de platillos listos para usar.'}
+                  </span>
                 </span>
               </label>
             )}

@@ -238,82 +238,26 @@ export default function LinkModal({ selectedRes, linkConfig, setLinkConfig, gene
 
             {/* Plan Setup Selector */}
             <div style={{ marginBottom: '0.85rem' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.75rem', color: '#fbbf24', fontWeight: 'bold' }}>
-                <input
-                  type="checkbox"
-                  checked={isMixedPlan}
-                  onChange={(e) => setIsMixedPlan(e.target.checked)}
-                />
-                Configurar Plan Personalizado (Mixto)
+              <label style={{ fontSize: '0.7rem', fontWeight: '700', color: '#94a3b8', display: 'block', textTransform: 'uppercase' }}>
+                Plan a Suscribir
               </label>
+              <div style={{ ...styles.input, marginTop: '4px', marginBottom: 0, background: 'rgba(15,23,42,0.4)', display: 'flex', alignItems: 'center', color: '#34d399', fontWeight: 'bold' }}>
+                🚀 Plan Pro (Único Plan)
+              </div>
             </div>
 
-            {!isMixedPlan ? (
-              <>
-                <div style={{ marginBottom: '0.85rem' }}>
-                  <label style={{ fontSize: '0.7rem', fontWeight: '700', color: '#94a3b8', display: 'block', textTransform: 'uppercase' }}>
-                    Plan a Suscribir
-                  </label>
-                  <select
-                    style={{ ...styles.input, marginTop: '4px', marginBottom: 0 }}
-                    value={linkConfig.plan}
-                    onChange={(e) => setLinkConfig({ ...linkConfig, plan: parseInt(e.target.value) })}
-                  >
-                    <option value={0}>⛔ Plan Tradicional</option>
-                    <option value={1}>📋 Plan Carta</option>
-                    <option value={2}>🚀 Plan Carta y Mesa</option>
-                  </select>
-                </div>
-
-                <div style={{ marginBottom: '0.85rem' }}>
-                  <label style={{ fontSize: '0.7rem', fontWeight: '700', color: '#94a3b8', display: 'block', textTransform: 'uppercase' }}>
-                    Número de Sedes
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    style={{ ...styles.input, marginTop: '4px', marginBottom: 0 }}
-                    value={linkConfig.branches}
-                    onChange={(e) => setLinkConfig({ ...linkConfig, branches: parseInt(e.target.value) || 1 })}
-                  />
-                </div>
-              </>
-            ) : (
-              <div style={{ background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.2)', borderRadius: '8px', padding: '0.75rem', marginBottom: '0.85rem' }}>
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '0.5rem' }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: '0.65rem', fontWeight: '700', color: '#fbbf24', display: 'block' }}>Tradicional (⛔)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      style={{ ...styles.input, padding: '0.5rem', marginTop: '2px', marginBottom: 0 }}
-                      value={branchesPlan0}
-                      onChange={(e) => setBranchesPlan0(parseInt(e.target.value) || 0)}
-                    />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: '0.65rem', fontWeight: '700', color: '#a78bfa', display: 'block' }}>Carta (📋)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      style={{ ...styles.input, padding: '0.5rem', marginTop: '2px', marginBottom: 0 }}
-                      value={branchesPlan1}
-                      onChange={(e) => setBranchesPlan1(parseInt(e.target.value) || 0)}
-                    />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: '0.65rem', fontWeight: '700', color: '#60a5fa', display: 'block' }}>Carta y Mesa (🚀)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      style={{ ...styles.input, padding: '0.5rem', marginTop: '2px', marginBottom: 0 }}
-                      value={branchesPlan2}
-                      onChange={(e) => setBranchesPlan2(parseInt(e.target.value) || 0)}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
+            <div style={{ marginBottom: '0.85rem' }}>
+              <label style={{ fontSize: '0.7rem', fontWeight: '700', color: '#94a3b8', display: 'block', textTransform: 'uppercase' }}>
+                Número de Sedes
+              </label>
+              <input
+                type="number"
+                min="1"
+                style={{ ...styles.input, marginTop: '4px', marginBottom: 0 }}
+                value={linkConfig.branches}
+                onChange={(e) => setLinkConfig({ ...linkConfig, branches: parseInt(e.target.value) || 1, plan: 2 })}
+              />
+            </div>
 
             {/* Billing Cycle Selector */}
             <div style={{ marginBottom: '1rem' }}>
@@ -432,14 +376,9 @@ export default function LinkModal({ selectedRes, linkConfig, setLinkConfig, gene
               <label style={{ fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
                 Plan
               </label>
-              <select
-                style={styles.input}
-                value={linkConfig.plan}
-                onChange={(e) => setLinkConfig({ ...linkConfig, plan: parseInt(e.target.value) })}
-              >
-                <option value={1}>📋 Plan Carta</option>
-                <option value={2}>🚀 Plan Carta y Mesa</option>
-              </select>
+              <div style={{ ...styles.input, display: 'flex', alignItems: 'center', color: '#34d399', fontWeight: 'bold', background: 'rgba(15,23,42,0.4)' }}>
+                🚀 Plan Pro
+              </div>
             </div>
 
             <div style={{ marginBottom: '1.5rem' }}>
@@ -451,7 +390,7 @@ export default function LinkModal({ selectedRes, linkConfig, setLinkConfig, gene
                 min="1"
                 style={styles.input}
                 value={linkConfig.branches}
-                onChange={(e) => setLinkConfig({ ...linkConfig, branches: parseInt(e.target.value) || 1 })}
+                onChange={(e) => setLinkConfig({ ...linkConfig, branches: parseInt(e.target.value) || 1, plan: 2 })}
               />
             </div>
 

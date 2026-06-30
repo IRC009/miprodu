@@ -3,7 +3,7 @@ import React from 'react';
 export default function AccessBanner({ restaurantData, designConfig, loading, isAllowed = true }) {
   const showLogo = designConfig?.paywallShowLogo !== false;
   const logo = restaurantData?.logoUrl || designConfig?.logoUrl;
-  const name = restaurantData?.name || "RESTAURANTE";
+  const name = restaurantData?.name || "TIENDA";
   const bgUrl = designConfig?.paywallBgUrl;
   
   return (

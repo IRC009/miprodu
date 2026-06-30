@@ -52,12 +52,18 @@ export function useInventoryData(restaurantId) {
   
   const [formData, setFormData] = useState({
     name: '',
+    sku: '',
     category: '',
     unit: '',
     costPerUnit: '',
     trackInventory: false,
     currentStock: '',
-    minAlertThreshold: ''
+    minAlertThreshold: '',
+    isDigital: false,
+    branchId: 'ALL',
+    location: '',
+    hasVariants: false,
+    variants: []
   });
 
   const loadIngredients = async () => {
@@ -83,28 +89,46 @@ export function useInventoryData(restaurantId) {
 
   const [isSaving, setIsSaving] = useState(false);
 
-  const openModal = (ingredient = null) => {
+  const openModal = (ingredient = null, defaultBranchId = 'ALL') => {
     if (ingredient) {
       setEditingIngredient(ingredient);
       setFormData({
         name: ingredient.name || '',
+        sku: ingredient.sku || '',
         category: ingredient.category || '',
         unit: ingredient.unit || '',
         costPerUnit: ingredient.costPerUnit !== undefined && ingredient.costPerUnit !== null ? formatInputWithThousands(ingredient.costPerUnit) : '',
         trackInventory: ingredient.trackInventory || false,
-        currentStock: ingredient.currentStock || '',
-        minAlertThreshold: ingredient.minAlertThreshold || ''
+        currentStock: ingredient.currentStock !== undefined && ingredient.currentStock !== null ? ingredient.currentStock : '',
+        minAlertThreshold: ingredient.minAlertThreshold !== undefined && ingredient.minAlertThreshold !== null ? ingredient.minAlertThreshold : '',
+        isDigital: ingredient.isDigital || false,
+        branchId: ingredient.branchId || 'ALL',
+        location: ingredient.location || '',
+        hasVariants: ingredient.hasVariants || false,
+        variants: (ingredient.variants || []).map(v => ({
+          id: v.id,
+          name: v.name || '',
+          sku: v.sku || '',
+          currentStock: v.currentStock !== undefined ? v.currentStock : '',
+          minAlertThreshold: v.minAlertThreshold !== undefined ? v.minAlertThreshold : ''
+        }))
       });
     } else {
       setEditingIngredient(null);
       setFormData({
         name: '',
+        sku: '',
         category: '',
         unit: '',
         costPerUnit: '',
         trackInventory: false,
         currentStock: '',
-        minAlertThreshold: ''
+        minAlertThreshold: '',
+        isDigital: false,
+        branchId: defaultBranchId || 'ALL',
+        location: '',
+        hasVariants: false,
+        variants: []
       });
     }
     setIsModalOpen(true);
@@ -118,12 +142,24 @@ export function useInventoryData(restaurantId) {
       const parsedCost = parseFloat(String(formData.costPerUnit).replace(/\./g, '').replace(/,/g, '.')) || 0;
       const dataToSave = {
         name: formData.name,
+        sku: formData.sku || '',
         category: formData.category,
         unit: formData.unit,
         costPerUnit: parsedCost,
         trackInventory: formData.trackInventory,
-        currentStock: formData.trackInventory ? (parseFloat(formData.currentStock) || 0) : 0,
-        minAlertThreshold: formData.trackInventory ? (parseFloat(formData.minAlertThreshold) || 0) : 0,
+        currentStock: formData.trackInventory && !formData.hasVariants ? (parseFloat(formData.currentStock) || 0) : 0,
+        minAlertThreshold: formData.trackInventory && !formData.hasVariants ? (parseFloat(formData.minAlertThreshold) || 0) : 0,
+        isDigital: formData.isDigital,
+        branchId: formData.isDigital ? 'ALL' : (formData.branchId || 'ALL'),
+        location: formData.isDigital ? '' : (formData.location || ''),
+        hasVariants: formData.hasVariants || false,
+        variants: (formData.hasVariants ? formData.variants : []).map(v => ({
+          id: v.id || (Date.now().toString(36) + Math.random().toString(36).slice(2)),
+          name: v.name || '',
+          sku: v.sku || '',
+          currentStock: parseFloat(v.currentStock) || 0,
+          minAlertThreshold: parseFloat(v.minAlertThreshold) || 0
+        }))
       };
 
       if (editingIngredient) {

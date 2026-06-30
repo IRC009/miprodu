@@ -4,6 +4,90 @@ import { Database } from '../infrastructure/adapters/FirebaseAdapter';
 const menuCache = {};
 const branchesCache = {};
 const promotionsCache = {};
+export const categoriesCache = {};
+
+export const seedMenuCache = (restaurantId, categories, branches, promotions, subscription) => {
+  if (categories) {
+    categoriesCache[restaurantId] = categories;
+    // Update any existing menuCache entries to keep categories fresh
+    Object.keys(menuCache).forEach(key => {
+      if (key.startsWith(`${restaurantId}-`)) {
+        if (menuCache[key]) {
+          menuCache[key].categories = categories;
+        }
+      }
+    });
+  }
+  if (branches) {
+    let filteredBranches = branches;
+    if (subscription) {
+      filteredBranches = branches.filter(b => isBranchPlanValid(b, subscription));
+    } else {
+      filteredBranches = branches.filter(b => b.planLevel !== -1 && b.planLevel !== undefined && b.planLevel !== null);
+    }
+    branchesCache[restaurantId] = filteredBranches;
+  }
+  if (promotions) {
+    promotionsCache[restaurantId] = promotions;
+  }
+};
+
+const filterOutOfStockProducts = (products, ingredients) => {
+  const ingredientsMap = {};
+  ingredients.forEach(ing => {
+    if (ing && ing.id) {
+      ingredientsMap[ing.id] = ing;
+    }
+  });
+
+  const isVariantInStock = (v) => {
+    if (!v.inventoryEnabled || !v.ingredientId) {
+      return true;
+    }
+    const ing = ingredientsMap[v.ingredientId];
+    if (!ing) {
+      return true;
+    }
+    if (!ing.trackInventory) {
+      return true;
+    }
+    const stock = Number(ing.currentStock) || 0;
+    const reqQty = Number(v.quantity) || 1;
+    return stock >= reqQty;
+  };
+
+  return products
+    .map(p => {
+      if (p.variants && Array.isArray(p.variants) && p.variants.length > 0) {
+        const inStockVariants = p.variants.filter(v => isVariantInStock(v));
+        return {
+          ...p,
+          variants: inStockVariants,
+          originalHadVariants: true
+        };
+      }
+      return p;
+    })
+    .filter(p => {
+      if (p.originalHadVariants && (!p.variants || p.variants.length === 0)) {
+        return false;
+      }
+      if (!p.recipe || !Array.isArray(p.recipe) || p.recipe.length === 0) {
+        return true;
+      }
+      for (const item of p.recipe) {
+        const ing = ingredientsMap[item.ingredientId];
+        if (ing && ing.trackInventory) {
+          const stock = Number(ing.currentStock) || 0;
+          const reqQty = Number(item.quantity) || 0;
+          if (stock < reqQty) {
+            return false;
+          }
+        }
+      }
+      return true;
+    });
+};
 
 export const getPublicMenu = async (restaurantId, branchId = null) => {
   const cacheKey = `${restaurantId}-${branchId}`;
@@ -12,8 +96,13 @@ export const getPublicMenu = async (restaurantId, branchId = null) => {
     // Trigger background update silently to keep cache fresh
     (async () => {
       try {
-        const catsCol = `restaurants/${restaurantId}/categories`;
-        let categories = await Database.getAll(catsCol, [], { field: 'order', direction: 'asc' });
+        let categories;
+        if (categoriesCache[restaurantId]) {
+          categories = categoriesCache[restaurantId];
+        } else {
+          const catsCol = `restaurants/${restaurantId}/categories`;
+          categories = await Database.getAll(catsCol, [], { field: 'order', direction: 'asc' });
+        }
         
         if (branchId) {
           categories = categories.filter(c => !c.branchIds || c.branchIds.length === 0 || c.branchIds.includes(branchId));
@@ -33,6 +122,16 @@ export const getPublicMenu = async (restaurantId, branchId = null) => {
           products = products.filter(p => !p.branchIds || p.branchIds.length === 0 || p.branchIds.includes(branchId));
         }
 
+        const ingredientBucketsCol = `restaurants/${restaurantId}/ingredientBuckets`;
+        const ingredientBuckets = await Database.getAll(ingredientBucketsCol);
+        let ingredients = [];
+        ingredientBuckets.forEach(bucket => {
+          if (bucket.ingredients) {
+            ingredients = [...ingredients, ...bucket.ingredients];
+          }
+        });
+        products = filterOutOfStockProducts(products, ingredients);
+
         products.sort((a, b) => (a.order || 0) - (b.order || 0));
         menuCache[cacheKey] = { categories, products };
       } catch (error) {
@@ -45,8 +144,13 @@ export const getPublicMenu = async (restaurantId, branchId = null) => {
 
   // Cold path
   try {
-    const catsCol = `restaurants/${restaurantId}/categories`;
-    let categories = await Database.getAll(catsCol, [], { field: 'order', direction: 'asc' });
+    let categories;
+    if (categoriesCache[restaurantId]) {
+      categories = categoriesCache[restaurantId];
+    } else {
+      const catsCol = `restaurants/${restaurantId}/categories`;
+      categories = await Database.getAll(catsCol, [], { field: 'order', direction: 'asc' });
+    }
     
     if (branchId) {
       categories = categories.filter(c => !c.branchIds || c.branchIds.length === 0 || c.branchIds.includes(branchId));
@@ -65,6 +169,16 @@ export const getPublicMenu = async (restaurantId, branchId = null) => {
     if (branchId) {
       products = products.filter(p => !p.branchIds || p.branchIds.length === 0 || p.branchIds.includes(branchId));
     }
+
+    const ingredientBucketsCol = `restaurants/${restaurantId}/ingredientBuckets`;
+    const ingredientBuckets = await Database.getAll(ingredientBucketsCol);
+    let ingredients = [];
+    ingredientBuckets.forEach(bucket => {
+      if (bucket.ingredients) {
+        ingredients = [...ingredients, ...bucket.ingredients];
+      }
+    });
+    products = filterOutOfStockProducts(products, ingredients);
 
     // Sort products by 'order' field
     products.sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -87,18 +201,9 @@ const isBranchPlanValid = (branch, sub) => {
   }
   
   const subStatus = sub?.status || 'inactive';
-  const isSubActive = subStatus === 'active' || subStatus === 'authorized' || subStatus === 'explore';
+  const isSubActive = subStatus === 'active' || subStatus === 'authorized';
   if (!isSubActive) {
     return false;
-  }
-  
-  if (subStatus === 'explore') {
-    const hasPaidSlots = (parseInt(sub.branchesPlan0) || 0) +
-                         (parseInt(sub.branchesPlan1) || 0) +
-                         (parseInt(sub.branchesPlan2) || 0) > 0;
-    if (!hasPaidSlots) {
-      return false;
-    }
   }
 
   const isMixed = sub.isMixed === true || 
@@ -121,6 +226,41 @@ const isBranchPlanValid = (branch, sub) => {
   }
 };
 
+const getEffectiveSubscription = async (restDoc) => {
+  const sub = restDoc?.subscription;
+  const createdAt = restDoc?.createdAt;
+  
+  if (!createdAt) return sub;
+  
+  let trialDays = 7;
+  try {
+    const pricingDoc = await Database.getById('platform_settings', 'pricing');
+    if (pricingDoc && typeof pricingDoc.trialDays === 'number') {
+      trialDays = pricingDoc.trialDays;
+    }
+  } catch (e) {
+    console.warn("Error fetching trial days in menuService:", e);
+  }
+  
+  const createdDate = new Date(createdAt);
+  if (isNaN(createdDate.getTime())) return sub;
+  
+  const diffTime = new Date().getTime() - createdDate.getTime();
+  const diffDays = diffTime / (1000 * 60 * 60 * 24);
+  const isRegTrialActive = diffDays >= 0 && diffDays <= trialDays;
+  
+  if (isRegTrialActive) {
+    return {
+      ...(sub || {}),
+      status: 'active',
+      planLevel: 2,
+      isRegTrial: true
+    };
+  }
+  
+  return sub;
+};
+
 export const getBranches = async (restaurantId) => {
   const cacheKey = restaurantId;
 
@@ -133,7 +273,7 @@ export const getBranches = async (restaurantId) => {
           Database.getAll(colName),
           Database.getById('restaurants', restaurantId)
         ]);
-        const sub = restDoc?.subscription;
+        const sub = await getEffectiveSubscription(restDoc);
         if (sub) {
           branchesCache[cacheKey] = list.filter(b => isBranchPlanValid(b, sub));
         } else {
@@ -154,7 +294,7 @@ export const getBranches = async (restaurantId) => {
       Database.getAll(colName),
       Database.getById('restaurants', restaurantId)
     ]);
-    const sub = restDoc?.subscription;
+    const sub = await getEffectiveSubscription(restDoc);
     let result;
     if (sub) {
       result = list.filter(b => isBranchPlanValid(b, sub));

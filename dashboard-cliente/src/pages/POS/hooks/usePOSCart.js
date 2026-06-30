@@ -15,9 +15,9 @@ export function usePOSCart() {
         newCart[existing].quantity++; 
         return newCart;
       }
-      return [...prev, { id: product.id, name: product.name, price: product.price, quantity: 1, bucketId: product.bucketId }];
+      return [...prev, { id: product.id, name: product.name, price: product.price, quantity: 1, bucketId: product.bucketId, sku: product.sku }];
     });
-    setToastMessage(`✅ ${product.name}`);
+    setToastMessage(`${product.name} agregado`);
     setTimeout(() => setToastMessage(null), 1000);
   };
 

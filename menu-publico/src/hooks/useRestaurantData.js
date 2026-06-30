@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 import { db, functions } from '../services/firebase';
 import { httpsCallable } from 'firebase/functions';
+import { seedDesignCache } from './useRestaurantDesign';
+import { seedMenuCache } from '../services/menuService';
 
 /**
  * Optimización: Carga paralela de restaurante y diseño
@@ -26,6 +28,27 @@ export async function fetchInitialData(identifier) {
     }
 
     if (!restaurantData) return { restaurant: null, design: null, error: 'not_found' };
+
+    // Try unified public_info first
+    try {
+      const publicInfoRef = doc(db, `restaurants/${restaurantData.id}/config/public_info`);
+      const publicInfoSnap = await getDoc(publicInfoRef);
+      if (publicInfoSnap.exists()) {
+        const publicInfo = publicInfoSnap.data();
+        seedDesignCache(restaurantData.id, publicInfo.design);
+        seedMenuCache(restaurantData.id, publicInfo.categories, publicInfo.branches, publicInfo.promotions, publicInfo.restaurant?.subscription);
+        if (publicInfo.restaurant) {
+          restaurantData = { ...restaurantData, ...publicInfo.restaurant };
+        }
+        return {
+          restaurant: restaurantData,
+          design: publicInfo.design,
+          error: null
+        };
+      }
+    } catch (e) {
+      console.warn('[public_info] Failed to load public_info in fetchInitialData:', e.message);
+    }
 
     // --- LAZY EVALUATION FOR CANCELLED SUBSCRIPTIONS ---
     const sub = restaurantData.subscription || {};
@@ -75,6 +98,8 @@ export function useRestaurantData(slugParam) {
       return;
     }
 
+    let unsubscribePublicInfo = null;
+
     const fetchRestaurant = async () => {
       setLoading(true);
       try {
@@ -100,6 +125,46 @@ export function useRestaurantData(slugParam) {
         }
 
         if (foundData) {
+          // Listen to unified public_info in real-time
+          const publicInfoRef = doc(db, `restaurants/${foundId}/config/public_info`);
+          
+          unsubscribePublicInfo = onSnapshot(publicInfoRef, (snap) => {
+            if (snap.exists()) {
+              const publicInfo = snap.data();
+              // Seed design cache
+              seedDesignCache(foundId, publicInfo.design);
+              // Seed menu, branches, promotions cache
+              seedMenuCache(foundId, publicInfo.categories, publicInfo.branches, publicInfo.promotions, publicInfo.restaurant?.subscription);
+              // Override foundData with unified restaurant data
+              if (publicInfo.restaurant) {
+                setData(prev => {
+                  const updated = {
+                    ...(prev || foundData),
+                    ...publicInfo.restaurant,
+                    design: publicInfo.design,
+                    categories: publicInfo.categories,
+                    branches: publicInfo.branches,
+                    promotions: publicInfo.promotions
+                  };
+                  // Keep lazy sub evaluation if cancelled
+                  const sub = updated.subscription || {};
+                  if (sub.cancelAtPeriodEnd) {
+                    const endDate = new Date(sub.cycleEndDate || sub.endDate);
+                    if (new Date() >= endDate) {
+                      updated.subscription = { status: 'cancelled' };
+                    }
+                  }
+                  return updated;
+                });
+              }
+            } else {
+              setData(foundData);
+            }
+          }, (err) => {
+            console.warn('[public_info] Failed to listen to public_info:', err.message);
+            setData(foundData);
+          });
+
           // --- LAZY EVALUATION FOR CANCELLED SUBSCRIPTIONS ---
           const sub = foundData.subscription || {};
           if (sub.cancelAtPeriodEnd) {
@@ -114,7 +179,7 @@ export function useRestaurantData(slugParam) {
               }
             }
           }
-          setData(foundData);
+          setData(prev => prev || foundData);
         } else {
           setError('not_found');
         }
@@ -127,6 +192,10 @@ export function useRestaurantData(slugParam) {
     };
 
     fetchRestaurant();
+
+    return () => {
+      if (unsubscribePublicInfo) unsubscribePublicInfo();
+    };
   }, [identifier]);
 
   return { data, loading, error, identifier };

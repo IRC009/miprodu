@@ -1,5 +1,6 @@
 import React from 'react';
 import { useDashboard } from '../../context/DashboardContext';
+import { Star, WifiOff } from 'lucide-react';
 import { printTicket } from '../../../../utils/printTicket';
 import { updateOrder, getOrder, createOrder, updateOrderStatus } from '../../../../services/orderService';
 import { earnPoints, redeemPoints } from '../../../../services/loyaltyService';
@@ -95,7 +96,7 @@ export default function DashboardCheckoutModal() {
               color: '#fde68a',
               fontWeight: 600,
             }}>
-              <span style={{ fontSize: '1rem' }}>📡</span>
+              <WifiOff size={16} />
               <div>
                 <div>Sin conexión — Modo Offline</div>
                 <div style={{ fontWeight: 400, fontSize: '0.75rem', color: '#fcd34d' }}>
@@ -339,8 +340,8 @@ export default function DashboardCheckoutModal() {
               flexDirection: 'column',
               gap: '0.6rem'
             }}>
-              <div style={{ fontWeight: 800, color: '#92400e', fontSize: '0.85rem' }}>
-                ⭐ Acumular / Canjear Puntos
+              <div style={{ fontWeight: 800, color: '#92400e', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Star size={14} fill="#92400e" /> Acumular / Canjear Puntos
               </div>
 
               <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
@@ -431,8 +432,8 @@ export default function DashboardCheckoutModal() {
 
               {loyaltyCustomer && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255, 255, 255, 0.5)', padding: '0.4rem 0.6rem', borderRadius: '8px' }}>
-                  <span style={{ color: '#92400e', fontSize: '0.8rem', fontWeight: 600 }}>
-                    {loyaltyCustomer.name} · <strong>⭐ {loyaltyCustomer.totalPoints || 0} pts</strong>
+                  <span style={{ color: '#92400e', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    {loyaltyCustomer.name} · <strong>{loyaltyCustomer.totalPoints || 0} pts</strong>
                   </span>
                   {loyaltyCustomer.totalPoints > 0 && (
                     <button 
@@ -456,7 +457,7 @@ export default function DashboardCheckoutModal() {
 
               {loyaltyPointsToRedeem > 0 && (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#ede9fe', border: '1px solid #c084fc', padding: '0.4rem 0.6rem', borderRadius: '8px', color: '#7c3aed', fontWeight: 700, fontSize: '0.8rem' }}>
-                  <span>✅ −${pointsDiscountValue.toLocaleString()} ({loyaltyPointsToRedeem} pts)</span>
+                  <span>Descuento: −${pointsDiscountValue.toLocaleString()} ({loyaltyPointsToRedeem} pts)</span>
                   <button 
                     style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem' }} 
                     onClick={() => setLoyaltyPointsToRedeem(0)}
@@ -689,7 +690,7 @@ export default function DashboardCheckoutModal() {
                       mixedPayments: effectiveMixedPayments,
                       loyaltyPointsRedeemed: loyaltyPointsToRedeem,
                       customerId: effectiveCustomerId,
-                      // ✅ Ya se acumularon arriba, marcar para evitar doble acumulación
+                      // Ya se acumularon arriba, marcar para evitar doble acumulación
                       loyaltyEarned: willProcessLoyalty ? true : false,
                       billedByWaiterId: checkoutWaiter?.id,
                       billedByWaiterName: checkoutWaiter?.name,
@@ -716,7 +717,7 @@ export default function DashboardCheckoutModal() {
 
                   // ─── 4. Mostrar resultado de puntos ──────────────────────────────────────────────
                   if (pointsEarned > 0) {
-                    showAlert(`⭐ +${pointsEarned} puntos acumulados para el cliente!`, 'Puntos Ganados', 'success');
+                    showAlert(`+${pointsEarned} puntos acumulados para el cliente!`, 'Puntos Ganados', 'success');
                   }
 
                   // Print combined ticket
@@ -797,7 +798,9 @@ export default function DashboardCheckoutModal() {
             gap: '1.25rem',
             animation: 'modalIn 0.2s ease-out'
           }}>
-            <h4 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: '#0f172a' }}>⭐ Canjear Puntos</h4>
+            <h4 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Star size={16} fill="#0f172a" /> Canjear Puntos
+            </h4>
             <p style={{ margin: 0, color: '#475569', fontSize: '0.85rem', lineHeight: '1.5' }}>
               {loyaltyCustomer.name} tiene <strong style={{ color: '#7c3aed' }}>{loyaltyCustomer.totalPoints} puntos</strong> disponibles.
               Cada punto equivale a <strong>${loyaltyConfig?.pointsValue?.toLocaleString()}</strong> de descuento.
@@ -828,7 +831,7 @@ export default function DashboardCheckoutModal() {
                         setLoyaltyRedeemModal(false);
                       }}
                     >
-                      {r.name} — ⭐ {r.pointsCost} pts
+                      {r.name} — {r.pointsCost} pts
                       {r.type === 'discount' && ` = $${(r.pointsCost * (loyaltyConfig.pointsValue || 0)).toLocaleString()} de desc.`}
                     </button>
                   ))}

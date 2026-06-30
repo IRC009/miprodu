@@ -33,85 +33,45 @@ function getComparableDate(val) {
  * @param {number} planLevel       - Nivel de plan global (>= 0 = activo, -1 = inactivo)
  */
 async function enforceBranchLimits(restaurantId, branches, sub0, sub1, sub2, planLevel) {
-  // Agrupar sedes por planLevel (solo 0, 1, 2)
-  const byPlan = { 0: [], 1: [], 2: [] };
-  for (const b of branches) {
-    const pl = parseInt(b.planLevel);
-    if (pl === 0 || pl === 1 || pl === 2) byPlan[pl].push(b);
-  }
-
-  const limits = { 0: sub0, 1: sub1, 2: sub2 };
-
-  // Calcular qué sedes conservar y cuáles sobran
-  const keptByPlan = { 0: [], 1: [], 2: [] };
-  const toStrip = [];
-
-  for (const pl of [0, 1, 2]) {
-    const group = byPlan[pl];
-    const limit = limits[pl];
-
-    // Ordenar: más recientes primero (conservar), más antiguas sobran
-    const sorted = [...group].sort((a, b) => {
-      const da = getComparableDate(a.lastPlanChange || a.createdAt);
-      const db_ = getComparableDate(b.lastPlanChange || b.createdAt);
-      return db_ - da; // desc
-    });
-
-    keptByPlan[pl] = sorted.slice(0, limit);
-    toStrip.push(...sorted.slice(limit));
-  }
-
-  // ── Regla mínimo 1 sede ───────────────────────────────────────────────────
-  // Si la suscripción está activa, hay cupos contratados (totalAllowed > 0) y no quedaría 
-  // NINGUNA sede con plan, rescatar la sede más reciente y asignarle el nivel de plan correspondiente.
   const isActive = planLevel >= 0;
-  const totalAllowed = sub0 + sub1 + sub2;
-  const totalKept = keptByPlan[0].length + keptByPlan[1].length + keptByPlan[2].length;
+  if (!isActive) return false;
 
-  let rescued = null;
-  let rescuePlanLevel = 0;
-  if (isActive && totalAllowed > 0 && totalKept === 0) {
-    const candidates = toStrip.length > 0 ? toStrip : branches;
-    if (candidates.length > 0) {
-      // Ordenar y tomar la más reciente para rescatarla
-      const sortedCandidates = [...candidates].sort((a, b) => {
-        const da = getComparableDate(a.lastPlanChange || a.createdAt);
-        const db_ = getComparableDate(b.lastPlanChange || b.createdAt);
-        return db_ - da; // desc
-      });
-      rescued = sortedCandidates[0];
-      
-      // Determinar qué nivel de plan asignarle (el primero que tenga slots disponibles)
-      if (sub2 > 0) rescuePlanLevel = 2;
-      else if (sub1 > 0) rescuePlanLevel = 1;
-      else rescuePlanLevel = 0;
+  const totalAllowed = sub2;
+  
+  // Ordenar: más recientes primero (conservar), más antiguas sobran
+  const sorted = [...branches].sort((a, b) => {
+    const da = getComparableDate(a.lastPlanChange || a.createdAt);
+    const db_ = getComparableDate(b.lastPlanChange || b.createdAt);
+    return db_ - da; // desc
+  });
 
-    }
-  }
-
-  if (toStrip.length === 0 && !rescued) return false; // nada que hacer
+  const kept = sorted.slice(0, totalAllowed);
+  const toStrip = sorted.slice(totalAllowed);
 
   const updateOps = [];
 
-  // Actualizar sede rescatada
-  if (rescued) {
-    updateOps.push(
-      updateBranch(restaurantId, rescued.id, {
-        planLevel: rescuePlanLevel,
-        lastPlanChange: new Date().toISOString()
-      }).catch(e => console.warn('[enforceBranchLimits] Error al rescatar sede:', rescued.id, e))
-    );
+  // Actualizar sedes que conservamos a planLevel 2 si no lo están
+  for (const branch of kept) {
+    if (parseInt(branch.planLevel) !== 2) {
+      updateOps.push(
+        updateBranch(restaurantId, branch.id, {
+          planLevel: 2,
+          lastPlanChange: new Date().toISOString()
+        }).catch(e => console.warn('[enforceBranchLimits] Error al asignar sede a Plan Pro:', branch.id, e))
+      );
+    }
   }
 
-  // Desasignar sedes excedentes (excluyendo la rescatada)
+  // Desasignar sedes excedentes
   for (const branch of toStrip) {
-    if (rescued && branch.id === rescued.id) continue;
-    updateOps.push(
-      updateBranch(restaurantId, branch.id, {
-        planLevel: -1,
-        lastPlanChange: new Date().toISOString()
-      }).catch(e => console.warn('[enforceBranchLimits] Error al reasignar sede:', branch.id, e))
-    );
+    if (parseInt(branch.planLevel) !== -1) {
+      updateOps.push(
+        updateBranch(restaurantId, branch.id, {
+          planLevel: -1,
+          lastPlanChange: new Date().toISOString()
+        }).catch(e => console.warn('[enforceBranchLimits] Error al desasignar sede excedente:', branch.id, e))
+      );
+    }
   }
 
   if (updateOps.length > 0) {
@@ -175,19 +135,14 @@ export function useBranchesData(restaurantId, isBranchAllowed, planLevel, isMixe
     if (changed && restaurantId) fetchBranches();
   }, [subscribedBranches0, subscribedBranches1, subscribedBranches2, restaurantId]);
 
-  const branchesP1 = branches.filter(b => b.planLevel === 1).length;
+  const branchesP1 = 0;
   const branchesP2 = branches.filter(b => b.planLevel === 2).length;
-  const branchesFree = branches.filter(b => b.planLevel === 0).length;
+  const branchesFree = 0;
   
-  const canAddFree = isMixed 
-    ? branchesFree < subscribedBranches0 
-    : (planLevel === 0 ? branchesFree < subscribedBranches : branchesFree < 1);
-
-  const canAddP1 = isMixed ? branchesP1 < subscribedBranches1 : planLevel === 1 && branchesP1 < subscribedBranches;
-  const canAddP2 = isMixed ? branchesP2 < subscribedBranches2 : planLevel === 2 && branchesP2 < subscribedBranches;
-  const canAdd = isMixed 
-    ? (canAddFree || canAddP1 || canAddP2) 
-    : (planLevel === 0 ? canAddFree : (planLevel === 1 ? canAddP1 : canAddP2));
+  const canAddFree = false;
+  const canAddP1 = false;
+  const canAddP2 = planLevel === 2 && branchesP2 < subscribedBranches;
+  const canAdd = canAddP2;
 
   const handleDelete = (id) => {
     showAlert('¿Eliminar esta sede? Se borrarán todos sus datos.', 'Confirmar', 'warning', async () => {

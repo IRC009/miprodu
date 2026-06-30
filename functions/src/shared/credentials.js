@@ -3,6 +3,11 @@
 
 const admin = require("firebase-admin");
 
+function sanitizeCredentialString(str) {
+  if (typeof str !== "string") return str;
+  return str.replace(/\r?\n|\r/g, "").trim();
+}
+
 /**
  * Obtiene las credenciales de Mercado Pago de un restaurante/sede.
  * Busca primero en la sede (si branchId existe), luego en config/general, luego en el documento raíz.
@@ -62,6 +67,14 @@ async function getMPCredentials(restaurantId, branchId = null) {
     mpCreds = globalMP || rootMP || null;
   }
 
+  if (mpCreds) {
+    mpCreds = {
+      ...mpCreds,
+      accessToken: sanitizeCredentialString(mpCreds.accessToken),
+      publicKey: sanitizeCredentialString(mpCreds.publicKey),
+    };
+  }
+
   return { creds: mpCreds, restaurantName: restaurantName || "Restaurante" };
 }
 
@@ -111,6 +124,14 @@ async function getBoldCredentials(restaurantId, branchId = null) {
     }
   } else {
     boldData = globalBold || rootBold || null;
+  }
+
+  if (boldData) {
+    boldData = {
+      ...boldData,
+      apiKey: sanitizeCredentialString(boldData.apiKey),
+      secretKey: sanitizeCredentialString(boldData.secretKey),
+    };
   }
 
   return boldData;

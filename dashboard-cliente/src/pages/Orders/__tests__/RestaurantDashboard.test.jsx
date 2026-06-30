@@ -118,52 +118,34 @@ describe('RestaurantDashboard - Verification Tests', () => {
     vi.clearAllMocks();
   });
 
-  it('debe mostrar el botón de facturación para mesas ocupadas', async () => {
+  it('debe mostrar el botón de facturación para pedidos en preparación', async () => {
     render(
       <BrowserRouter>
         <RestaurantDashboard />
       </BrowserRouter>
     );
 
-    // 1. Cambiar a la pestaña de Mesas
-    const tablesTabBtn = await screen.findByRole('button', { name: /Mesas/i });
-    fireEvent.click(tablesTabBtn);
+    // 1. Cambiar a la pestaña de En Preparación
+    const preparingTabBtn = await screen.findByRole('button', { name: /Preparando/i });
+    fireEvent.click(preparingTabBtn);
 
-    const table2Label = await screen.findByText(/Mesa 2/i);
-    const cardElement = table2Label.closest('.table-card');
-    
-    await waitFor(() => {
-        expect(cardElement).toHaveClass('occupied');
-    });
-
-    fireEvent.click(cardElement);
-
-    // Verificar que el botón de facturación consolidada existe
-    const billBtn = await screen.findByText(/Consolidar y Facturar/i);
+    // Verificar que el botón de cobro existe para la orden
+    const billBtn = await screen.findByText(/Registrar Pago/i);
     expect(billBtn).toBeInTheDocument();
   });
 
-  it('debe abrir el modal de autorización al intentar cancelar', async () => {
+  it('debe abrir el modal de autorización al intentar cancelar desde En Preparación', async () => {
     render(
       <BrowserRouter>
         <RestaurantDashboard />
       </BrowserRouter>
     );
 
-    // 1. Cambiar a la pestaña de Mesas
-    const tablesTabBtn = await screen.findByRole('button', { name: /Mesas/i });
-    fireEvent.click(tablesTabBtn);
+    // 1. Cambiar a la pestaña de En Preparación
+    const preparingTabBtn = await screen.findByRole('button', { name: /Preparando/i });
+    fireEvent.click(preparingTabBtn);
 
-    const table2Label = await screen.findByText(/Mesa 2/i);
-    const cardElement = table2Label.closest('.table-card');
-    
-    await waitFor(() => {
-        expect(cardElement).toHaveClass('occupied');
-    });
-
-    fireEvent.click(cardElement);
-    
-    const cancelBtn = await screen.findByTitle('Cancelar Pedido');
+    const cancelBtn = await screen.findByTitle('Cancelar pedido');
     fireEvent.click(cancelBtn);
 
     const authTitle = await screen.findByText(/Autorización Requerida/i);

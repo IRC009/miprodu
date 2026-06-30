@@ -10,7 +10,7 @@ const PaywallRouteWrapper = () => {
   const { slug } = useParams();
   const { data: restaurantData, loading, error } = useRestaurantData(slug);
   const restaurantId = restaurantData?.id || slug;
-  const { designConfig } = useRestaurantDesign(restaurantId);
+  const { designConfig } = useRestaurantDesign(restaurantId, restaurantData?.design);
 
   if (loading) {
     return <LoadingScreen message="Cargando..." />;
@@ -20,7 +20,7 @@ const PaywallRouteWrapper = () => {
     return (
       <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '2rem', background: '#0a0a0a', fontFamily: "'Inter', sans-serif" }}>
         <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔍</div>
-        <h2 style={{ color: '#ef4444', marginBottom: '0.5rem' }}>Restaurante no encontrado</h2>
+        <h2 style={{ color: '#ef4444', marginBottom: '0.5rem' }}>Tienda o catálogo no encontrado</h2>
         <p style={{ color: '#64748b' }}>El enlace que estás usando no parece ser válido.</p>
       </div>
     );
@@ -28,7 +28,11 @@ const PaywallRouteWrapper = () => {
 
   return (
     <PaywallCheck restaurantData={restaurantData} designConfig={designConfig}>
-      <AnalyticsTracker restaurantId={restaurantData.id} />
+      <AnalyticsTracker 
+        restaurantId={restaurantData.id} 
+        marketingPixels={restaurantData.marketingPixels} 
+        currency={restaurantData.currency || 'COP'} 
+      />
       <Outlet context={{ restaurantData }} />
     </PaywallCheck>
   );

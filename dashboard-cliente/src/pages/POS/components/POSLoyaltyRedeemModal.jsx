@@ -1,5 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
+import { Coins } from 'lucide-react';
 import s from '../POS.module.css';
 
 /**
@@ -15,7 +16,9 @@ export default function POSLoyaltyRedeemModal({ loyaltyCustomer, loyaltyConfig, 
   return createPortal(
     <div className="saas-modal-overlay" style={{ zIndex: 10002 }}>
       <div className={`saas-modal-content ${s.redeemModal}`}>
-        <h3 className={s.redeemTitle}>⭐ Canjear Puntos</h3>
+        <h3 className={s.redeemTitle} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+          <Coins size={16} /> Canjear Puntos
+        </h3>
         <p className={s.redeemSubtitle}>
           {loyaltyCustomer.name} tiene <strong>{loyaltyCustomer.totalPoints} puntos</strong> disponibles.
           Cada punto equivale a ${loyaltyConfig?.pointsValue?.toLocaleString()} de descuento.
@@ -26,7 +29,7 @@ export default function POSLoyaltyRedeemModal({ loyaltyCustomer, loyaltyConfig, 
             <div className={s.rewardsSectionTitle}>PREMIOS DISPONIBLES</div>
             {availableRewards.map(r => (
               <button key={r.id} className={s.rewardBtn} onClick={() => onApply(r.pointsCost)}>
-                {r.name} — ⭐ {r.pointsCost} pts
+                {r.name} — {r.pointsCost} pts
                 {r.type === 'discount' && ` = $${(r.pointsCost * (loyaltyConfig.pointsValue || 0)).toLocaleString()} de descuento`}
               </button>
             ))}

@@ -1,15 +1,18 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { getBranches } from '../../../services/branchService';
 import { getFullAnalytics } from '../../../services/biService';
+import { db } from '../../../services/firebase';
+import { collection, onSnapshot } from 'firebase/firestore';
+
 
 // ─── Loading step messages (shown during simulated BI re-compute) ──────────────
 const BI_STEPS = [
-  { pct: 10, msg: '🛒 Analizando canasta de compras (Cross-Selling)...' },
-  { pct: 30, msg: '⚠️ Calculando tasa de deserción (Churn VIP)...' },
-  { pct: 55, msg: '🌧️ Correlacionando ventas con datos de Clima...' },
-  { pct: 75, msg: '🍽️ Generando Matriz de Ingeniería de Menú...' },
-  { pct: 90, msg: '📍 Calculando Geo-BI y zonas de domicilios...' },
-  { pct: 100, msg: '✅ Inteligencia lista.' },
+  { pct: 10, msg: 'Analizando canasta de compras (Cross-Selling)...' },
+  { pct: 30, msg: 'Calculando tasa de deserción (Churn VIP)...' },
+  { pct: 55, msg: 'Correlacionando ventas con datos de Clima...' },
+  { pct: 75, msg: 'Generando análisis de ingeniería de productos...' },
+  { pct: 90, msg: 'Calculando Geo-BI y zonas de domicilios...' },
+  { pct: 100, msg: 'Inteligencia lista.' },
 ];
 
 const STEP_DURATION_MS  = 900;   // ~5.4 s total across 6 steps
@@ -42,7 +45,7 @@ const writeCooldown = (restaurantId) => {
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 export function useAnalyticsData(restaurantId, isBranchAllowed) {
-  const today   = new Date().toISOString().split('T')[0];
+  const today = useMemo(() => new Date().toISOString().split('T')[0], []);
 
   const [branches,   setBranches]   = useState([]);
   const [branchId,   setBranchId]   = useState('ALL');
@@ -117,9 +120,9 @@ export function useAnalyticsData(restaurantId, isBranchAllowed) {
   }, [restaurantId, isBranchAllowed]);
 
   // ─── Fetch analytics (initial + filter changes) ─────────────────────────────
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (silent = false) => {
     if (!restaurantId) return;
-    setLoading(true);
+    if (!silent) setLoading(true);
     try {
       const result = await getFullAnalytics(
         restaurantId,
@@ -142,11 +145,52 @@ export function useAnalyticsData(restaurantId, isBranchAllowed) {
     } catch (e) {
       console.error('Analytics error:', e);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [restaurantId, branchId, startDate, endDate, today]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  // Only run standard loading fetch when filters actually change
+  useEffect(() => {
+    fetchData();
+  }, [restaurantId, branchId, startDate, endDate]);
+
+  // Reference to avoid stale closure in real-time listener
+  const fetchDataRef = useRef(fetchData);
+  useEffect(() => {
+    fetchDataRef.current = fetchData;
+  }, [fetchData]);
+
+  // ─── Listen to real-time analytics/order updates ────────────────────────────
+  useEffect(() => {
+    if (!restaurantId) return;
+
+    let timeoutId = null;
+
+    const triggerFetch = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        if (fetchDataRef.current) {
+          fetchDataRef.current(true); // silent = true
+        }
+      }, 2000); // 2-second debounce for smooth updates
+    };
+
+    const qAnalytics = collection(db, `restaurants/${restaurantId}/analytics_buckets`);
+    const unsubAnalytics = onSnapshot(qAnalytics, () => {
+      triggerFetch();
+    }, (err) => console.warn("Real-time analytics listener failed:", err));
+
+    const qOrders = collection(db, `restaurants/${restaurantId}/active_orders`);
+    const unsubOrders = onSnapshot(qOrders, () => {
+      triggerFetch();
+    }, (err) => console.warn("Real-time orders listener failed:", err));
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      unsubAnalytics();
+      unsubOrders();
+    };
+  }, [restaurantId]);
 
   // ─── Manual BI Refresh (with simulated loading + cooldown) ──────────────────
   const refreshBIData = useCallback(async () => {

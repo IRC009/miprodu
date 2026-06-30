@@ -8,7 +8,8 @@ import { getInventoryMovements } from '../../services/inventoryService';
 
 export default function AnalyticsView() {
   const { restaurantId: RESTAURANT_ID, isBranchAllowed, userProfile } = useSubscription();
-  const { products } = useRestaurantData();
+  const { products, design } = useRestaurantData();
+  const isEcommerce = design?.ecommerceMode === true;
   
   const [metrics, setMetrics] = useState({
     totalSales: 0,
@@ -74,10 +75,11 @@ export default function AnalyticsView() {
           // Agrupar por mesero (Rendimiento de Personal)
           if (order.waiterId) {
              if (!waiterMap[order.waiterId]) {
-                waiterMap[order.waiterId] = { name: order.waiterName || 'Staff', tablesServed: new Set(), totalRevenue: 0 };
+                waiterMap[order.waiterId] = { name: order.waiterName || 'Staff', tablesServed: new Set(), totalRevenue: 0, orderCount: 0 };
              }
              if (order.tableNumber) waiterMap[order.waiterId].tablesServed.add(order.tableNumber);
              waiterMap[order.waiterId].totalRevenue += orderTotal;
+             waiterMap[order.waiterId].orderCount += 1;
           }
 
           // Agrupar por franja horaria (Hora del Restaurante)
@@ -153,7 +155,8 @@ export default function AnalyticsView() {
           timeSlots,
           waiterPerformance: Object.values(waiterMap).map(w => ({
              ...w,
-             tablesServed: w.tablesServed.size
+             tablesServed: w.tablesServed.size,
+             orderCount: w.orderCount
           })).sort((a, b) => b.totalRevenue - a.totalRevenue)
         });
         
@@ -317,9 +320,9 @@ export default function AnalyticsView() {
             <thead>
               <tr>
                 <th>Colaborador</th>
-                <th>Mesas Atendidas</th>
+                <th>{isEcommerce ? "Pedidos Atendidos" : "Mesas Atendidas"}</th>
                 <th>Venta Total Generada</th>
-                <th>Promedio por Mesa</th>
+                <th>{isEcommerce ? "Promedio por Pedido" : "Promedio por Mesa"}</th>
               </tr>
             </thead>
             <tbody>
@@ -329,10 +332,12 @@ export default function AnalyticsView() {
                 metrics.waiterPerformance.map((waiter, idx) => (
                   <tr key={idx}>
                     <td style={{ fontWeight: 600 }}>{waiter.name}</td>
-                    <td>{waiter.tablesServed}</td>
+                    <td>{isEcommerce ? waiter.orderCount : waiter.tablesServed}</td>
                     <td style={{ fontWeight: 700, color: '#0f172a' }}>{formatMoney(waiter.totalRevenue)}</td>
                     <td style={{ color: '#64748b' }}>
-                       {waiter.tablesServed > 0 ? formatMoney(waiter.totalRevenue / waiter.tablesServed) : '$0'}
+                       {isEcommerce 
+                         ? (waiter.orderCount > 0 ? formatMoney(waiter.totalRevenue / waiter.orderCount) : '$0')
+                         : (waiter.tablesServed > 0 ? formatMoney(waiter.totalRevenue / waiter.tablesServed) : '$0')}
                     </td>
                   </tr>
                 ))

@@ -35,7 +35,7 @@ AGREGAR:
   // Cloudflare for SaaS — Dominios personalizados
   CF_API_TOKEN: process.env.CF_API_TOKEN || "",
   CF_ZONE_ID:   process.env.CF_ZONE_ID   || "",
-  PLATFORM_DOMAINS: ["cartaymesa.com", "web.app", "firebaseapp.com", "localhost"],
+  PLATFORM_DOMAINS: ["miprodu.com", "web.app", "firebaseapp.com", "localhost"],
 
 NOTA: Después del deploy, configurar los secrets con:
   firebase functions:secrets:set CF_API_TOKEN
@@ -64,7 +64,7 @@ DÓNDE: Al inicio del componente function App(), antes del return.
 
 AGREGAR:
   // Detectar si el acceso viene de un dominio personalizado de cliente
-  const PLATFORM_DOMAINS = ['cartaymesa.com', 'web.app', 'firebaseapp.com', 'localhost'];
+  const PLATFORM_DOMAINS = ['miprodu.com', 'web.app', 'firebaseapp.com', 'localhost'];
   const isCustomDomain = !PLATFORM_DOMAINS.some(d =>
     window.location.hostname === d || window.location.hostname.endsWith('.' + d)
   );
@@ -98,7 +98,7 @@ DÓNDE: Al inicio del componente, después de:
 
 AGREGAR:
   // Detectar si el acceso es por dominio personalizado (slug no existe en la URL)
-  const PLATFORM_DOMAINS = ['cartaymesa.com', 'web.app', 'firebaseapp.com', 'localhost'];
+  const PLATFORM_DOMAINS = ['miprodu.com', 'web.app', 'firebaseapp.com', 'localhost'];
   const isCustomDomain = !PLATFORM_DOMAINS.some(d =>
     window.location.hostname === d || window.location.hostname.endsWith('.' + d)
   );

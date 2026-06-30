@@ -5,8 +5,8 @@ const { test, expect } = require('@playwright/test');
  * Verifica el estado de las aplicaciones en vivo y la interactividad básica.
  */
 
-const DASHBOARD_URL = 'https://app.cartaymesa.com';
-const MENU_BASE_URL = 'https://menu.cartaymesa.com';
+const DASHBOARD_URL = 'https://app.miprodu.com';
+const MENU_BASE_URL = 'https://menu.miprodu.com';
 const EMAIL = 'isaacrodas10@gmail.com';
 const PASS = '32613036';
 
@@ -63,7 +63,7 @@ test.describe('WebExplora Smoke & Interactivity Tests', () => {
     await newPage.waitForLoadState();
     console.log(`✅ Navegación a Menú Público exitosa: ${newPage.url()}`);
     
-    await expect(newPage).toHaveURL(/menu\.cartaymesa\.com\/r\//);
+    await expect(newPage).toHaveURL(/menu\.miprodu\.com\/r\//);
     
     // Cerrar modal de promociones si aparece
     const promoCloseBtn = newPage.locator('button:has-text("Entendido"), .promos-modal-close');

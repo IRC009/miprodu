@@ -43,6 +43,7 @@ export function useCartModal(restaurantId, onClose) {
   const [customerName, setCustomerName] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
   const [tableNumber, setTableNumber] = useState('');
   const [globalObservations, setGlobalObservations] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('cash');
@@ -58,6 +59,27 @@ export function useCartModal(restaurantId, onClose) {
   const [loyaltyCustomerId, setLoyaltyCustomerId] = useState('');
   const [loyaltyCustomerPhone, setLoyaltyCustomerPhone] = useState('');
   const [loyaltyCustomerEmail, setLoyaltyCustomerEmail] = useState('');
+
+  // Disparar begin_checkout al montar el carrito
+  useEffect(() => {
+    if (cartItems.length > 0) {
+      try {
+        if (window.trackPixelEvent) {
+          window.trackPixelEvent('begin_checkout', {
+            value: cartTotal,
+            items: cartItems.map(item => ({
+              id: item.id,
+              name: item.name,
+              price: item.discountPrice || item.price,
+              quantity: item.quantity
+            }))
+          });
+        }
+      } catch (e) {
+        console.warn('Error tracking begin_checkout pixel:', e);
+      }
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const showGPSBlockedInstructions = (title = 'Ubicación requerida') => {
     showAlert(
@@ -76,6 +98,8 @@ export function useCartModal(restaurantId, onClose) {
   // Sede seleccionada activa
   const [selectedBranch, setSelectedBranch] = useState(null);
   const [branchPlan, setBranchPlan] = useState(0);
+
+  const [isEcommerce, setIsEcommerce] = useState(false);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -124,14 +148,22 @@ export function useCartModal(restaurantId, onClose) {
 
       const data = await getGeneralSettings(restaurantId, activeBranchId);
       setSettings(data || {});
+
+      let isShop = false;
+      try {
+        const designSnap = await getDoc(doc(db, `restaurants/${restaurantId}/config/design`));
+        if (designSnap.exists()) {
+          const t = designSnap.data().template;
+          isShop = ['noir', 'urban', 'bloom', 'classic'].includes(t);
+          setIsEcommerce(isShop);
+        }
+      } catch (e) { console.error(e); }
       
       let initialOrderType = 'delivery';
       const hasQrTable = qrTable && qrTable !== '';
       const isCounterMode = data?.orderIdentificationMode === 'counter';
 
-      const isTableEnabled = ((data?.enableTableOrders !== false) && 
-        (isCounterMode ? (data?.enableBarService !== false) : (data?.enableTableService !== false)) &&
-        branchPlan >= 2) || (data?.enableWhatsAppTableOrders === true && branchPlan >= 0);
+      const isTableEnabled = false;
       const isDeliveryEnabled = ((data?.enableWhatsAppOrders !== false) && branchPlan >= 1) || (data?.enableWhatsAppDirectDelivery === true);
       const isPickupEnabled = (data?.enablePickupOrders !== false) && branchPlan >= 1;
 
@@ -152,7 +184,7 @@ export function useCartModal(restaurantId, onClose) {
       }
       setOrderType(initialOrderType);
       
-      if ((data?.suggestedTipPercentage || 0) > 0) {
+      if (!isShop && (data?.suggestedTipPercentage || 0) > 0) {
         setAddTip(true);
       }
 
@@ -241,7 +273,7 @@ export function useCartModal(restaurantId, onClose) {
   const buildOrderBase = () => ({
     items: cartItems,
     globalObservations,
-    branchId: branchId || null,
+    branchId: branchId || selectedBranch?.id || null,
     origin: 'menu',
     source: 'qr',
     paymentMethod: paymentMethod === 'transfer' ? 'transfer' : 'cash',
@@ -262,7 +294,7 @@ export function useCartModal(restaurantId, onClose) {
     const base = {
       items: cartItems,
       globalObservations,
-      branchId: branchId || null,
+      branchId: branchId || selectedBranch?.id || null,
       origin: 'menu',
       source: 'qr',
       paymentMethod: 'card',
@@ -512,6 +544,26 @@ export function useCartModal(restaurantId, onClose) {
 
       const whatsappUrl = `https://wa.me/${cleanWaNumber}?text=${encodeURIComponent(msg)}`;
       
+      try {
+        if (window.trackPixelEvent) {
+          window.trackPixelEvent('purchase', {
+            value: totalWithoutTip,
+            orderId: `WA_${Date.now()}`,
+            customer: {
+              name: customerName || '',
+              phone: customerPhone || '',
+              email: customerEmail || '',
+            },
+            items: cartItems.map(item => ({
+              id: item.id,
+              name: item.name,
+              price: item.discountPrice || item.price,
+              quantity: item.quantity
+            }))
+          });
+        }
+      } catch (e) {}
+
       window.open(whatsappUrl, '_blank');
       
       clearCart();
@@ -610,6 +662,27 @@ export function useCartModal(restaurantId, onClose) {
                   `*TOTAL:* $${formattedTotal}${obs}\n`;
 
       const whatsappUrl = `https://wa.me/${targetWaNumber}?text=${encodeURIComponent(msg)}`;
+      
+      try {
+        if (window.trackPixelEvent) {
+          window.trackPixelEvent('purchase', {
+            value: cartTotal,
+            orderId: `WA_TABLE_${Date.now()}`,
+            customer: {
+              name: customerName || '',
+              phone: customerPhone || '',
+              email: customerEmail || '',
+            },
+            items: cartItems.map(item => ({
+              id: item.id,
+              name: item.name,
+              price: item.discountPrice || item.price,
+              quantity: item.quantity
+            }))
+          });
+        }
+      } catch (e) {}
+
       window.open(whatsappUrl, '_blank');
       clearCart();
       onClose();
@@ -944,10 +1017,10 @@ export function useCartModal(restaurantId, onClose) {
     : isOnlinePayment
       ? 'Pagar Pedido'
       : orderType === 'delivery'
-        ? (settings?.enableWhatsAppDirectDelivery === true ? 'Enviar a WhatsApp' : 'Confirmar Pedido')
+        ? (settings?.enableWhatsAppDirectDelivery === true ? 'Enviar a WhatsApp' : (isEcommerce ? 'Confirmar Compra' : 'Confirmar Pedido'))
         : orderType === 'table'
           ? (settings?.enableWhatsAppTableOrders === true && branchPlan < 2 ? 'Enviar a WhatsApp 🪑' : 'Enviar a Mesa')
-          : 'Pedir para Recoger';
+          : (isEcommerce ? 'Confirmar Compra' : 'Pedir para Recoger');
 
   return {
     loading, settings, selectedBranch,
@@ -957,6 +1030,7 @@ export function useCartModal(restaurantId, onClose) {
     customerName, setCustomerName,
     customerAddress, setCustomerAddress,
     customerPhone, setCustomerPhone,
+    customerEmail, setCustomerEmail,
     tableNumber, setTableNumber,
     globalObservations, setGlobalObservations,
     paymentMethod, setPaymentMethod,
@@ -987,5 +1061,6 @@ export function useCartModal(restaurantId, onClose) {
     requestDeliveryGPS,
     handleSelectOrderType,
     branchPlan,
+    isEcommerce,
   };
 }

@@ -1,5 +1,6 @@
 import React from 'react';
 import { PROMO_TYPES } from '../constants/promoTypes';
+import { Lock } from 'lucide-react';
 
 export default function RuleModal({ ruleForm, setRuleForm, onClose, onSave, branches, categories, planLevel }) {
   const selectedTypeObj = PROMO_TYPES.find(t => t.type === ruleForm.type);
@@ -14,17 +15,17 @@ export default function RuleModal({ ruleForm, setRuleForm, onClose, onSave, bran
     <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: '1rem' }}>
       <div className="card" style={{ width: '100%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto' }}>
         <h2 style={{ marginBottom: '1rem', fontSize: '1.25rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {selectedTypeObj?.icon} Configurar: {selectedTypeObj?.label}
-          {isLocked && <span style={{ color: '#ef4444', fontSize: '0.8rem', background: '#fee2e2', padding: '2px 8px', borderRadius: '12px' }}>🔒 Requiere Plan Superior</span>}
+          Configurar: {selectedTypeObj?.label}
+          {isLocked && <span style={{ color: '#ef4444', fontSize: '0.8rem', background: '#fee2e2', padding: '2px 8px', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Lock size={12} /> Requiere Plan Superior</span>}
         </h2>
 
         {isLocked ? (
           <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
-            <span style={{ fontSize: '3rem' }}>🔒</span>
+            <Lock size={48} style={{ color: '#ef4444', margin: '0 auto 1rem' }} />
             <h3 style={{ fontWeight: 700, margin: '1rem 0 0.5rem' }}>Esta promoción no está disponible en tu plan actual</h3>
             <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
               Para utilizar <strong>{selectedTypeObj?.label}</strong>, necesitas actualizar al plan 
-              {selectedTypeObj.minPlan === 2 ? ' "Carta y Mesa"' : ' "Carta"'}.
+              {selectedTypeObj.minPlan === 2 ? ' "Plan Pro"' : ' "Plan Carta"'}.
             </p>
             <button className="btn-primary" onClick={onClose}>Entendido</button>
           </div>

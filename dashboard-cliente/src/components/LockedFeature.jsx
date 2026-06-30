@@ -3,14 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useSubscription } from '../context/SubscriptionContext';
 import { useRestaurantData } from '../context/RestaurantDataContext';
 import { PLAN_NAMES, FEATURE_ACCESS } from '../context/constants';
-import { Lock, Gem } from 'lucide-react';
+import { Lock, Gem, Zap, Lightbulb, MapPin, Building2 } from 'lucide-react';
 
 /**
  * Envuelve cualquier página o sección.
  * Si el usuario no tiene el plan necesario, muestra un bloqueo elegante.
  */
 export default function LockedFeature({ feature, children }) {
-  const { canAccess, isLocked, planLevel, userProfile, selectedBranchId, updateSelectedBranch, isExplore } = useSubscription();
+  const { canAccess, isLocked, planLevel, isActive, userProfile, selectedBranchId, updateSelectedBranch } = useSubscription();
   const { branches, loading: loadingData } = useRestaurantData();
   const navigate = useNavigate();
 
@@ -49,24 +49,23 @@ export default function LockedFeature({ feature, children }) {
   //   (el más restrictivo), para evitar que el plan global desbloquee features
   //   que la sede activa no tiene contratados.
   // - Si no hay sedes cargadas aún: usa el planLevel global de la suscripción
-  const branchPlanLevelRaw = isExplore
-    ? 0
-    : (selectedBranchId && selectedBranchId !== 'ALL'
-        ? ((selectedBranchData?.planLevel !== undefined && selectedBranchData?.planLevel !== null)
-            ? parseInt(selectedBranchData.planLevel)
-            : planLevel)
-        : (branches && branches.length > 0
-            ? Math.min(...branches.map(b =>
-                (b.planLevel !== undefined && b.planLevel !== null && !isNaN(parseInt(b.planLevel)))
-                  ? parseInt(b.planLevel)
-                  : 0
-              ))
-            : planLevel));
+  const branchPlanLevelRaw = (selectedBranchId && selectedBranchId !== 'ALL'
+    ? ((selectedBranchData?.planLevel !== undefined && selectedBranchData?.planLevel !== null)
+        ? parseInt(selectedBranchData.planLevel)
+        : planLevel)
+    : (branches && branches.length > 0
+        ? Math.min(...branches.map(b =>
+            (b.planLevel !== undefined && b.planLevel !== null && !isNaN(parseInt(b.planLevel)))
+              ? parseInt(b.planLevel)
+              : 0
+          ))
+        : planLevel));
 
   const branchPlanLevel = branchPlanLevelRaw < 0 ? 0 : branchPlanLevelRaw;
 
   const isLockedByBranch = branchPlanLevel < requiredPlanLevel;
-  const featureLocked = isLocked(feature) || isLockedByBranch;
+  const isCajaBlocked = !isActive && (feature === 'orders' || feature === 'restaurante');
+  const featureLocked = isLocked(feature) || isLockedByBranch || isCajaBlocked;
 
   // Si está bloqueado por el plan (global o de la sede)
   if (featureLocked) {
@@ -108,12 +107,25 @@ export default function LockedFeature({ feature, children }) {
             maxWidth: 460, boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
           }}>
             <div style={{ fontWeight: 800, color: '#92400e', marginBottom: '0.4rem', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              ⚡ Tienes un plan disponible sin asignar a esta sede
+              <Zap size={16} style={{ flexShrink: 0 }} /> Tienes un plan disponible sin asignar a esta sede
             </div>
             <div style={{ fontSize: '0.85rem', color: '#78350f', lineHeight: 1.6 }}>
               Tu suscripción global incluye el plan <strong>{requiredPlan}</strong>, pero tu sede activa (<strong>{selectedBranchData?.name || 'Sede Seleccionada'}</strong>) está configurada en el plan <strong>{PLAN_NAMES[branchPlanLevel] || 'Tradicional'}</strong>.
               <br /><br />
               Para habilitar esta función en esta sede, ve a <strong>Gestión de Sedes</strong>, edita esta sede y asígnale tu plan contratado.
+            </div>
+          </div>
+        ) : isCajaBlocked ? (
+          <div style={{
+            background: '#fef2f2', border: '1.5px solid #fca5a5', borderRadius: 16,
+            padding: '1.2rem 1.5rem', margin: '0.5rem 0 2rem', textAlign: 'left',
+            maxWidth: 460, boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
+          }}>
+            <div style={{ fontWeight: 800, color: '#991b1b', marginBottom: '0.4rem', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Lock size={16} style={{ flexShrink: 0 }} /> Función Bloqueada — Sin Plan Activo
+            </div>
+            <div style={{ fontSize: '0.85rem', color: '#7f1d1d', lineHeight: 1.6 }}>
+              Tu periodo de prueba ha finalizado. Para reactivar tu caja registradora, poder facturar y recibir pedidos en tiempo real, necesitas contratar un plan de suscripción activo.
             </div>
           </div>
         ) : (
@@ -137,7 +149,7 @@ export default function LockedFeature({ feature, children }) {
             boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.02)'
           }}>
             <strong style={{ color: '#1e293b', display: 'block', marginBottom: '4px', fontSize: '0.9rem' }}>
-              💡 ¿Para qué sirve esta funcionalidad?
+              <Lightbulb size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'middle' }} /> ¿Para qué sirve esta funcionalidad?
             </strong>
             {access.desc}
           </div>
@@ -164,7 +176,7 @@ export default function LockedFeature({ feature, children }) {
             maxWidth: '460px',
             boxShadow: 'var(--shadow-sm)'
           }}>
-            <span style={{ fontWeight: 800, fontSize: '0.88rem', color: '#475569' }}>📍 Cambiar a otra Sede para desbloquear:</span>
+            <span style={{ fontWeight: 800, fontSize: '0.88rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '6px' }}><MapPin size={16} /> Cambiar a otra Sede para desbloquear:</span>
             <select
               value={selectedBranchId || 'ALL'}
               onChange={(e) => updateSelectedBranch(e.target.value)}
@@ -186,7 +198,7 @@ export default function LockedFeature({ feature, children }) {
                 const level = (b.planLevel !== undefined && b.planLevel !== null && !isNaN(parseInt(b.planLevel))) 
                   ? parseInt(b.planLevel) 
                   : -1;
-                    const label = level <= 0 ? '(Plan Tradicional ❌)' : level === 1 ? '(Plan Carta ✅)' : '(Plan Carta y Mesa ✅)';
+                    const label = level <= 0 ? '(Plan Tradicional - No Habilitado)' : level === 1 ? '(Plan Carta - Habilitado)' : '(Plan Pro - Habilitado)';
                 return (
                   <option key={b.id} value={b.id}>
                     {b.name} {label}
@@ -219,7 +231,7 @@ export default function LockedFeature({ feature, children }) {
               onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#78350f'}
               onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#92400e'}
             >
-              🏬 Ir a Gestión de Sedes
+              <Building2 size={16} /> Ir a Gestión de Sedes
             </button>
           ) : (
             <button

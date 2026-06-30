@@ -17,6 +17,7 @@ export default function HamburgerDrawer({
   const branchParam = searchParams.get('branch');
   
   const [openDropdowns, setOpenDropdowns] = useState({});
+  const [expandedCategories, setExpandedCategories] = useState({});
   const [branches, setBranches] = useState([]);
   const [categories, setCategories] = useState([]);
 
@@ -28,6 +29,32 @@ export default function HamburgerDrawer({
       });
     }
   }, [isOpen, restaurantId, branchParam]);
+
+  const onSelectCategoryAndSub = (catId, subId) => {
+    const cat = categories.find(c => c.id === catId);
+    if (cat) {
+      const subParamVal = subId.toLowerCase();
+      setSearchParams(
+        branchParam 
+          ? { branch: branchParam, category: cat.name.toLowerCase(), subcat: subParamVal } 
+          : { category: cat.name.toLowerCase(), subcat: subParamVal }
+      );
+      if (!location.pathname.endsWith('/menu')) {
+        const targetPath = isCustomDomain 
+          ? `/menu?${branchParam ? `branch=${branchParam}&` : ''}category=${cat.name.toLowerCase()}&subcat=${encodeURIComponent(subParamVal)}` 
+          : `/r/${slug}/menu?${branchParam ? `branch=${branchParam}&` : ''}category=${cat.name.toLowerCase()}&subcat=${encodeURIComponent(subParamVal)}`;
+        navigate(targetPath);
+      }
+    }
+  };
+
+  const toggleCategory = (catId, e) => {
+    e.stopPropagation();
+    setExpandedCategories(prev => ({
+      ...prev,
+      [catId]: !prev[catId]
+    }));
+  };
 
   if (!isOpen) return null;
 
@@ -161,25 +188,27 @@ export default function HamburgerDrawer({
         style={{
           width: '100%',
           maxWidth: '450px',
-          height: '100%',
+          height: '100vh',
+          maxHeight: '100vh',
           backgroundColor: '#ffffff', // Explicitly white body
           boxShadow: '2px 0 10px rgba(0,0,0,0.3)', // shadow on the right side
           display: 'flex',
           flexDirection: 'column',
           transform: 'translateX(0)',
           animation: 'slideInLeft 0.3s ease',
-          overflowY: 'auto'
+          overflow: 'hidden'
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header - Dark background by default or dynamic designConfig */}
+        {/* Header - Fixed at the top */}
         <div style={{
           padding: '2rem 1.5rem',
           backgroundColor: 'var(--drawer-header-bg, #2a2a2a)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          position: 'relative'
+          position: 'relative',
+          flexShrink: 0
         }}>
           <button 
             onClick={onClose}
@@ -192,7 +221,13 @@ export default function HamburgerDrawer({
               color: 'var(--drawer-header-text, #ffffff)',
               fontSize: '2rem',
               cursor: 'pointer',
-              fontWeight: '300'
+              fontWeight: '300',
+              padding: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10,
+              lineHeight: 1
             }}
           >
             ×
@@ -220,13 +255,21 @@ export default function HamburgerDrawer({
                 onClose();
               }}
             >
-              {restaurantName ? restaurantName.toUpperCase() : 'EL RESTAURANTE'}
+              {restaurantName ? restaurantName.toUpperCase() : 'TIENDA'}
             </h2>
           )}
         </div>
 
-        {/* Body Content */}
-        <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', flex: 1 }}>
+        {/* Body Content - Scrollable */}
+        <div style={{ 
+          padding: '1.5rem', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: '2rem', 
+          flex: 1, 
+          overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch'
+        }}>
           
           {/* Main Content Group */}
           <div>
@@ -275,26 +318,98 @@ export default function HamburgerDrawer({
 
             {/* Categories List */}
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {categories.map(cat => (
-                <div 
-                  key={cat.id}
-                  onClick={() => {
-                    onSelectCategory(cat.id);
-                    onClose();
-                  }}
-                  style={{
-                    padding: '1rem',
-                    color: primaryColor,
-                    fontFamily: 'var(--font-main)',
-                    fontSize: '1.2rem',
-                    fontWeight: 300,
-                    cursor: 'pointer',
-                    borderBottom: `1px solid ${primaryColor}`,
-                  }}
-                >
-                  {cat.name}
-                </div>
-              ))}
+              {categories.map(cat => {
+                const subcats = cat.subcategories?.filter(s => s.name || s.label) || [];
+                const hasSubcats = subcats.length > 0;
+                const isExpanded = !!expandedCategories[cat.id];
+
+                return (
+                  <div key={cat.id} style={{ borderBottom: `1px solid ${primaryColor}40` }}>
+                    <div 
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <span 
+                        onClick={() => {
+                          onSelectCategory(cat.id);
+                          onClose();
+                        }}
+                        style={{
+                          padding: '1rem 0.5rem',
+                          color: primaryColor,
+                          fontFamily: 'var(--font-main)',
+                          fontSize: '1.2rem',
+                          fontWeight: 400,
+                          flex: 1
+                        }}
+                      >
+                        {cat.name}
+                      </span>
+                      {hasSubcats && (
+                        <button
+                          onClick={(e) => toggleCategory(cat.id, e)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: primaryColor,
+                            padding: '1rem 1.25rem',
+                            cursor: 'pointer',
+                            fontSize: '1rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'transform 0.2s',
+                            transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)'
+                          }}
+                        >
+                          ▼
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Collapsible Subcategories */}
+                    {hasSubcats && isExpanded && (
+                      <div style={{ 
+                        backgroundColor: 'rgba(0,0,0,0.02)',
+                        paddingLeft: '1.25rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        borderLeft: `2px solid ${primaryColor}40`
+                      }}>
+                        {subcats.map(sub => {
+                          const subId = sub.id || sub.name;
+                          return (
+                            <div
+                              key={subId}
+                              onClick={() => {
+                                onSelectCategoryAndSub(cat.id, subId);
+                                onClose();
+                              }}
+                              style={{
+                                padding: '0.75rem 1rem',
+                                color: '#555555',
+                                fontFamily: 'var(--font-main)',
+                                fontSize: '1rem',
+                                cursor: 'pointer',
+                                borderBottom: '1px dashed rgba(0,0,0,0.05)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px'
+                              }}
+                            >
+                              <span style={{ opacity: 0.5 }}>└</span> {sub.name || sub.label}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 

@@ -15,9 +15,9 @@ const DescriptionGenerator = () => {
       // Use gemini-2.0-flash
       const model = getGenerativeModel(vertexAI, { model: "gemini-2.0-flash" });
       
-      const prompt = `Actúa como un experto en marketing gastronómico para el SaaS 'CartaYmesa'. 
-      Genera una descripción sugerida y apetitosa de exactamente 20 palabras para el platillo: "${dishName}". 
-      La descripción debe ser en español y enfocada a un menú digital moderno.`;
+      const prompt = `Actúa como un experto en marketing digital de productos para el SaaS 'MiProdu'. 
+      Genera una descripción sugerida y atractiva de exactamente 20 palabras para el producto: "${dishName}". 
+      La descripción debe ser en español y enfocada a un catálogo digital moderno.`;
 
       const result = await model.generateContent(prompt);
       const response = await result.response;
@@ -40,7 +40,7 @@ const DescriptionGenerator = () => {
           type="text"
           value={dishName}
           onChange={(e) => setDishName(e.target.value)}
-          placeholder="Nombre del platillo (ej: Hamburguesa Triple)"
+          placeholder="Nombre del producto (ej: Camisa Oxford Mostaza)"
           style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
         />
         <button

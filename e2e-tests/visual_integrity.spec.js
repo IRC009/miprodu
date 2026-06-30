@@ -5,7 +5,7 @@ const { test, expect } = require('@playwright/test');
  * Verifica que las variables CSS y la identidad del restaurante se apliquen.
  */
 
-const MENU_URL = 'https://menu.cartaymesa.com/r/isaacrodas10/menu';
+const MENU_URL = 'https://menu.miprodu.com/r/isaacrodas10/menu';
 
 test.describe('Integridad Visual y Marca Blanca', () => {
 

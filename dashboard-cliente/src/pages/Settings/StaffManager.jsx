@@ -6,6 +6,7 @@ import { FEATURE_ACCESS } from '../../context/constants';
 import { useAlert } from '../../context/AlertContext';
 import './StaffManager.css';
 import './SettingsStyles.css';
+import { UserPlus, Users } from 'lucide-react';
 
 export default function StaffManager() {
   const { restaurantId } = useSubscription();
@@ -105,7 +106,7 @@ export default function StaffManager() {
         <div className="section-card">
           <div className="section-card-header">
             <div className="section-card-title">
-              <div className="section-card-icon">➕</div>
+              <div className="section-card-icon"><UserPlus size={18} /></div>
               <h3>Asignar Nuevo Usuario</h3>
             </div>
           </div>
@@ -182,7 +183,7 @@ export default function StaffManager() {
         <div className="section-card">
           <div className="section-card-header">
             <div className="section-card-title">
-              <div className="section-card-icon">👥</div>
+              <div className="section-card-icon"><Users size={18} /></div>
               <h3>Usuarios Activos</h3>
             </div>
           </div>

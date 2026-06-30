@@ -61,36 +61,35 @@ async function handleOnOrderCreated(event) {
     const total = (order.total || 0).toLocaleString("es-CO");
     const orderType = order.orderType === "delivery" ? "Domicilio" : "Caja";
 
-    const payload = {
-      tokens: targets,
-      notification: {
-        title: `Nuevo Pedido - ${orderType}`,
-        body: `Cliente: ${customer} | Total: $${total} | Productos: ${itemsSummary}`,
-      },
-      data: {
-        screen: "restaurante",
-        restaurantId,
-        branchId: branchId || "",
-        orderId,
-      },
-      android: {
-        priority: "high",
+    const title = `Nuevo Pedido - ${orderType}`;
+    const body = `Cliente: ${customer} | Total: $${total} | Productos: ${itemsSummary}`;
+
+    if (targets.length > 0) {
+      const fcmPayload = {
+        tokens: targets,
         notification: {
-          sound: "order_chime",
-          channelId: "miprodu-orders",
-        }
-      },
-      apns: {
-        payload: {
-          aps: {
-            sound: "order_chime.caf",
+          title,
+          body,
+        },
+        data: { screen: "restaurante", restaurantId, branchId: branchId || "", orderId },
+        android: {
+          priority: "high",
+          notification: {
+            sound: "order_chime",
+            channelId: "miprodu-orders-v9",
+          }
+        },
+        apns: {
+          payload: {
+            aps: {
+              sound: "order_chime.caf",
+            }
           }
         }
-      }
-    };
-
-    const response = await admin.messaging().sendEachForMulticast(payload);
-    console.log(`[OrderTrigger] Firebase FCM Response:`, JSON.stringify(response));
+      };
+      const response = await admin.messaging().sendEachForMulticast(fcmPayload);
+      console.log(`[OrderTrigger] Direct FCM send response:`, JSON.stringify(response));
+    }
   } catch (error) {
     console.error("[OrderTrigger] Error sending push notifications:", error);
   }

@@ -1,6 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { PAYMENT_METHODS } from '../constants';
+import { Coins, CheckCircle, WifiOff } from 'lucide-react';
 import s from '../POS.module.css';
 
 /**
@@ -50,7 +51,7 @@ export default function POSCheckoutModal({
             color: '#fde68a',
             fontWeight: 600,
           }}>
-            <span style={{ fontSize: '1rem' }}>📡</span>
+            <WifiOff size={18} style={{ color: '#fde68a' }} />
             <div>
               <div>Sin conexión — Modo Offline</div>
               <div style={{ fontWeight: 400, fontSize: '0.75rem', color: '#fcd34d' }}>
@@ -268,7 +269,9 @@ export default function POSCheckoutModal({
         {/* Panel Loyalty */}
         {loyaltyConfig?.enabled && (
           <div className={s.loyaltyPanel}>
-            <div className={s.loyaltyTitle}>⭐ Acumular / Canjear Puntos</div>
+            <div className={s.loyaltyTitle} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <Coins size={16} /> Acumular / Canjear Puntos
+            </div>
 
             <div className={s.loyaltySearchRow}>
               <input
@@ -318,7 +321,7 @@ export default function POSCheckoutModal({
             {loyaltyCustomer && (
               <div className={s.loyaltyCustomerInfo}>
                 <span className={s.loyaltyCustomerName}>
-                  {loyaltyCustomer.name} · <strong>⭐ {loyaltyCustomer.totalPoints || 0} puntos</strong>
+                  {loyaltyCustomer.name} · <strong>{loyaltyCustomer.totalPoints || 0} puntos</strong>
                 </span>
                 {loyaltyCustomer.totalPoints > 0 && (
                   <button className={s.loyaltyRedeemBtn} onClick={() => setLoyaltyRedeemModal(true)}>
@@ -329,8 +332,8 @@ export default function POSCheckoutModal({
             )}
 
             {loyaltyPointsToRedeem > 0 && (
-              <div className={s.loyaltyRedeemBadge}>
-                ✅ Descuento por puntos: −${(loyaltyPointsToRedeem * (loyaltyConfig?.pointsValue || 0)).toLocaleString()} ({loyaltyPointsToRedeem} pts)
+              <div className={s.loyaltyRedeemBadge} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <CheckCircle size={14} style={{ color: '#22c55e' }} /> Descuento por puntos: −${(loyaltyPointsToRedeem * (loyaltyConfig?.pointsValue || 0)).toLocaleString()} ({loyaltyPointsToRedeem} pts)
                 <button className={s.loyaltyRedeemRemoveBtn} onClick={() => setLoyaltyPointsToRedeem(0)}>✕</button>
               </div>
             )}

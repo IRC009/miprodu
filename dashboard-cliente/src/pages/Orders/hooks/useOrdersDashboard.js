@@ -399,7 +399,7 @@ export function useOrdersDashboard() {
           if (!editedKeys.has(key)) {
             const item = originalMap[key];
             removedItems.push({ ...item });
-            changeHistory.push(`🗑️ ${item.name}`);
+            changeHistory.push(`-${item.name}`);
           }
         });
 
@@ -517,7 +517,7 @@ export function useOrdersDashboard() {
           collectedAt: new Date().toISOString()
         });
       }
-      showAlert('Pago validado correctamente.', 'Pago Aprobado ✅', 'success');
+      showAlert('Pago validado correctamente.', 'Pago Aprobado', 'success');
     } catch (error) {
       console.error(error);
       showAlert('Error al validar el pago.', 'Error', 'error');
@@ -533,7 +533,7 @@ export function useOrdersDashboard() {
         isBilled: false,
         billedAt: null
       });
-      showAlert('El pago ha sido rechazado. El cliente debe subir un nuevo comprobante.', 'Pago Rechazado ❌', 'warning');
+      showAlert('El pago ha sido rechazado. El cliente debe subir un nuevo comprobante.', 'Pago Rechazado', 'warning');
     } catch (error) {
       console.error(error);
       showAlert('Error al rechazar el pago.', 'Error', 'error');

@@ -1,7 +1,7 @@
 const path = require('path');
 const sharp = require('../landing-page/node_modules/sharp');
 
-const inputPath = path.join(__dirname, 'assets/splash-icon.png');
+const inputPath = path.join(__dirname, 'assets/splash-image.png');
 const outputPath = path.join(__dirname, 'assets/android-icon-foreground.png');
 
 sharp(inputPath)

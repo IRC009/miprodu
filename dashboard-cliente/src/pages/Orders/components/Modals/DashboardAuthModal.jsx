@@ -1,5 +1,6 @@
 import React from 'react';
 import { useDashboard } from '../../context/DashboardContext';
+import { CreditCard, DollarSign, LogOut, ShieldAlert, KeyRound, Info } from 'lucide-react';
 
 export default function DashboardAuthModal() {
   const [showPin, setShowPin] = React.useState(false);
@@ -38,8 +39,12 @@ export default function DashboardAuthModal() {
     <div className="rd-modal-overlay">
       <div className="rd-modal-content" style={{ maxWidth: '400px', borderRadius: '24px', padding: '2.5rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>
-            {authModal.type === 'bill' ? '💳' : authModal.type === 'collect' ? '💰' : authModal.type === 'dispatch' ? '👋' : authModal.type === 'cancel_action' ? '🔒' : '🧑‍🍳'}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem', color: '#64748b' }}>
+            {authModal.type === 'bill' ? <CreditCard size={48} strokeWidth={1.5} /> : 
+             authModal.type === 'collect' ? <DollarSign size={48} strokeWidth={1.5} /> : 
+             authModal.type === 'dispatch' ? <LogOut size={48} strokeWidth={1.5} /> : 
+             authModal.type === 'cancel_action' ? <ShieldAlert size={48} strokeWidth={1.5} /> : 
+             <KeyRound size={48} strokeWidth={1.5} />}
           </div>
           <h2 style={{ fontSize: '1.5rem', fontWeight: 900 }}>
             Autorización Requerida
@@ -67,14 +72,14 @@ export default function DashboardAuthModal() {
               const roleDisplay = w.role === 'dueño' || w.role === 'owner' || w.role === 'admin' ? 'Administración' : w.role?.toUpperCase() || 'PERSONAL';
               return (
                 <option key={w.id} value={w.id}>
-                  {w.name} ({roleDisplay}){w.id === activeShift?.openedByWaiterId ? ' ⭐' : ''}
+                  {w.name} ({roleDisplay}){w.id === activeShift?.openedByWaiterId ? ' (Apertura)' : ''}
                 </option>
               );
             })}
           </select>
           {isLockedToWaiter && originalWaiter && (
             <p style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
-              📌 Mesa asignada a: {originalWaiter.name}. Solo él o un administrador pueden comandar.
+              <Info size={14} /> Mesa asignada a: {originalWaiter.name}. Solo él o un administrador pueden comandar.
             </p>
           )}
         </div>
@@ -87,17 +92,17 @@ export default function DashboardAuthModal() {
                 type="button"
                 onClick={() => setPaymentMethod('cash')} 
                 style={{ padding: '0.6rem 0.2rem', borderRadius: '10px', fontSize: '0.75rem', border: paymentMethod === 'cash' ? '2px solid #0f172a' : '1px solid #e2e8f0', background: paymentMethod === 'cash' ? '#f1f5f9' : 'white', fontWeight: 700, cursor: 'pointer' }}
-              >💵 Efec.</button>
+              >Efectivo</button>
               <button 
                 type="button"
                 onClick={() => setPaymentMethod('card')} 
                 style={{ padding: '0.6rem 0.2rem', borderRadius: '10px', fontSize: '0.75rem', border: paymentMethod === 'card' ? '2px solid #0f172a' : '1px solid #e2e8f0', background: paymentMethod === 'card' ? '#f1f5f9' : 'white', fontWeight: 700, cursor: 'pointer' }}
-              >💳 Tarj.</button>
+              >Tarjeta</button>
               <button 
                 type="button"
                 onClick={() => setPaymentMethod('transfer')} 
                 style={{ padding: '0.6rem 0.2rem', borderRadius: '10px', fontSize: '0.75rem', border: paymentMethod === 'transfer' ? '2px solid #0f172a' : '1px solid #e2e8f0', background: paymentMethod === 'transfer' ? '#f1f5f9' : 'white', fontWeight: 700, cursor: 'pointer' }}
-              >📲 Transf.</button>
+              >Transferencia</button>
             </div>
           </div>
         )}

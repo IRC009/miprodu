@@ -19,7 +19,7 @@ export function getPublicMenuUrl({ restaurant, restaurantId, path = '', params =
     baseUrl = `https://${restaurant.customDomain}`;
     fullPath = '';
   } else {
-    baseUrl = 'https://menu.cartaymesa.com';
+    baseUrl = 'https://miprodu.com';
     fullPath = isRootLevelRoute ? '' : `/r/${menuIdentifier}`;
   }
 

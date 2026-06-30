@@ -6,16 +6,16 @@
     "miprodu-fec00": {
       "hosting": {
         "dashboard": [
-          "dashboardcliente"
+          "appmiprodu"
         ],
         "menupublico": [
-          "menupublico-digital"
+          "miprodu-fec00"
         ],
         "paneladmin": [
-          "dashboardadmincarta"
+          "paneladminmiprodu"
         ],
         "landing": [
-          "cartaymesa"
+          "landingmiprodu"
         ]
       }
     }

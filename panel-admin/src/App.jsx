@@ -299,38 +299,6 @@ function App() {
               </div>
               <div style={{
                 background: 'rgba(15, 23, 42, 0.4)',
-                border: '1px solid rgba(245, 158, 11, 0.15)',
-                borderRadius: '0.75rem',
-                padding: '1rem 1.25rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
-              }}>
-                <span style={{ fontSize: '1.75rem', padding: '0.4rem', background: 'rgba(245, 158, 11, 0.1)', borderRadius: '0.5rem' }}>⛔</span>
-                <div>
-                  <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: '700', letterSpacing: '0.05em' }}>SEDES TRADICIONAL</div>
-                  <div style={{ fontSize: '1.35rem', fontWeight: '800', color: '#fbbf24', marginTop: '2px' }}>{stats.planTradicional || 0}</div>
-                </div>
-              </div>
-              <div style={{
-                background: 'rgba(15, 23, 42, 0.4)',
-                border: '1px solid rgba(167, 139, 250, 0.15)',
-                borderRadius: '0.75rem',
-                padding: '1rem 1.25rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
-              }}>
-                <span style={{ fontSize: '1.75rem', padding: '0.4rem', background: 'rgba(167, 139, 250, 0.1)', borderRadius: '0.5rem' }}>📋</span>
-                <div>
-                  <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: '700', letterSpacing: '0.05em' }}>SEDES CARTA</div>
-                  <div style={{ fontSize: '1.35rem', fontWeight: '800', color: '#a78bfa', marginTop: '2px' }}>{stats.planCarta}</div>
-                </div>
-              </div>
-              <div style={{
-                background: 'rgba(15, 23, 42, 0.4)',
                 border: '1px solid rgba(16, 185, 129, 0.15)',
                 borderRadius: '0.75rem',
                 padding: '1rem 1.25rem',
@@ -341,7 +309,7 @@ function App() {
               }}>
                 <span style={{ fontSize: '1.75rem', padding: '0.4rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '0.5rem' }}>🚀</span>
                 <div>
-                  <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: '700', letterSpacing: '0.05em' }}>SEDES C. Y MESA</div>
+                  <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: '700', letterSpacing: '0.05em' }}>SEDES PLAN PRO ACTIVAS</div>
                   <div style={{ fontSize: '1.35rem', fontWeight: '800', color: '#34d399', marginTop: '2px' }}>{stats.planCartaMesa}</div>
                 </div>
               </div>

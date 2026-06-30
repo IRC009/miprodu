@@ -16,7 +16,8 @@ const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 
 export default function BIAnalytics() {
   const { restaurantId, selectedBranchId, isBranchAllowed } = useSubscription();
-  const { products } = useRestaurantData();
+  const { products, design } = useRestaurantData();
+  const isEcommerce = design?.ecommerceMode === true;
   
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
@@ -79,10 +80,9 @@ export default function BIAnalytics() {
         </div>
       </header>
 
-      {/* KPIs Principales */}
       <div className="bi-kpi-grid">
         <KPI className="blue" icon={<TrendingUp />} label="Ventas Totales" value={formatCurrency(data.sales.totalRevenue)} subValue={`${data.sales.orderCount} órdenes`} />
-        <KPI className="green" icon={<Target />} label="Ticket Promedio" value={formatCurrency(data.sales.averageTicket)} subValue="Consumo por mesa" />
+        <KPI className="green" icon={<Target />} label="Ticket Promedio" value={formatCurrency(data.sales.averageTicket)} subValue={isEcommerce ? "Consumo por pedido" : "Consumo por mesa"} />
         <KPI className="purple" icon={<Users />} label="Conversión Menú" value={`${data.engagement.conversionRate.toFixed(1)}%`} subValue={`Tiempo prom: ${(data.engagement.avgSessionTime / 60).toFixed(1)} min`} />
         <KPI className="orange" icon={<Clock />} label="Tiempo Promedio" value={`${data.efficiency.avgServiceTime.toFixed(1)} min`} subValue="Ciclo de servicio" />
       </div>
@@ -106,7 +106,7 @@ export default function BIAnalytics() {
 
         {/* Ranking de Meseros */}
         <section className="bi-card">
-          <h3>Top Rendimiento Personal (Meseros)</h3>
+          <h3>{isEcommerce ? "Top Rendimiento Personal (Vendedores)" : "Top Rendimiento Personal (Meseros)"}</h3>
           <div className="bi-staff-list">
             {data.staff.waiters.slice(0, 5).map((waiter, i) => (
               <div key={i} className="bi-staff-item">
@@ -123,7 +123,7 @@ export default function BIAnalytics() {
 
         {/* Ranking de Cajeras */}
         <section className="bi-card">
-          <h3>Top Recaudación (Cajeras)</h3>
+          <h3>{isEcommerce ? "Top Recaudación (Caja / POS)" : "Top Recaudación (Cajeras)"}</h3>
           <div className="bi-staff-list">
             {data.staff.cashiers.slice(0, 5).map((cashier, i) => (
               <div key={i} className="bi-staff-item">
@@ -155,29 +155,31 @@ export default function BIAnalytics() {
         </section>
 
         {/* Inteligencia Espacial (Mesas) */}
-        <section className="bi-card">
-          <h3>Rendimiento por Mesas</h3>
-          <div className="bi-table-container">
-            <table className="bi-table">
-              <thead>
-                <tr>
-                  <th>Mesa</th>
-                  <th>Uso</th>
-                  <th>Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.spatial.slice(0, 8).map((table, i) => (
-                  <tr key={i}>
-                    <td>Mesa {table.table}</td>
-                    <td>{table.count} veces</td>
-                    <td><strong>{formatCurrency(table.revenue)}</strong></td>
+        {!isEcommerce && (
+          <section className="bi-card">
+            <h3>Rendimiento por Mesas</h3>
+            <div className="bi-table-container">
+              <table className="bi-table">
+                <thead>
+                  <tr>
+                    <th>Mesa</th>
+                    <th>Uso</th>
+                    <th>Total</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+                </thead>
+                <tbody>
+                  {data.spatial.slice(0, 8).map((table, i) => (
+                    <tr key={i}>
+                      <td>Mesa {table.table}</td>
+                      <td>{table.count} veces</td>
+                      <td><strong>{formatCurrency(table.revenue)}</strong></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
 
         {/* Embudo de Conversión */}
         <section className="bi-card">

@@ -141,7 +141,6 @@ export default function MenuIframePreview({ menuIdentifier, iframeKey, onRefresh
           />
         ) : (
           <div className="mockup-iframe-placeholder">
-            <span>⏳</span>
             <p>Cargando vista previa...</p>
           </div>
         )}
@@ -165,7 +164,7 @@ export default function MenuIframePreview({ menuIdentifier, iframeKey, onRefresh
           onMouseDown={e => e.stopPropagation()}
         >
           <button onClick={onRefresh} className="preview-control-btn" title="Recargar menú">
-            🔄 Recargar
+            Recargar
           </button>
           
           <button
@@ -175,7 +174,7 @@ export default function MenuIframePreview({ menuIdentifier, iframeKey, onRefresh
             }}
             className={`preview-control-btn ${isFloating ? 'active' : ''}`}
           >
-            {isFloating ? '📌 Anclar' : '🚀 Flotante'}
+            {isFloating ? 'Anclar' : 'Flotante'}
           </button>
         </div>
 
@@ -219,7 +218,7 @@ export default function MenuIframePreview({ menuIdentifier, iframeKey, onRefresh
         fontWeight: 600,
         opacity: 0.9
       }}>
-        ⚡ Vista previa en vivo activa
+        Vista previa en vivo activa
       </div>
     </div>
   );

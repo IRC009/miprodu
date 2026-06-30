@@ -1,5 +1,6 @@
 import React from 'react';
 import { useDashboard } from '../../context/DashboardContext';
+import { User } from 'lucide-react';
 
 export default function DashboardSplitModal() {
   const {
@@ -14,7 +15,7 @@ export default function DashboardSplitModal() {
         {/* Header */}
         <div style={{ padding: '1.25rem 1.75rem', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', borderRadius: '24px 24px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h2 style={{ margin: 0, color: '#fff', fontSize: '1.3rem', fontWeight: 900 }}>✂️ Dividir Cuenta — Mesa {splitModal.tableNumber}</h2>
+            <h2 style={{ margin: 0, color: '#fff', fontSize: '1.3rem', fontWeight: 900 }}>Dividir Cuenta — Mesa {splitModal.tableNumber}</h2>
             <p style={{ margin: '2px 0 0', color: 'rgba(255,255,255,0.75)', fontSize: '0.8rem' }}>Asigna cada producto a una persona y factura por separado</p>
           </div>
           <button onClick={() => setSplitModal(null)} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', fontSize: '1.4rem', cursor: 'pointer', borderRadius: '50%', width: '34px', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>×</button>
@@ -28,13 +29,13 @@ export default function DashboardSplitModal() {
             const [clr, bg] = colors[pIdx % colors.length];
             return (
               <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: bg, border: `1.5px solid ${clr}30`, borderRadius: '20px', padding: '0.3rem 0.65rem' }}>
-                <span style={{ color: clr, fontSize: '0.85rem' }}>👤</span>
+                <User size={14} style={{ color: clr }} />
                 <input value={p.name} onChange={e => setSplitModal(prev => ({ ...prev, persons: prev.persons.map(pp => pp.id === p.id ? { ...pp, name: e.target.value } : pp) }))} style={{ border: 'none', background: 'transparent', fontWeight: 700, fontSize: '0.82rem', color: clr, width: '85px', outline: 'none' }} />
                 <select value={p.paymentMethod} onChange={e => setSplitModal(prev => ({ ...prev, persons: prev.persons.map(pp => pp.id === p.id ? { ...pp, paymentMethod: e.target.value } : pp) }))} style={{ border: 'none', background: 'transparent', fontSize: '0.75rem', color: clr, outline: 'none', cursor: 'pointer' }}>
-                  <option value="cash">💵 Efectivo</option>
-                  <option value="card">💳 Tarjeta</option>
-                  <option value="transfer">📱 Transfer</option>
-                  <option value="nequi">📲 Nequi</option>
+                  <option value="cash">Efectivo</option>
+                  <option value="card">Tarjeta</option>
+                  <option value="transfer">Transferencia</option>
+                  <option value="nequi">Nequi</option>
                 </select>
                 {splitModal.persons.length > 2 && (
                   <button onClick={() => setSplitModal(prev => ({ ...prev, persons: prev.persons.filter(pp => pp.id !== p.id), flatItems: prev.flatItems.map(fi => fi.assignedTo === p.id ? { ...fi, assignedTo: prev.persons[0].id } : fi) }))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#e11d48', fontSize: '0.9rem', padding: 0, lineHeight: 1 }}>×</button>
@@ -62,7 +63,10 @@ export default function DashboardSplitModal() {
                 const [,rowBg] = pIdx >= 0 ? colors[pIdx % colors.length] : ['transparent','transparent'];
                 return (
                   <tr key={item.key} style={{ borderBottom: '1px solid #f1f5f9', background: rowBg + '60', transition: 'background 0.2s' }}>
-                    <td style={{ padding: '0.55rem 0.4rem', fontWeight: 600 }}>{item.name}</td>
+                    <td style={{ padding: '0.55rem 0.4rem', fontWeight: 600 }}>
+                      {item.name}
+                      {item.sku && <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block', fontWeight: 600 }}>SKU: {item.sku}</span>}
+                    </td>
                     <td style={{ padding: '0.55rem 0.4rem', textAlign: 'right', color: '#64748b' }}>${(item.price || 0).toLocaleString()}</td>
                     <td style={{ padding: '0.55rem 0.4rem', textAlign: 'center' }}>
                       <div style={{ display: 'flex', gap: '0.3rem', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -94,7 +98,7 @@ export default function DashboardSplitModal() {
               const count = splitModal.flatItems.filter(fi => fi.assignedTo === p.id).length;
               return (
                 <div key={p.id} style={{ background: bg, border: `1.5px solid ${clr}30`, borderRadius: '12px', padding: '0.5rem 0.9rem', minWidth: '120px', textAlign: 'center' }}>
-                  <div style={{ fontWeight: 800, color: clr, fontSize: '0.8rem' }}>👤 {p.name}</div>
+                  <div style={{ fontWeight: 800, color: clr, fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}><User size={12} /> {p.name}</div>
                   <div style={{ fontSize: '1.1rem', fontWeight: 900, color: clr }}>${personTotal.toLocaleString()}</div>
                   <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{count} producto{count !== 1 ? 's' : ''}</div>
                 </div>
@@ -115,7 +119,7 @@ export default function DashboardSplitModal() {
                 cursor: isSubmittingCheckout ? 'not-allowed' : 'pointer' 
               }}
             >
-              {isSubmittingCheckout ? 'Procesando...' : '💳 Facturar División'}
+              {isSubmittingCheckout ? 'Procesando...' : 'Facturar División'}
             </button>
           </div>
         </div>

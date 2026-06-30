@@ -38,6 +38,56 @@ export const deleteIngredient = async (restaurantId, ingredientId) => {
   await deleteDoc(ingredientRef);
 };
 
+/**
+ * Adjusts stock for a specific variant within an ingredient document.
+ * variants are stored as an array in the ingredient doc; we patch the matching one.
+ */
+export const adjustStockVariant = async (restaurantId, ingredientId, variantId, quantityChange, type, reason = '', costAtTime = 0, staffData = null, branchId = 'ALL') => {
+  try {
+    await runTransaction(db, async (transaction) => {
+      const ingredientRef = doc(db, `restaurants/${restaurantId}/ingredients`, ingredientId);
+      const metaRef = doc(db, `restaurants/${restaurantId}/inventory_metadata`, branchId);
+      const bucketsRef = collection(db, `restaurants/${restaurantId}/inventory_buckets`);
+
+      const [ingSnap, metaSnap] = await Promise.all([
+        transaction.get(ingredientRef),
+        transaction.get(metaRef)
+      ]);
+
+      if (!ingSnap.exists()) throw new Error('Artículo no encontrado');
+
+      const ingData = ingSnap.data();
+      const variants = (ingData.variants || []).map(v => {
+        if (v.id === variantId) {
+          return { ...v, currentStock: (Number(v.currentStock) || 0) + quantityChange };
+        }
+        return v;
+      });
+      transaction.update(ingredientRef, { variants });
+
+      let activeBucketId = metaSnap.exists() ? metaSnap.data().activeBucketId : doc(bucketsRef).id;
+      const bucketRef = doc(bucketsRef, activeBucketId);
+      const bucketSnap = await transaction.get(bucketRef);
+      const bucketData = bucketSnap.exists()
+        ? bucketSnap.data()
+        : { id: activeBucketId, restaurantId, branchId, count: 0, isFull: false, movements: [] };
+
+      const timestamp = new Date().toISOString();
+      bucketData.movements.push({ type, ingredientId, variantId, quantity: quantityChange, reason, costAtTime, staffId: staffData?.id || null, staffName: staffData?.name || null, timestamp, branchId });
+      bucketData.count += 1;
+      if (!bucketData.startDate || timestamp < bucketData.startDate) bucketData.startDate = timestamp;
+      if (!bucketData.endDate || timestamp > bucketData.endDate) bucketData.endDate = timestamp;
+      const isNowFull = bucketData.count >= 200;
+      if (isNowFull) bucketData.isFull = true;
+      transaction.set(bucketRef, bucketData, { merge: true });
+      transaction.set(metaRef, { activeBucketId: isNowFull ? doc(bucketsRef).id : activeBucketId }, { merge: true });
+    });
+  } catch (error) {
+    console.error('Error ajustando stock de variante:', error);
+    throw error;
+  }
+};
+
 export const adjustStock = async (restaurantId, ingredientId, quantityChange, type, reason = '', costAtTime = 0, staffData = null, newCostPerUnit = null, branchId = 'ALL') => {
   try {
     await runTransaction(db, async (transaction) => {
@@ -135,12 +185,27 @@ export const deductInventoryForOrder = async (restaurantId, itemsOrDeductions, o
       const timestamp = new Date().toISOString();
       let hasMovements = false;
 
-      for (const [ingredientId, amount] of Object.entries(finalDeductions)) {
-        if (!ingredientId || ingredientId === 'items' || ingredientId === 'branchId') continue;
+      for (const [key, amount] of Object.entries(finalDeductions)) {
+        if (!key || key === 'items' || key === 'branchId') continue;
         if (amount <= 0) continue;
 
+        // Support hierarchical variant deductions encoded as "ingredientId::variantId"
+        const [ingredientId, variantId] = key.split('::');
+
         const ingredientRef = doc(db, `restaurants/${restaurantId}/ingredients`, ingredientId);
-        transaction.update(ingredientRef, { currentStock: increment(-amount) });
+        if (variantId) {
+          // Variant-level deduction: patch the variants array
+          const ingSnap = await transaction.get(ingredientRef);
+          if (ingSnap.exists()) {
+            const ingData = ingSnap.data();
+            const updatedVariants = (ingData.variants || []).map(v =>
+              v.id === variantId ? { ...v, currentStock: (Number(v.currentStock) || 0) - amount } : v
+            );
+            transaction.update(ingredientRef, { variants: updatedVariants });
+          }
+        } else {
+          transaction.update(ingredientRef, { currentStock: increment(-amount) });
+        }
 
         const movement = {
           type: 'sale',
@@ -202,15 +267,36 @@ export const resolveRecipeDeductions = async (restaurantId, orderItems) => {
     if (!productId) continue;
 
     const product = allProducts.find(p => p.id === productId);
-    if (!product || !Array.isArray(product.recipe) || product.recipe.length === 0) continue;
+    if (!product) continue;
 
     const qty = Number(item.quantity) || 1;
-    product.recipe.forEach(r => {
-      if (!r.ingredientId) return;
-      const amount = (Number(r.quantity) || 0) * qty;
-      if (amount <= 0) return;
-      deductions[r.ingredientId] = (deductions[r.ingredientId] || 0) + amount;
-    });
+
+    // Check if a variant is selected and has inventory tracking enabled
+    let chosenVariant = item.selectedVariant;
+    if (!chosenVariant && product.variants && Array.isArray(product.variants)) {
+      chosenVariant = product.variants.find(v => item.name === `${product.name} (${v.name})` || item.name === v.name);
+    }
+
+    if (chosenVariant && chosenVariant.inventoryEnabled && chosenVariant.ingredientId) {
+      const amount = (Number(chosenVariant.quantity) || 1) * qty;
+      if (amount > 0) {
+        // If the variant links to an inventory sub-variant, encode as "ingredientId::variantId"
+        const key = chosenVariant.inventoryVariantId
+          ? `${chosenVariant.ingredientId}::${chosenVariant.inventoryVariantId}`
+          : chosenVariant.ingredientId;
+        deductions[key] = (deductions[key] || 0) + amount;
+      }
+    } else {
+      // Fallback to standard product recipe
+      if (Array.isArray(product.recipe) && product.recipe.length > 0) {
+        product.recipe.forEach(r => {
+          if (!r.ingredientId) return;
+          const amount = (Number(r.quantity) || 0) * qty;
+          if (amount <= 0) return;
+          deductions[r.ingredientId] = (deductions[r.ingredientId] || 0) + amount;
+        });
+      }
+    }
   }
   return deductions;
 };

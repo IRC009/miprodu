@@ -103,97 +103,36 @@ export default function BranchesManager() {
 
       {/* Stat chips */}
       <div className="stat-chips">
-        <div className="stat-chip" style={{ background: '#064e3b', color: '#fff', borderColor: '#064e3b' }}>
-          <span className="stat-chip-value" style={{ color: '#fff' }}>{branchesFree} / {subscribedBranches0}</span>
-          <span className="stat-chip-label" style={{ color: 'rgba(255,255,255,0.7)' }}>Sedes Tradicional</span>
-        </div>
         <div className="stat-chip stat-chip-primary">
-          <span className="stat-chip-value">{branchesP1} / {subscribedBranches1}</span>
-          <span className="stat-chip-label">Sedes Carta</span>
-        </div>
-        <div className="stat-chip" style={{ background: '#1a0a10', color: '#fff', borderColor: '#1a0a10' }}>
-          <span className="stat-chip-value" style={{ color: '#fff' }}>{branchesP2} / {subscribedBranches2}</span>
-          <span className="stat-chip-label" style={{ color: 'rgba(255,255,255,0.7)' }}>Sedes Carta y Mesa</span>
+          <span className="stat-chip-value">{branchesP2} / {subscribedBranches}</span>
+          <span className="stat-chip-label">Sedes Plan Pro</span>
         </div>
       </div>
-
+ 
       {/* Alerta de exceso de sedes asignadas */}
       {(() => {
         if (planLevel === -1) return null; // Sin plan activo — no mostrar exceso
-        let hasExceeded = false;
-        let details = [];
-
-        if (isMixed) {
-          if (branchesFree > subscribedBranches0) {
-            hasExceeded = true;
-            details.push(`Tienes ${branchesFree} sede${branchesFree > 1 ? 's' : ''} en Plan Tradicional pero tu suscripción solo cubre ${subscribedBranches0}.`);
-          }
-          if (branchesP1 > subscribedBranches1) {
-            hasExceeded = true;
-            details.push(`Tienes ${branchesP1} sede${branchesP1 > 1 ? 's' : ''} en Plan Carta pero tu suscripción solo cubre ${subscribedBranches1}.`);
-          }
-          if (branchesP2 > subscribedBranches2) {
-            hasExceeded = true;
-            details.push(`Tienes ${branchesP2} sede${branchesP2 > 1 ? 's' : ''} en Plan Carta y Mesa pero tu suscripción solo cubre ${subscribedBranches2}.`);
-          }
-        } else {
-          // Simple plan
-          const activeBranchesForSub = planLevel === 0 
-            ? branchesFree 
-            : (planLevel === 1 ? branchesP1 : branchesP2);
-            
-          if (activeBranchesForSub > subscribedBranches) {
-            hasExceeded = true;
-            const planName = planLevel === 2 ? 'Carta y Mesa' : (planLevel === 1 ? 'Carta' : 'Tradicional');
-            details.push(`Tienes ${activeBranchesForSub} sede${activeBranchesForSub > 1 ? 's' : ''} en Plan ${planName} pero tu suscripción solo cubre ${subscribedBranches}.`);
-          }
-        }
-
-        if (!hasExceeded) return null;
-
-        return (
-          <div className="info-banner" style={{ marginBottom: '1.25rem', gap: '0.75rem', borderLeft: '4px solid #ef4444', background: 'rgba(239, 68, 68, 0.08)', color: '#991b1b' }}>
-            <span style={{ fontSize: '1.2rem' }}>⚠️</span>
-            <div>
-              <strong>Exceso de sedes asignadas detectado (Reajuste requerido).</strong>
-              <div style={{ fontSize: '0.84rem', marginTop: '0.3rem', opacity: 0.9, color: '#991b1b' }}>
-                {details.map((d, i) => <div key={i}>• {d}</div>)}
-                Por favor, edita las sedes necesarias y reajústalas seleccionando un plan disponible o "Ninguno" para desactivarlas.
-              </div>
-            </div>
-          </div>
-        );
-      })()}
-
-      {/* Alerta de slots de plan sin asignar */}
-      {(() => {
-        if (planLevel === -1) return null; // Sin plan activo — nada que asignar
-        if (isMixed) {
-          const unassignedP0 = Math.max(0, subscribedBranches0 - branchesFree);
-          const unassignedP1 = Math.max(0, subscribedBranches1 - branchesP1);
-          const unassignedP2 = Math.max(0, subscribedBranches2 - branchesP2);
-          if (unassignedP0 === 0 && unassignedP1 === 0 && unassignedP2 === 0) return null;
+        if (branchesP2 > subscribedBranches) {
           return (
-            <div className="info-banner info-banner-warning" style={{ marginBottom: '1.25rem', gap: '0.75rem' }}>
-              <span style={{ fontSize: '1.2rem' }}>⚡</span>
+            <div className="info-banner" style={{ marginBottom: '1.25rem', gap: '0.75rem', borderLeft: '4px solid #ef4444', background: 'rgba(239, 68, 68, 0.08)', color: '#991b1b' }}>
+              <span style={{ fontSize: '1.2rem' }}>⚠️</span>
               <div>
-                <strong>Tienes planes contratados sin asignar a ninguna sede.</strong>
-                <div style={{ fontSize: '0.84rem', marginTop: '0.3rem', opacity: 0.85 }}>
-                  {unassignedP0 > 0 && <span>• <strong>{unassignedP0}</strong> slot{unassignedP0 > 1 ? 's' : ''} de <strong>Plan Tradicional</strong> disponible{unassignedP0 > 1 ? 's' : ''}. </span>}
-                  {unassignedP1 > 0 && <span>• <strong>{unassignedP1}</strong> slot{unassignedP1 > 1 ? 's' : ''} de <strong>Plan Carta</strong> disponible{unassignedP1 > 1 ? 's' : ''}. </span>}
-                  {unassignedP2 > 0 && <span>• <strong>{unassignedP2}</strong> slot{unassignedP2 > 1 ? 's' : ''} de <strong>Plan Carta y Mesa</strong> disponible{unassignedP2 > 1 ? 's' : ''}. </span>}
-                  Edita cada sede y asígnale un plan para desbloquear todas sus funciones.
+                <strong>Exceso de sedes asignadas detectado (Reajuste requerido).</strong>
+                <div style={{ fontSize: '0.84rem', marginTop: '0.3rem', opacity: 0.9, color: '#991b1b' }}>
+                  Tienes {branchesP2} sede{branchesP2 > 1 ? 's' : ''} activas en Plan Pro pero tu suscripción solo cubre {subscribedBranches}.
+                  Por favor, desactiva las sedes excedentes editándolas y seleccionando "Ninguno" en su Plan Asignado.
                 </div>
               </div>
             </div>
           );
         }
-
-        if (!planLevel || planLevel === 0) return null;
-
-        // Plan no mixto: slots = subscribedBranches, asignados = branchesP1 + branchesP2
-        const assignedPaid = branches.filter(b => (b.planLevel ?? -1) >= 1).length;
-        const unassigned = Math.max(0, subscribedBranches - assignedPaid);
+        return null;
+      })()}
+ 
+      {/* Alerta de slots de plan sin asignar */}
+      {(() => {
+        if (planLevel === -1) return null; // Sin plan activo — nada que asignar
+        const unassigned = Math.max(0, subscribedBranches - branchesP2);
         if (unassigned === 0) return null;
         return (
           <div className="info-banner info-banner-warning" style={{ marginBottom: '1.25rem', gap: '0.75rem' }}>
@@ -201,8 +140,8 @@ export default function BranchesManager() {
             <div>
               <strong>Tienes {unassigned} sede{unassigned > 1 ? 's' : ''} con plan disponible sin asignar.</strong>
               <div style={{ fontSize: '0.84rem', marginTop: '0.3rem', opacity: 0.85 }}>
-                Compraste el <strong>Plan {planLevel === 1 ? 'Carta' : 'Carta y Mesa'}</strong> para {subscribedBranches} sede{subscribedBranches > 1 ? 's' : ''}, pero {unassigned === 1 ? 'una sede no tiene el plan activado' : `${unassigned} sedes no tienen el plan activado`}. 
-                Haz clic en <strong>Editar</strong> en la sede correspondiente y selecciona el plan para desbloquear todas sus funciones.
+                Compraste el <strong>Plan Pro</strong> para {subscribedBranches} sede{subscribedBranches > 1 ? 's' : ''}, pero {unassigned === 1 ? 'una sede no tiene el plan activado' : `${unassigned} sedes no tienen el plan activado`}. 
+                Haz clic en <strong>Editar</strong> en la sede correspondiente y selecciona el "Plan Pro" para desbloquear todas sus funciones.
               </div>
             </div>
           </div>
@@ -238,15 +177,7 @@ export default function BranchesManager() {
             // Siempre mostrar el planLevel real de la sede almacenado en Firestore.
             // Solo aplicar restricciones visuales cuando hay un plan activo (planLevel >= 0).
             let bPlan = (branch.planLevel !== undefined && branch.planLevel !== null) ? branch.planLevel : -1;
-            if (planLevel >= 0) {
-              if (!isMixed) {
-                if (bPlan > planLevel) bPlan = -1;
-              } else {
-                if (bPlan === 0 && subscribedBranches0 === 0) bPlan = -1;
-                if (bPlan === 1 && subscribedBranches1 === 0) bPlan = -1;
-                if (bPlan === 2 && subscribedBranches2 === 0) bPlan = -1;
-              }
-            }
+            if (bPlan !== 2) bPlan = -1;
             return (
               <div key={branch.id} className={`branch-card ${branch.customClass || ''}`}>
                 {branch.photoUrl && (
@@ -257,8 +188,8 @@ export default function BranchesManager() {
                     <div className="branch-card-name">{branch.name}</div>
                     <div className="branch-card-meta">{branch.city}</div>
                   </div>
-                  <span className="badge badge-primary" style={{ background: bPlan === 2 ? '#1a0a10' : (bPlan === 1 ? '#8B1A2E' : (bPlan === 0 ? '#10b981' : '#64748b')), color: '#fff' }}>
-                    {bPlan === 2 ? 'Carta y Mesa' : (bPlan === 1 ? 'Carta' : (bPlan === 0 ? 'Tradicional' : 'Sin Plan'))}
+                  <span className="badge badge-primary" style={{ background: bPlan === 2 ? '#eab308' : '#64748b', color: bPlan === 2 ? '#000' : '#fff' }}>
+                    {bPlan === 2 ? 'Plan Pro' : 'Sin Plan'}
                   </span>
                 </div>
 
@@ -272,11 +203,7 @@ export default function BranchesManager() {
                     <span>📞</span><span>{branch.phone}</span>
                   </div>
                 )}
-                {branch.schedule && (
-                  <div style={{ display:'flex', gap:'0.4rem', alignItems:'center', fontSize:'0.82rem', color:'var(--text-muted)', marginBottom:'0.75rem' }}>
-                    <span>🕐</span><span>{typeof branch.schedule === 'string' ? branch.schedule : 'Horario configurado'}</span>
-                  </div>
-                )}
+
 
                 {bPlan !== -1 && (
                   <div style={{ display:'flex', gap:'0.5rem', marginBottom:'0.75rem', marginTop:'0.5rem' }}>

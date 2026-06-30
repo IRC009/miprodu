@@ -8,13 +8,15 @@
 //   + import { useRestaurantDataWithCustomDomain as useRestaurantData } from '../hooks/useRestaurantDataWithCustomDomain';
 
 import { useState, useEffect } from 'react';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 import { db, functions } from '../services/firebase';
 import { httpsCallable } from 'firebase/functions';
+import { seedDesignCache } from './useRestaurantDesign';
+import { seedMenuCache } from '../services/menuService';
 
 // Dominios base de la plataforma — accesos que NO son dominios de clientes
 const PLATFORM_DOMAINS = [
-  'cartaymesa.com',
+  'miprodu.com',
   'web.app',
   'firebaseapp.com',
   'localhost',
@@ -55,6 +57,8 @@ export function useRestaurantDataWithCustomDomain(slugParam) {
       return;
     }
 
+    let unsubscribePublicInfo = null;
+
     const fetchRestaurant = async () => {
       setLoading(true);
       setError(null);
@@ -94,6 +98,46 @@ export function useRestaurantDataWithCustomDomain(slugParam) {
         }
 
         if (foundData) {
+          // Listen to unified public_info in real-time
+          const publicInfoRef = doc(db, `restaurants/${foundData.id}/config/public_info`);
+          
+          unsubscribePublicInfo = onSnapshot(publicInfoRef, (snap) => {
+            if (snap.exists()) {
+              const publicInfo = snap.data();
+              // Seed design cache
+              seedDesignCache(foundData.id, publicInfo.design);
+              // Seed menu, branches, promotions cache
+              seedMenuCache(foundData.id, publicInfo.categories, publicInfo.branches, publicInfo.promotions, publicInfo.restaurant?.subscription);
+              // Override foundData with unified restaurant data
+              if (publicInfo.restaurant) {
+                setData(prev => {
+                  const updated = {
+                    ...(prev || foundData),
+                    ...publicInfo.restaurant,
+                    design: publicInfo.design,
+                    categories: publicInfo.categories,
+                    branches: publicInfo.branches,
+                    promotions: publicInfo.promotions
+                  };
+                  // Keep lazy sub evaluation if cancelled
+                  const sub = updated.subscription || {};
+                  if (sub.cancelAtPeriodEnd) {
+                    const endDate = new Date(sub.cycleEndDate || sub.endDate);
+                    if (new Date() >= endDate) {
+                      updated.subscription = { status: 'cancelled' };
+                    }
+                  }
+                  return updated;
+                });
+              }
+            } else {
+              setData(foundData);
+            }
+          }, (err) => {
+            console.warn('[public_info] Failed to listen to public_info in custom domain hook:', err.message);
+            setData(foundData);
+          });
+
           // ── Evaluación lazy de suscripción cancelada (misma lógica que el hook original) ──
           const sub = foundData.subscription || {};
           if (sub.cancelAtPeriodEnd) {
@@ -108,7 +152,7 @@ export function useRestaurantDataWithCustomDomain(slugParam) {
               }
             }
           }
-          setData(foundData);
+          setData(prev => prev || foundData);
         } else {
           setError('not_found');
         }
@@ -121,6 +165,10 @@ export function useRestaurantDataWithCustomDomain(slugParam) {
     };
 
     fetchRestaurant();
+
+    return () => {
+      if (unsubscribePublicInfo) unsubscribePublicInfo();
+    };
   }, [identifier, isCustomDomain, hostname]);
 
   return { data, loading, error, isCustomDomain };

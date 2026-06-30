@@ -24,7 +24,7 @@ export default function POSShiftModal({
   return createPortal(
     <div className="saas-modal-overlay">
       <div className="saas-modal-content" style={{ maxWidth: '450px', padding: '2rem' }}>
-        <h2 className="page-title">{isOpen ? '🚀 Abrir Caja' : '🔒 Cerrar Caja'}</h2>
+        <h2 className="page-title">{isOpen ? 'Abrir Caja' : 'Cerrar Caja'}</h2>
         <p className="page-subtitle" style={{ marginBottom: '1.5rem' }}>
           {isOpen ? 'Ingresa los saldos iniciales' : 'Reporta los saldos finales para reconciliación'}
         </p>
@@ -92,7 +92,7 @@ export default function POSShiftModal({
 
         <div className={s.shiftAmountsGrid}>
           <div className="form-group">
-            <label className="form-label">💵 Efectivo</label>
+            <label className="form-label">Efectivo</label>
             <input
               type="number" className="form-input" placeholder="$0"
               value={amounts.cash}
@@ -100,7 +100,7 @@ export default function POSShiftModal({
             />
           </div>
           <div className="form-group">
-            <label className="form-label">📲 Transferencia</label>
+            <label className="form-label">Transferencia</label>
             <input
               type="number" className="form-input" placeholder="$0"
               value={amounts.transfer}
@@ -108,7 +108,7 @@ export default function POSShiftModal({
             />
           </div>
           <div className={`form-group ${s.shiftAmountsGridFull}`}>
-            <label className="form-label">💳 Tarjeta / Datáfono</label>
+            <label className="form-label">Tarjeta / Datáfono</label>
             <input
               type="number" className="form-input" placeholder="$0"
               value={amounts.card}

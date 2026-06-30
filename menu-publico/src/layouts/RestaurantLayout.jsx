@@ -41,7 +41,7 @@ export default function RestaurantLayout() {
   if (error === 'not_found' || !restaurant) {
     return (
       <div className="loader-container" style={{ flexDirection: 'column', gap: '1rem', color: '#666' }}>
-        <h2>404 - Restaurante no encontrado</h2>
+        <h2>404 - Tienda o catálogo no encontrado</h2>
         <p>Por favor verifica el enlace.</p>
       </div>
     );
@@ -79,8 +79,7 @@ export default function RestaurantLayout() {
           <Link to={`${basePath}/branches`} className="nav-link">Nuestras Sedes</Link>
           {(() => {
             const sub = restaurant?.subscription || {};
-            const isExplore = sub.isExplore === true || sub.status === 'explore';
-            const planLevel = isExplore ? 0 : (parseInt(sub.planLevel) || 0);
+            const planLevel = parseInt(sub.planLevel) || 0;
             return planLevel >= 2;
           })() && <Link to={`${basePath}/reservations`} className="nav-link">Reserva Aquí</Link>}
         </nav>

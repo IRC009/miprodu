@@ -5,7 +5,7 @@ const { test, expect } = require('@playwright/test');
  * Verifica cómo se comporta la aplicación ante la pérdida de conexión.
  */
 
-const DASHBOARD_URL = 'https://app.cartaymesa.com';
+const DASHBOARD_URL = 'https://app.miprodu.com';
 const EMAIL = 'isaacrodas10@gmail.com';
 const PASS = '32613036';
 

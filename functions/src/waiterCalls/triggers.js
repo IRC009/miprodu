@@ -111,7 +111,7 @@ async function handleOnWaiterCallCreated(event) {
         priority: "high",
         notification: {
           sound: "waiter_bell",
-          channelId: "waiter-calls-custom-sound",
+          channelId: "miprodu-waiter-calls-v5",
         }
       },
       apns: {

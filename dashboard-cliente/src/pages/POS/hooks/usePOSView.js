@@ -16,7 +16,10 @@ import { usePOSCheckout } from './usePOSCheckout';
 
 export function usePOSView() {
   const { restaurantId, isBranchAllowed, userProfile, hasRole, planLevel, selectedBranchId, updateSelectedBranch } = useSubscription();
-  const { restaurant, products, categories, branches: contextBranches } = useRestaurantData();
+  const { restaurant, design, products, categories, branches: contextBranches } = useRestaurantData();
+
+  // eCommerce mode: Mesa / Barra / Rápido are restaurant-only concepts
+  const isEcommerce = design?.ecommerceMode === true;
   const { showAlert } = useAlert();
   const location = useLocation();
   const navigate = useNavigate();
@@ -48,6 +51,7 @@ export function usePOSView() {
   };
   
   const [branchTables, setBranchTables] = useState([]);
+  const [loadingTables, setLoadingTables] = useState(true);
   const [waiterId, setWaiterId] = useState('');
   const [waiterPin, setWaiterPin] = useState('');
 
@@ -357,28 +361,35 @@ export function usePOSView() {
   }, [alwaysOpenShift, isBranchUnipersonal, userProfile, branches, contextBranches, selectedBranch, restaurant, isAuthVerified]);
 
   useEffect(() => {
+    if (loadingTables) return; // wait for tables to load before deciding orderType fallback
     if ((selectedBranchData || restaurant) && !userProfile.loading) {
       const configObj = selectedBranchData || restaurant || {};
-      
-      const isTableAvailable = (branchPlanLevel >= 2 && configObj.enableTableService !== false) || configObj.enableWhatsAppTableOrders === true;
-      const isBarEnabled = branchPlanLevel > 0 && configObj.enableBarService !== false;
+
+      // In eCommerce mode Mesa / Barra / Rápido are suppressed entirely
+      const isTableAvailable = !isEcommerce && (
+        ((branchPlanLevel >= 2 && configObj.enableTableService !== false) ||
+         (branchPlanLevel === 1 && configObj.enableTableService !== false) ||
+         configObj.enableWhatsAppTableOrders === true) &&
+        branchTables.length > 0
+      );
+      const isBarEnabled = !isEcommerce && branchPlanLevel > 0 && configObj.enableBarService !== false;
       const isDeliveryEnabled = (branchPlanLevel > 0 && configObj.enableWhatsAppOrders !== false) || configObj.enableWhatsAppDirectDelivery === true;
       const isFastEnabled = branchPlanLevel > 0 && configObj.enableFastService !== false;
 
-      const isCurrentEnabled = 
+      const isCurrentEnabled =
         (orderType === 'table' && isTableAvailable) ||
         (orderType === 'bar' && isBarEnabled) ||
         (orderType === 'fast' && isFastEnabled) ||
         (orderType === 'delivery' && isDeliveryEnabled);
 
       if (!isCurrentEnabled) {
-        if (isTableAvailable) setOrderType('table');
-        else if (isDeliveryEnabled) setOrderType('delivery');
+        if (isDeliveryEnabled) setOrderType('delivery');
+        else if (isTableAvailable) setOrderType('table');
         else if (isBarEnabled) setOrderType('bar');
         else if (isFastEnabled) setOrderType('fast');
       }
     }
-  }, [restaurant, selectedBranchData, orderType, userProfile.loading, branchPlanLevel]);
+  }, [restaurant, selectedBranchData, orderType, userProfile.loading, branchPlanLevel, branchTables, loadingTables, isEcommerce]);
 
   useEffect(() => {
     if (userProfile.loading) return;
@@ -419,10 +430,14 @@ export function usePOSView() {
     if (!selectedBranch) return;
     posShift.fetchOpenShift();
 
-    getTables(restaurantId, selectedBranch).then(data => {
-      const sorted = [...data].sort((a, b) => Number(a.number) - Number(b.number));
-      setBranchTables(sorted);
-    });
+    setLoadingTables(true);
+    getTables(restaurantId, selectedBranch)
+      .then(data => {
+        const sorted = [...data].sort((a, b) => Number(a.number) - Number(b.number));
+        setBranchTables(sorted);
+      })
+      .catch(err => console.error('[usePOSView] Error loading tables:', err))
+      .finally(() => setLoadingTables(false));
   }, [selectedBranch, restaurantId, alwaysOpenShift, selectedRegisterIndex]);
 
   const hasPOSBillingPermission = useMemo(() => {
@@ -688,7 +703,7 @@ export function usePOSView() {
       
       let msg = '';
       if (orderType === 'table') {
-        msg = `*PEDIDO DESDE LA MESA* 🪑\n` +
+        msg = `*PEDIDO DESDE LA MESA*\n` +
               `----------------------------------\n` +
               `*Mesa:* ${tableNumber}${waiterTag}\n` +
               `*Cliente:* ${customerName || 'Cliente'}\n` +
@@ -697,7 +712,7 @@ export function usePOSView() {
               `----------------------------------\n` +
               `*TOTAL:* $${formattedTotal}${obs}\n`;
       } else {
-        msg = `*NUEVO PEDIDO A DOMICILIO* 🛵\n` +
+        msg = `*NUEVO PEDIDO A DOMICILIO*\n` +
               `----------------------------------\n` +
               `*Cliente:* ${customerName}\n` +
               `*Teléfono:* ${customerPhone}\n` +
@@ -742,6 +757,7 @@ export function usePOSView() {
     isBranchUnipersonal, branchPlanLevel, alwaysOpenShift, allowAllCashiersToBill,
     waiters, setWaiters, filteredWaiters,
     splitModal, setSplitModal, splitPersons, setSplitPersons, splitFlatItems, setSplitFlatItems,
+    isEcommerce,
     branchTables, setBranchTables,
     waiterId, setWaiterId, waiterPin, setWaiterPin,
     selectedCategory, setSelectedCategory, searchQuery, setSearchQuery,

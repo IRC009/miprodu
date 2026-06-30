@@ -1,129 +1,78 @@
 import React from 'react';
 import { useDashboard } from '../../context/DashboardContext';
-import { printTicket } from '../../../../utils/printTicket';
-import { updateOrder } from '../../../../services/orderService';
+import { Lock } from 'lucide-react';
 
 export default function DashboardTabsHeader() {
   const {
-    restaurantId, userProfile, isBranchAllowed, hasRole, isUnipersonal, selectedBranch, setSelectedBranch,
-    restaurant, branches, tables, activeOrders, liveBilledOrders, archivedOrders, inboxOrders, loading,
-    activeTab, setActiveTab, showCallClient, setShowCallClient, startDate, setStartDate,
-    waiters, activeShift, authModal, setAuthModal, selectedWaiterId, setSelectedWaiterId,
-    waiterPin, setWaiterPin, isVerifying, staffUser, isUploading, setIsUploading,
-    checkoutModal, setCheckoutModal, checkoutOrders, checkoutTable, checkoutWaiter,
-    tip, setTip, discount, setDiscount, isSubmittingCheckout, setIsSubmittingCheckout, paymentMethod, setPaymentMethod,
-    PAYMENT_METHODS, refundOrder, setRefundOrder, refundItems, setRefundItems, refundReason, setRefundReason,
-    isProcessingRefund, canCancel, billedOrders, getTableOrders, getBarOrders, getDeliveryOrders,
-    managingTable, setManagingTable, splitModal, setSplitModal, actionModal, setActionModal,
-    actionReason, setActionReason, actionIsMerma, setActionIsMerma, actionLoading,
-    handleTableClick, handleConsolidateAndBill, handleOpenSplitBill, handleProcessSplitBill,
-    handleMarkCollected, handlePrintComanda, handleReprintInvoice, handleDispatchOrder,
-    handleStaffUploadReceipt, handleMarkReady, handleCallClient, getTrackingUrl, getWhatsAppUrl,
-    handleValidatePayment, handleInvalidatePayment, handleCancelOrder, handleReturnOrder,
-    handleRefundClick, processRefund, processActionModal, getItemNetQty, handleCancelItem,
-    handleNewOrder, confirmAuth, seedTables, handleClearTable, fetchArchived, showAlert,
-    branchPlanLevel, selectedBranchData, filteredWaiterCalls
+    activeTab, setActiveTab,
+    inboxOrders, activeOrders, billedOrders,
+    userProfile, staffUser, branchPlanLevel,
   } = useDashboard();
 
-  
-  
-
-  const configObj = selectedBranchData || restaurant || {};
-  const showTablesTab = (configObj.enableTableService !== false);
-  const showInboxTab = showTablesTab;
-  const showBarTab = configObj.enableBarService !== false;
-  const showWaiterCalls = configObj.enableWaiterCalls !== false;
-  // Llamados (calls) tab is independent of tables — available in all plans if waiter calls are enabled
-  const showCallsTab = showWaiterCalls;
-
-  const isWhatsAppEnabled = selectedBranchData?.enableWhatsAppOrders ?? restaurant?.enableWhatsAppOrders ?? false;
-  const showDeliveryTab = isWhatsAppEnabled;
-
-  const getDeliveryTabLabel = () => {
-    const count = getDeliveryOrders().length;
-    return `🛵 Domicilios (${count})`;
-  };
-
-  const isInboxLocked = branchPlanLevel < 1;
-  const isTablesLocked = branchPlanLevel < 2;
-  const isBarLocked = branchPlanLevel <= 0;
-  const isDeliveryLocked = branchPlanLevel <= 0;
-  const isBilledLocked = branchPlanLevel <= 0;
-
-  const hasBillingPermission = 
-    isUnipersonal ||
-    ['owner', 'admin', 'dueño'].includes(userProfile?.role) ||
+  const hasBillingPermission =
+    ['owner', 'dueño', 'admin'].includes(userProfile?.role?.toLowerCase()) ||
     (userProfile?.permissions || []).includes('bill_orders') ||
     (staffUser && (
-      ['owner', 'admin', 'dueño', 'supervisor'].includes(staffUser.role) ||
-      (staffUser.permissions || []).includes('bill_orders')
+      ['owner', 'dueño', 'admin'].includes(staffUser?.role?.toLowerCase()) ||
+      (staffUser?.permissions || []).includes('bill_orders')
     ));
 
-  React.useEffect(() => {
-    const tabsVisibility = {
-      inbox: showInboxTab,
-      tables: showTablesTab,
-      bar: showBarTab,
-      delivery: showDeliveryTab,
-      billed: hasBillingPermission,
-      calls: showCallsTab
-    };
+  // ── Logistics pipeline counts ───────────────────────────────────────────────
+  const preparingCount = activeOrders.filter(o =>
+    o.waiterId &&
+    o.status !== 'ready' &&
+    o.status !== 'ready_for_pickup' &&
+    o.status !== 'dispatched' &&
+    o.status !== 'completed' &&
+    o.status !== 'cancelled'
+  ).length;
 
-    if (!tabsVisibility[activeTab]) {
-      const firstVisible = ['calls', 'inbox', 'tables', 'bar', 'delivery', 'billed'].find(tab => tabsVisibility[tab]);
-      if (firstVisible) {
-        setActiveTab(firstVisible);
-      }
+  const readyCount = activeOrders.filter(o =>
+    (o.status === 'ready' || o.status === 'ready_for_pickup')
+  ).length;
+
+  const dispatchedCount = activeOrders.filter(o =>
+    o.status === 'dispatched'
+  ).length;
+
+  const tabs = [
+    { key: 'inbox',      label: 'Entrantes',          count: inboxOrders.length,  locked: branchPlanLevel < 1 },
+    { key: 'preparing',  label: 'Preparando',          count: preparingCount,       locked: branchPlanLevel < 1 },
+    { key: 'ready',      label: 'Listo p/Despacho',    count: readyCount,           locked: branchPlanLevel < 1 },
+    { key: 'dispatched', label: 'En Camino',           count: dispatchedCount,      locked: branchPlanLevel < 1 },
+    { key: 'billed',     label: 'Completados',         count: billedOrders.length,  locked: branchPlanLevel < 1, hidden: !hasBillingPermission },
+  ].filter(t => !t.hidden);
+
+  // Auto-redirect if current tab is not in the valid list
+  React.useEffect(() => {
+    const valid = tabs.map(t => t.key);
+    if (!valid.includes(activeTab)) {
+      setActiveTab('inbox');
     }
-  }, [activeTab, showInboxTab, showTablesTab, showBarTab, showDeliveryTab, hasBillingPermission, showCallsTab, setActiveTab]);
- 
+  }, [activeTab, setActiveTab]);
+
   return (
     <div className="rd-tabs">
-        {showInboxTab && (
-          <button 
-            className={`rd-tab-btn ${activeTab === 'inbox' ? 'active' : ''} ${isInboxLocked ? 'rd-tab-locked' : ''}`} 
-            onClick={() => setActiveTab('inbox')}
-          >
-            {isInboxLocked ? '🔒' : '📥'} Bandeja ({isInboxLocked ? '—' : inboxOrders.length})
-          </button>
-        )}
-        {showTablesTab && (
-          <button 
-            className={`rd-tab-btn ${activeTab === 'tables' ? 'active' : ''} ${isTablesLocked ? 'rd-tab-locked' : ''}`} 
-            onClick={() => setActiveTab('tables')}
-          >
-            {isTablesLocked ? '🔒' : '🪑'} Mesas ({isTablesLocked ? '—' : tables.filter(t => getTableOrders(t.number).length > 0).length})
-          </button>
-        )}
-        {showBarTab && (
-          <button 
-            className={`rd-tab-btn ${activeTab === 'bar' ? 'active' : ''} ${isBarLocked ? 'rd-tab-locked' : ''}`} 
-            onClick={() => setActiveTab('bar')}
-          >
-            {isBarLocked ? '🔒' : '🍸'} Barra ({isBarLocked ? '—' : getBarOrders().length})
-          </button>
-        )}
-        {showDeliveryTab && (
-          <button 
-            className={`rd-tab-btn ${activeTab === 'delivery' ? 'active' : ''} ${isDeliveryLocked ? 'rd-tab-locked' : ''}`} 
-            onClick={() => setActiveTab('delivery')}
-          >
-            {isDeliveryLocked ? '🔒 Domicilios (—)' : getDeliveryTabLabel()}
-          </button>
-        )}
-         {hasBillingPermission && (
-          <button 
-            className={`rd-tab-btn ${activeTab === 'billed' ? 'active' : ''} ${isBilledLocked ? 'rd-tab-locked' : ''}`} 
-            onClick={() => setActiveTab('billed')}
-          >
-            {isBilledLocked ? '🔒' : '✅'} Facturados ({isBilledLocked ? '—' : billedOrders.length})
-          </button>
-        )}
-         {showCallsTab && (
-          <button className={`rd-tab-btn ${activeTab === 'calls' ? 'active' : ''}`} onClick={() => setActiveTab('calls')}>
-            🔔 Llamados ({filteredWaiterCalls.length})
-          </button>
-        )}
-      </div>
+      {tabs.map(tab => (
+        <button
+          key={tab.key}
+          className={`rd-tab-btn ${activeTab === tab.key ? 'active' : ''} ${tab.locked ? 'rd-tab-locked' : ''}`}
+          onClick={() => !tab.locked && setActiveTab(tab.key)}
+        >
+          {tab.locked && <Lock size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />}{tab.label}{' '}
+          <span style={{
+            background: activeTab === tab.key ? 'rgba(255,255,255,0.25)' : '#e2e8f0',
+            color: activeTab === tab.key ? 'inherit' : '#475569',
+            borderRadius: '20px',
+            padding: '1px 7px',
+            fontSize: '0.72rem',
+            fontWeight: 900,
+            marginLeft: '3px'
+          }}>
+            {tab.locked ? '—' : tab.count}
+          </span>
+        </button>
+      ))}
+    </div>
   );
 }

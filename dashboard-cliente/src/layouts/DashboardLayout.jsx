@@ -12,9 +12,10 @@ import logoSinfondo from '../assets/logo_sinfondo.png';
 import { getPublicMenuUrl } from '../utils/menuUrl';
 import {
   LayoutDashboard, BookOpen, Paintbrush, Building2,
-  CreditCard, ScrollText, Leaf, MapPin, CalendarDays,
-  Users, TrendingUp, UserCheck, Megaphone, Tag,
-  Link2, Grid3x3, Settings, Gem, LogOut, Lock, ChevronRight, Menu, Star, ShieldAlert, ShieldCheck
+  CreditCard, ScrollText, Leaf, MapPin,
+  Users, TrendingUp, Megaphone, Tag,
+  Settings, Gem, LogOut, Lock, Menu, Star, ShieldAlert, ShieldCheck,
+  Eye, Bell
 } from 'lucide-react';
 import './DashboardLayout.css';
 
@@ -22,18 +23,16 @@ const NAV_ITEMS = [
   { path: '/',            label: 'Dashboard',       icon: LayoutDashboard, feature: 'dashboard' },
   { path: '/menu',        label: 'Productos',       icon: BookOpen,        feature: 'menu' },
   { path: '/design',      label: 'Diseño',          icon: Paintbrush,      feature: 'design' },
-  { path: '/restaurante', label: 'Pedidos Web',     icon: Building2,       feature: 'restaurante' },
+  { path: '/restaurante', label: 'Pedidos',        icon: Building2,       feature: 'restaurante' },
   { path: '/pos',         label: 'Caja / POS',      icon: CreditCard,      feature: 'orders' },
   { path: '/shifts',      label: 'Historial Caja',  icon: ScrollText,      feature: 'shift_history' },
   { path: '/inventory',   label: 'Inventario',      icon: Leaf,            feature: 'inventory' },
   { path: '/branches',    label: 'Tiendas / Sedes', icon: MapPin,          feature: 'branches' },
-  { path: '/reservations',label: 'Citas / Apartados',icon: CalendarDays,   feature: 'reservations' },
   { path: '/crm',         label: 'Clientes',        icon: Users,           feature: 'crm' },
   { path: '/analytics',   label: 'Analytics',       icon: TrendingUp,      feature: 'analytics' },
-  { path: '/waiters',     label: 'Personal',        icon: UserCheck,       feature: 'meseros' },
+
   // { path: '/campaigns',   label: 'Campañas',        icon: Megaphone,       feature: 'campaigns' },
   { path: '/promotions',  label: 'Promociones',     icon: Tag,             feature: 'promotions' },
-  { path: '/tables',      label: 'Códigos QR',      icon: Grid3x3,         feature: 'tables' },
   { path: '/loyalty',     label: 'Puntos Lealtad',  icon: Star,            feature: 'loyalty' },
   { path: '/audit',       label: 'Auditoría',       icon: ShieldAlert,     feature: 'settings' },
   { path: '/backups',     label: 'Respaldos',       icon: ShieldCheck,     feature: 'settings' },
@@ -61,7 +60,7 @@ export default function DashboardLayout({ user }) {
     }, 450);
     return () => clearTimeout(timer);
   }, [location.pathname]);
-  const { planLevel, isActive, subscription, restaurantId, availableRestaurants, switchRestaurant, userProfile, canAccess, isLocked, isExplore, selectedBranchId, updateSelectedBranch } = useSubscription();
+  const { planLevel, isActive, subscription, restaurantId, availableRestaurants, switchRestaurant, userProfile, canAccess, isLocked, selectedBranchId, updateSelectedBranch } = useSubscription();
   const { restaurant, branches } = useRestaurantData();
 
   const menuIdentifier = restaurant?.slug || restaurantId;
@@ -79,8 +78,8 @@ export default function DashboardLayout({ user }) {
     window.location.href = '/login';
   };
 
-  const planLabel = isExplore ? 'Modo Exploración' : (isActive ? PLAN_NAMES[planLevel] : 'Sin Plan');
-  const planColor = isExplore ? '#f97316' : (planLevel === 3 ? '#f59e0b' : planLevel === 2 ? '#6366f1' : planLevel === 1 ? '#22c55e' : '#94a3b8');
+  const planLabel = isActive ? PLAN_NAMES[planLevel] : 'Sin Plan';
+  const planColor = planLevel === 3 ? '#f59e0b' : planLevel === 2 ? '#6366f1' : planLevel === 1 ? '#22c55e' : '#94a3b8';
 
   const filteredNavItems = useMemo(() => 
     NAV_ITEMS.filter(item => !item.feature || canAccess(item.feature)),
@@ -90,19 +89,9 @@ export default function DashboardLayout({ user }) {
 
 
   const needsPlanSelection = useMemo(() => {
-    if (userProfile.loading) return false;
-    if (!subscription || subscription.status === 'loading') return false;
-    const isOwner = userProfile.role === 'owner' || userProfile.roles?.includes('owner');
-    if (!isOwner) return false;
-    const isSubActive = subscription && (
-      subscription.status === 'active' || 
-      subscription.status === 'authorized' || 
-      subscription.status === 'pending' || 
-      subscription.status === 'explore' || 
-      subscription.isExplore === true
-    );
-    return !isSubActive;
-  }, [userProfile, subscription]);
+    // Permitir ingresar sin plan (pero bloqueando catálogo y caja vía LockedFeature / PaywallCheck)
+    return false;
+  }, []);
 
   useEffect(() => {
     if (needsPlanSelection && location.pathname !== '/subscription') {
@@ -182,7 +171,6 @@ export default function DashboardLayout({ user }) {
         <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2rem', backgroundColor: '#fff', borderBottom: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <img src={logoSinfondo} alt="MiProdu" style={{ height: '36px' }} />
-            <span style={{ fontWeight: 800, fontSize: '1.1rem', color: '#0f172a' }}>Mi<span style={{ color: '#C9A227' }}>Produ</span></span>
           </div>
           <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', fontWeight: 600, fontSize: '0.9rem' }}>
             <LogOut size={18} /> Cerrar Sesión
@@ -206,12 +194,7 @@ export default function DashboardLayout({ user }) {
               alt="MiProdu"
               className="sidebar-logo-img"
             />
-            {isSidebarOpen && (
-              <div className="logo-wordmark">
-                <span className="logo-brand">Mi</span>
-                <span className="logo-brand logo-brand-separator" style={{ color: '#C9A227' }}>Produ</span>
-              </div>
-            )}
+            {/* Wordmark removed */}
           </div>
           {/* Toggle — siempre visible en el header */}
           <button
@@ -238,8 +221,8 @@ export default function DashboardLayout({ user }) {
               alignItems: 'center',
               gap: '6px',
             }}>
-              <span>{isExplore ? '🧭' : (isActive ? '✅' : '⚠️')}</span>
-              {isExplore ? planLabel : `Plan ${planLabel}`}
+              {isActive ? <ShieldCheck size={14} /> : <ShieldAlert size={14} />}
+              {`Plan ${planLabel}`}
             </div>
           </div>
         )}
@@ -345,7 +328,7 @@ export default function DashboardLayout({ user }) {
                 color: planColor,
               }}
             >
-              {isExplore ? `🧭 ${planLabel}` : (isActive ? `Plan ${planLabel}` : '⚠️ Sin Plan')}
+              {isActive ? `Plan ${planLabel}` : 'Sin Plan'}
             </div>
             
             {(() => {
@@ -362,14 +345,14 @@ export default function DashboardLayout({ user }) {
                   className="topbar-menu-link"
                   title="Ver mi catálogo público"
                 >
-                  <span className="topbar-menu-link-icon">👁️</span>
+                  <span className="topbar-menu-link-icon"><Eye size={16} /></span>
                   <span className="topbar-menu-link-text">Catálogo</span>
                 </a>
               );
             })()}
 
             <button className="topbar-btn">
-              🔔
+              <Bell size={18} />
             </button>
             <div className="user-profile">
               <div className="avatar">

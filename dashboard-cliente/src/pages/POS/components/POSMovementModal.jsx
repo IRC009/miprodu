@@ -1,5 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
+import { TrendingDown, TrendingUp } from 'lucide-react';
 import s from '../POS.module.css';
 
 /**
@@ -19,8 +20,9 @@ export default function POSMovementModal({
   return createPortal(
     <div className={`saas-modal-overlay ${s.movementOverlay}`}>
       <div className={`saas-modal-content ${s.movementModal}`}>
-        <h2 className={s.movementTitle}>
-          {isEgreso ? '💸 Registrar Egreso' : '💰 Ingreso Extra'}
+        <h2 className={s.movementTitle} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', justifyContent: 'center', width: '100%' }}>
+          {isEgreso ? <TrendingDown size={20} style={{ color: '#ef4444' }} /> : <TrendingUp size={20} style={{ color: '#22c55e' }} />}
+          {isEgreso ? 'Registrar Egreso' : 'Ingreso Extra'}
         </h2>
         <p className={s.movementSubtitle}>
           El monto se {isEgreso ? 'restará' : 'sumará'} del efectivo esperado en caja.

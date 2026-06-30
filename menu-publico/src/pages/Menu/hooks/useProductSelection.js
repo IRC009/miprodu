@@ -36,7 +36,13 @@ export function useProductSelection(product, designConfig, isAvailable = true) {
       return;
     }
     const finalProduct = hasVariants && selectedVariant 
-      ? { ...product, name: `${product.name} (${selectedVariant.name})`, price: selectedVariant.price, discountPrice: null }
+      ? { 
+          ...product, 
+          name: `${product.name} (${selectedVariant.name})`, 
+          price: selectedVariant.price, 
+          discountPrice: null,
+          selectedVariant: selectedVariant
+        }
       : product;
       
     addToCart(finalProduct, 1, observations);

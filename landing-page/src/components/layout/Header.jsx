@@ -7,7 +7,7 @@ const NAV_LINKS = [
   { label: 'Funcionalidades', href: '#funcionalidades' },
   { label: 'Cómo funciona', href: '#como-funciona' },
   { label: 'Precios', href: '#precios' },
-  { label: '📲 App Móvil', href: '#download-app' },
+  { label: 'App Móvil', href: '#download-app' },
 ];
 
 export default function Header() {
@@ -29,7 +29,7 @@ export default function Header() {
     <header ref={headerRef} className={`lp-header ${scrolled ? 'scrolled' : ''}`}>
       <div className="lp-container header-inner">
         <a href="#" className="header-logo-wrap">
-          <img src={logo} alt="Tienda y QR" className="header-logo-img" fetchPriority="high" />
+          <img src={logo} alt="MiProdu" className="header-logo-img" fetchPriority="high" />
         </a>
 
         <nav className={`header-nav ${menuOpen ? 'open' : ''}`}>
@@ -39,7 +39,7 @@ export default function Header() {
             </a>
           ))}
           <a
-            href="https://app.tu-nuevo-dominio.com"
+            href="https://app.miprodu.com"
             target="_blank"
             rel="noopener noreferrer"
             className="header-cta"

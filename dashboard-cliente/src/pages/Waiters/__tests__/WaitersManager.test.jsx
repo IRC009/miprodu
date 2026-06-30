@@ -20,14 +20,14 @@ const mockSubscriptionValue = {
 vi.mock('../../../context/SubscriptionContext', () => ({
   useSubscription: () => mockSubscriptionValue,
   SubscriptionProvider: ({ children }) => <>{children}</>,
-  PLAN_NAMES: { 0: 'Gratis', 1: 'Carta', 2: 'Carta y Mesa' }
+  PLAN_NAMES: { 0: 'Gratis', 1: 'Carta', 2: 'Pro' }
 }));
 
 // También mockeamos la ruta que usa el componente internamente por si acaso
 vi.mock('../../../context/SubscriptionContext', () => ({
   useSubscription: () => mockSubscriptionValue,
   SubscriptionProvider: ({ children }) => <>{children}</>,
-  PLAN_NAMES: { 0: 'Gratis', 1: 'Carta', 2: 'Carta y Mesa' }
+  PLAN_NAMES: { 0: 'Gratis', 1: 'Carta', 2: 'Pro' }
 }));
 
 vi.mock('../../../context/AlertContext', () => ({

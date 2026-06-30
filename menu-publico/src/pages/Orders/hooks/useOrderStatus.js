@@ -24,6 +24,7 @@ export function useOrderStatus() {
   const [restaurantName, setRestaurantName] = useState('');
   const [loaded, setLoaded] = useState(false);
   const [settings, setSettings] = useState(null);
+  const [designConfig, setDesignConfig] = useState(null);
   const [receiptFile, setReceiptFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   
@@ -76,7 +77,7 @@ export function useOrderStatus() {
     });
 
     const unsubRest = Database.listenById('restaurants', restaurantId, (data) => {
-      if (data) setRestaurantName(data.name || 'Restaurante');
+      if (data) setRestaurantName(data.name || 'Tienda');
     });
 
     return () => {
@@ -89,6 +90,14 @@ export function useOrderStatus() {
   useEffect(() => {
     if (!restaurantId) return;
     getGeneralSettings(restaurantId, branchId).then(setSettings);
+    
+    // Listen to design config for ecommerce mode integration
+    const unsubDesign = Database.listenById(`restaurants/${restaurantId}/config`, 'design', (data) => {
+      if (data) setDesignConfig(data);
+    });
+    return () => {
+      if (unsubDesign) unsubDesign();
+    };
   }, [restaurantId, branchId]);
 
   useEffect(() => {
@@ -141,6 +150,37 @@ export function useOrderStatus() {
   }, [soundMuted, isDone]);
 
   useEffect(() => {
+    if (order && order.id && !isPaymentFailed) {
+      const key = `purchase_tracked_${order.id}`;
+      const alreadyTracked = localStorage.getItem(key);
+      if (!alreadyTracked) {
+        try {
+          if (window.trackPixelEvent) {
+            window.trackPixelEvent('purchase', {
+              value: order.total || 0,
+              orderId: order.id,
+              customer: {
+                name: order.customerName || '',
+                phone: order.customerPhone || '',
+                email: order.customerEmail || '',
+              },
+              items: (order.items || []).map(item => ({
+                id: item.id,
+                name: item.name,
+                price: item.discountPrice || item.price,
+                quantity: item.quantity
+              }))
+            });
+            localStorage.setItem(key, 'true');
+          }
+        } catch (e) {
+          console.warn('Error tracking purchase pixel:', e);
+        }
+      }
+    }
+  }, [order, isPaymentFailed]);
+
+  useEffect(() => {
     return () => {
       if (bellIntervalRef.current) clearInterval(bellIntervalRef.current);
     };
@@ -188,7 +228,7 @@ export function useOrderStatus() {
 
   return {
     restaurantId, orderId, navigate, showAlert,
-    order, restaurantName, loaded, settings,
+    order, restaurantName, loaded, settings, designConfig,
     receiptFile, setReceiptFile, isUploading,
     soundMuted, setSoundMuted,
     isPaymentFailed, isDone, currentStep, isReady, isDelivery,

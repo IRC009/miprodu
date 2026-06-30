@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useOutletContext, useNavigate } from 'react-router-dom';
+import { useOutletContext, useNavigate, useSearchParams } from 'react-router-dom';
 import { useMenuData } from './hooks/useMenuData';
 import ProductCard from './components/ProductCard';
 import RecommendationsBanner from './components/RecommendationsBanner';
@@ -17,8 +17,11 @@ import './Menu.css';
 export default function Menu() {
   const { restaurantId, designConfig, ordersEnabled, basePath, restaurantData } = useOutletContext();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { addToCart } = useCart();
   const [selectedModalProduct, setSelectedModalProduct] = React.useState(null);
+
+  const subcatParam = searchParams.get('subcat') || searchParams.get('sub');
 
   const {
     loading,
@@ -34,7 +37,7 @@ export default function Menu() {
     isGridForced, setIsGridForced,
     showPromos, setShowPromos,
     isNearBranch, locationError
-  } = useMenuData(restaurantId);
+  } = useMenuData(restaurantId, restaurantData);
 
   const isColorDark = (color) => {
     if (!color || !color.startsWith('#')) return true;
@@ -136,6 +139,15 @@ export default function Menu() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [isGridForced]);
+
+  useEffect(() => {
+    if (subcatParam && !loading && categoryProducts.length > 0) {
+      const timer = setTimeout(() => {
+        scrollToSubcat(subcatParam);
+      }, 350);
+      return () => clearTimeout(timer);
+    }
+  }, [subcatParam, loading, categoryProducts.length]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -284,7 +296,7 @@ export default function Menu() {
                   fontWeight: '900', fontSize: '1.3rem', textTransform: 'uppercase', boxShadow: '0 8px 20px rgba(239, 68, 68, 0.3)', gridColumn: '1 / -1'
                 }}
               >
-                🔥 Ofertas y Promociones
+                Ofertas y Promociones
                 <span style={{ fontSize: '0.8rem', opacity: 0.9, marginTop: '4px', fontWeight: 600 }}>{promoProducts.length} productos en oferta</span>
               </button>
             )}
@@ -354,7 +366,6 @@ export default function Menu() {
           overflow: 'hidden',
         }}>
           <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 60% 0%, rgba(255,255,255,0.18) 0%, transparent 70%)', pointerEvents: 'none' }} />
-          <div style={{ fontSize: '2.2rem', marginBottom: '0.5rem', filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.3))' }}>🔥</div>
           <h2 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 900, margin: '0 0 0.4rem', textShadow: '0 2px 8px rgba(0,0,0,0.25)', letterSpacing: '-0.02em' }}>
             Ofertas y Promociones
           </h2>

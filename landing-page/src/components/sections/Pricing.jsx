@@ -53,46 +53,25 @@ import { getPricingConfig, disableExpiredPromotion } from '../../services/pricin
 
 const PLAN_META = [
   {
-    id: 0, name: 'Tradicional', tagline: 'Menú digital QR esencial', Icon: QrIcon,
+    id: 2, name: 'Plan Pro', tagline: 'Todo lo que necesitas para tu catálogo digital', Icon: RestaurantFullIcon, recommended: true,
     features: [
-      'Menú digital QR ilimitado',
+      'Catálogo digital ilimitado',
       'Pedidos y Domicilios a WhatsApp (Directo)',
-      'Personal y Roles (Meseros, Cajeros, Supervisores)',
-      'Llamado al mesero desde la mesa (botón de llamado)',
-      'Fotos, logo y personalización visual',
-      'Gestión de Sedes (1 sede incluida)',
-      'Promociones y banners informativos',
-      'SSL y hosting incluido',
-    ],
-  },
-  {
-    id: 1, name: 'Carta', tagline: 'Operación tradicional y POS', Icon: MenuPageIcon,
-    features: [
-      'Todo lo del plan Tradicional',
+      'Personal y Roles (Vendedores, Cajeros, Supervisores)',
       'Caja POS con apertura y cierre de turno',
-      'Panel de Restaurante (comandas en tiempo real)',
-      'Pedidos Web (Para llevar / Delivery)',
-      'Gestión de Domicilios',
-      'Gestión de Sedes pagadas',
-      'Historial de Turnos',
-      'Soporte prioritario',
-    ],
-  },
-  {
-    id: 2, name: 'Carta y Mesa', tagline: 'Tecnología, Pasarela y Salón', Icon: RestaurantFullIcon, recommended: true,
-    features: [
-      'Todo lo del plan Carta',
-      'Sistema de Mesas y Comandas de Salón',
-      'Pedidos y Autoservicio QR en Mesa',
+      'Panel de Control (pedidos en tiempo real)',
+      'Pedidos Web (Para llevar / Delivery) y Gestión de Domicilios',
+      'Pedidos y Autoservicio en vitrinas/stands',
       'Validación de Ubicación (GPS) del Cliente',
-      'Dominio Personalizado (ej: menu.mi-restaurante.com)',
+      'Dominio Personalizado (ej: catalogo.mi-negocio.com)',
       'Pasarela de Pagos Digitales integrada',
       'Pago por Transferencia / Comprobante (Nequi, Daviplata)',
-      'Reservas de Mesa con correo electrónico',
+      'Reservas de Stock con correo electrónico',
       'Inventarios y control de costos',
       'CRM: Historial de Clientes',
       'Analíticas avanzadas de ventas',
-      'Programa de Puntos y Lealtad',
+      'Programa de Puntos y Fidelización',
+      'SSL y hosting incluido',
     ],
   },
 ];
@@ -307,28 +286,28 @@ export default function Pricing() {
         {/* ── Dynamic Promo Banner ── */}
         {isPromoActive && pricing.promotion && !promoCountdown?.expired && (
           <div style={{
-            background: 'linear-gradient(135deg, #8B1A2E 0%, #5c0f1e 50%, #3b0a14 100%)',
-            border: '1px solid rgba(232,116,138,0.3)',
+            background: 'linear-gradient(135deg, #C9A227 0%, #a8841c 50%, #7d6010 100%)',
+            border: '1px solid rgba(201, 162, 39, 0.3)',
             borderRadius: '16px',
             padding: '1.5rem 2rem',
             marginBottom: '2.5rem',
             position: 'relative',
             overflow: 'hidden',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+            boxShadow: '0 20px 40px rgba(201, 162, 39, 0.15)',
             maxWidth: '1140px',
             margin: '0 auto 2.5rem',
             color: '#fff',
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem', position: 'relative', zIndex: 2 }}>
               <div style={{ flex: 1, minWidth: '280px' }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(232,116,138,0.2)', border: '1px solid rgba(232,116,138,0.4)', borderRadius: '99px', padding: '3px 12px', fontSize: '0.7rem', fontWeight: '800', color: '#F3A3B2', letterSpacing: '0.05em', marginBottom: '0.5rem', textTransform: 'uppercase' }}>
-                  🏷️ {pricing.promotion.label || 'Oferta Exclusiva'}
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(0, 0, 0, 0.2)', border: '1px solid rgba(255, 255, 255, 0.4)', borderRadius: '99px', padding: '3px 12px', fontSize: '0.7rem', fontWeight: '800', color: '#fff', letterSpacing: '0.05em', marginBottom: '0.5rem', textTransform: 'uppercase' }}>
+                  {pricing.promotion.label || 'Oferta Exclusiva'}
                 </div>
                 <h3 style={{ fontSize: '1.3rem', fontWeight: '800', margin: '0 0 0.4rem', color: '#fff' }}>
                   {pricing.promotion.description || 'Precios rebajados por tiempo limitado.'}
                 </h3>
                 <p style={{ margin: 0, fontSize: '0.82rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
-                  🛡️ <strong>Garantía de renovación:</strong> Suscríbete bajo esta promoción y <strong style={{ color: '#F3A3B2' }}>mantendrás este precio con descuento para siempre</strong> en todas tus futuras renovaciones.
+                  <strong>Garantía de renovación:</strong> Suscríbete bajo esta promoción y <strong style={{ color: '#F3A3B2' }}>mantendrás este precio con descuento para siempre</strong> en todas tus futuras renovaciones.
                 </p>
                 {/* Scarcity Display */}
                 {pricing.promotion?.enableScarcityQty && (
@@ -340,7 +319,7 @@ export default function Pricing() {
                       </span>
                     </div>
                     <div style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '6px' }}>
-                      🔥 Solo quedan <span style={{ color: '#ff4d4d', fontWeight: 900, fontSize: '1.5rem', background: 'rgba(239, 68, 68, 0.15)', padding: '2px 8px', borderRadius: '6px', border: '1px solid rgba(239, 68, 68, 0.3)', display: 'inline-block', lineHeight: 1 }}>{simulatedQty}</span> cupos con precio promocional
+                      Solo quedan <span style={{ color: '#ff4d4d', fontWeight: 900, fontSize: '1.5rem', background: 'rgba(239, 68, 68, 0.15)', padding: '2px 8px', borderRadius: '6px', border: '1px solid rgba(239, 68, 68, 0.3)', display: 'inline-block', lineHeight: 1 }}>{simulatedQty}</span> cupos con precio promocional
                     </div>
                     <div style={{ width: '100%', height: '5px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '3px', marginTop: '6px', overflow: 'hidden' }}>
                       <div 
@@ -406,7 +385,7 @@ export default function Pricing() {
           </div>
         )}
 
-        <div className="pricing-grid">
+        <div className="pricing-grid" style={{ display:'flex', justifyContent:'center', gap:'2rem', flexWrap:'wrap' }}>
           {PLANS.map((p, i) => {
             const hasDiscount = isPromoActive && p.monthly > 0;
             const origMonthly = pricing.basePrices[p.id]?.monthly || p.monthly;
@@ -417,7 +396,7 @@ export default function Pricing() {
             const pct = hasDiscount ? Math.round((1 - currentPrice / origPrice) * 100) : 0;
 
             return (
-              <div key={p.id} ref={el => cardsRef.current[i] = el} className={`pricing-card ${p.recommended ? 'recommended' : ''}`}>
+              <div key={p.id} ref={el => cardsRef.current[i] = el} className={`pricing-card ${p.recommended ? 'recommended' : ''}`} style={{ maxWidth:'480px', minWidth:'320px', flex:'0 1 480px' }}>
                 {p.recommended && <div className="pricing-badge-rec">Más popular</div>}
                 
                 {/* Discount Badge */}
@@ -426,14 +405,14 @@ export default function Pricing() {
                     position: 'absolute',
                     top: '20px',
                     left: '20px',
-                    background: '#8B1A2E',
+                    background: '#C9A227',
                     color: '#fff',
                     fontSize: '0.65rem',
                     fontWeight: '800',
                     padding: '3px 10px',
                     borderRadius: '99px',
                     zIndex: 2,
-                    boxShadow: '0 4px 10px rgba(139,26,46,0.3)'
+                    boxShadow: '0 4px 10px rgba(201,162,39,0.3)'
                   }}>
                     Ahorras {pct}%
                   </div>
@@ -444,7 +423,7 @@ export default function Pricing() {
                     width: '64px',
                     height: '64px',
                     borderRadius: '50%',
-                    background: p.recommended ? '#8B1A2E' : 'rgba(139,26,46,0.07)',
+                    background: p.recommended ? '#C9A227' : 'rgba(201,162,39,0.07)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -483,12 +462,12 @@ export default function Pricing() {
                         {fmt(origPrice)}
                       </span>
                       <span style={{
-                        background: 'linear-gradient(135deg, #8B1A2E 0%, #c02040 100%)',
+                        background: 'linear-gradient(135deg, #C9A227 0%, #e0ba3c 100%)',
                         color: '#fff',
                         fontSize: '0.6rem', fontWeight: '900',
                         padding: '2px 9px', borderRadius: '99px',
                         letterSpacing: '0.05em', textTransform: 'uppercase',
-                        boxShadow: '0 2px 8px rgba(139,26,46,0.5)'
+                        boxShadow: '0 2px 8px rgba(201,162,39,0.5)'
                       }}>
                         −{pct}%
                       </span>
@@ -519,7 +498,7 @@ export default function Pricing() {
                     <li key={j}>
                       <span style={{
                         flexShrink: 0, marginTop: '2px', width: '18px', height: '18px', borderRadius: '50%',
-                        background: '#8B1A2E',
+                        background: '#C9A227',
                         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: '0.6rem', fontWeight: '900', color: '#fff',
                         marginRight: '6px'
@@ -528,7 +507,7 @@ export default function Pricing() {
                   ))}
                 </ul>
 
-                <a href="https://app.cartaymesa.com" target="_blank" rel="noopener noreferrer" className={`pricing-cta ${p.recommended ? 'primary' : 'outline'}`}>
+                <a href="https://app.miprodu.com" target="_blank" rel="noopener noreferrer" className={`pricing-cta ${p.recommended ? 'primary' : 'outline'}`}>
                   {p.monthly === 0 ? 'Comenzar Gratis' : ((pricing.trialDays ?? 7) > 0 ? `Empezar ${pricing.trialDays ?? 7} días gratis` : 'Empezar gratis')}
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16" style={{marginLeft: '6px'}}><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                 </a>
@@ -545,13 +524,6 @@ export default function Pricing() {
           })}
         </div>
 
-        <div className="pricing-multi">
-          <div className="pricing-multi-icon"><BranchesIcon /></div>
-          <div>
-            <strong>¿Tienes varias sedes?</strong>
-            <p>Combina planes: algunas sedes en "Carta" y otras en "Carta y Mesa". Pagas exactamente lo que necesitas, sede por sede.</p>
-          </div>
-        </div>
       </div>
     </section>
   );

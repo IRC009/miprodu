@@ -181,7 +181,7 @@ export function usePOSCheckout(options) {
 
       if (targetWaiterId && finalUserId !== targetWaiterId) {
         const actorName = currentUser?.name || 'Cajero';
-        const actorNote = `(Comandado por: ${actorName})`;
+        const actorNote = `(Vendido por: ${actorName})`;
         if (!effectiveObservations.includes(actorNote)) {
           effectiveObservations = effectiveObservations ? `${effectiveObservations} ${actorNote}` : actorNote;
         }

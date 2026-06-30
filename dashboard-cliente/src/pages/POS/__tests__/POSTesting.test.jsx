@@ -108,7 +108,7 @@ describe('POS - Atribución de Órdenes', () => {
     fireEvent.click(screen.getByText('Cafe'));
 
     // 4. Clic en Ordenar
-    fireEvent.click(screen.getByText(/📋 Ordenar/i));
+    fireEvent.click(screen.getByText(/Ordenar/i));
 
     // 5. El sistema DEBE bloquear: la cajera NO es el mesero original de la mesa
     await waitFor(() => {
@@ -148,12 +148,12 @@ describe('POS - Atribución de Órdenes', () => {
 
     await waitFor(() => expect(screen.getByText('Cafe')).toBeInTheDocument());
 
-    const fastOptionBtn = screen.getByRole('button', { name: /⚡ Rápido/i });
+    const fastOptionBtn = screen.getByRole('button', { name: /Rápido/i });
     fireEvent.click(fastOptionBtn);
 
     fireEvent.click(screen.getByText('Cafe'));
 
-    const orderBtn = screen.getByRole('button', { name: /📋 Ordenar/i });
+    const orderBtn = screen.getByRole('button', { name: /Ordenar/i });
     expect(orderBtn).toBeDisabled();
   });
 });

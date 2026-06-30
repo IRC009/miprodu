@@ -32,21 +32,21 @@ function Avatar({ name }) {
 const TESTIMONIALS = [
   {
     name: 'Carlos Moreno',
-    role: 'Propietario — Asadero El Rincón',
+    role: 'Propietario — Accesorios El Rincón',
     stars: 5,
-    text: 'Antes usábamos menús impresos que cambiábamos cada semana. Ahora actualizamos desde el celular en segundos. Las ventas subieron porque los clientes ven fotos reales de los platos.',
+    text: 'Antes usábamos catálogos impresos que cambiábamos cada semana. Ahora actualizamos desde el celular en segundos. Las ventas subieron porque los clientes ven fotos reales y variaciones de los productos.',
   },
   {
     name: 'Valentina Torres',
-    role: 'Administradora — Sazón de Casa (3 sedes)',
+    role: 'Administradora — Valentina Modas (3 tiendas)',
     stars: 5,
-    text: 'Con 3 sedes era un caos manejar todo por separado. Carta y Mesa nos centraliza todo. Los reportes comparativos me muestran cuál sede está vendiendo mejor cada semana.',
+    text: 'Con 3 tiendas era un caos manejar todo por separado. MiProdu nos centraliza todo. Los reportes comparativos me muestran cuál tienda está vendiendo mejor cada semana.',
   },
   {
     name: 'Juan Sebastián Ríos',
-    role: 'Chef & Propietario — Restaurante Ocho',
+    role: 'Propietario — Calzado Ocho',
     stars: 5,
-    text: 'El sistema de comandas cambió todo. Mi personal ya no usa papel, los pedidos llegan directo a la pantalla de cocina. Cero errores, cero demoras. Increíble.',
+    text: 'El sistema de pedidos cambió todo. El stock se actualiza al instante, los pedidos llegan directo al panel de control. Cero errores, cero demoras. Increíble.',
   },
 ];
 
@@ -70,7 +70,7 @@ export default function Testimonials() {
         <div className="testimonials-header">
           <div className="section-badge">Testimonios</div>
           <h2 className="section-title">
-            Lo que dicen nuestros <span className="wine-text">restaurantes</span>
+            Lo que dicen nuestros <span className="wine-text">negocios</span>
           </h2>
         </div>
 

@@ -4,14 +4,25 @@ import { auth, db } from '../../../services/firebase';
 import { doc, setDoc, getDoc, collection, getDocs, query, where, increment } from 'firebase/firestore';
 import { encryptPassword } from '../../../utils/crypto';
 
-const STAFF_EMAIL_DOMAIN = 'staff.cartaymesa.com';
+const STAFF_EMAIL_DOMAIN = 'staff.miprodu.com';
 
 // Datos para remarketing y segmentación
 const BUSINESS_TYPES = [
-  'Restaurante', 'Cafetería / Coffee Shop', 'Bar / Coctelería', 'Pizzería',
-  'Hamburguesería', 'Comida Rápida', 'Comida Saludable', 'Sushi / Asiática',
-  'Heladería / Repostería', 'Panadería', 'Food Truck', 'Hotel / Hospedaje',
-  'Dark Kitchen / Nube', 'Catering / Eventos', 'Otro'
+  'Tienda de Ropa / Moda',
+  'Calzado y Zapatos',
+  'Accesorios y Joyería',
+  'Cosméticos y Belleza',
+  'Tecnología y Electrónica',
+  'Supermercado / Minimarket / Abarrotes',
+  'Hogar y Decoración',
+  'Mascotas / Pet Shop',
+  'Droguería / Farmacia',
+  'Ferretería y Herramientas',
+  'Librería / Papelería / Regalos',
+  'Deportes y Fitness',
+  'Repuestos / Automotriz',
+  'Restaurante / Cafetería',
+  'Otro'
 ];
 
 const HOW_FOUND_OPTIONS = [
@@ -166,7 +177,7 @@ export function useAuthForm(onLogin) {
         }
         
         if (!hasRestaurant) {
-          setError('Tu cuenta existe, pero no tienes un restaurante configurado. Te hemos redirigido al formulario de registro para que crees tu base de datos.');
+          setError('Tu cuenta existe, pero no tienes un negocio configurado. Te hemos redirigido al formulario de registro para que crees tu base de datos.');
           setIsRegistering(true);
           setStep(2);
           setRestaurantName('');

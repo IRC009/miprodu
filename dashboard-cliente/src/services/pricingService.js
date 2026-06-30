@@ -67,6 +67,7 @@ export const usePricingConfig = () => {
     effectivePrices: FALLBACK_PRICES,
     isPromoActive: false,
     trialDays: FALLBACK_TRIAL_DAYS,
+    subTrialDays: 0,
     loading: true,
   });
 
@@ -84,7 +85,8 @@ export const usePricingConfig = () => {
         const promotion = data.promotion ? { ...data.promotion, updatedAt: data.updatedAt || null } : null;
         const { prices: effectivePrices, isPromoActive } = computeEffectivePrices(base, promotion);
         const trialDays = (typeof data.trialDays === 'number' && data.trialDays >= 1) ? data.trialDays : FALLBACK_TRIAL_DAYS;
-        setConfig({ basePrices: base, promotion, effectivePrices, isPromoActive, trialDays, loading: false });
+        const subTrialDays = (typeof data.subTrialDays === 'number' && data.subTrialDays >= 0) ? data.subTrialDays : 0;
+        setConfig({ basePrices: base, promotion, effectivePrices, isPromoActive, trialDays, subTrialDays, loading: false });
       },
       (err) => {
         console.warn('[pricingService] Firestore listener failed, using fallback.', err.message);

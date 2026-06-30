@@ -2,6 +2,7 @@ import { db, storage } from './firebase';
 import { collection, doc, query, onSnapshot, updateDoc, where, addDoc, getDocs, runTransaction, serverTimestamp, getDoc, limit, setDoc, deleteDoc, getDocsFromCache, getDocFromCache } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { trackTableOpen, trackTableClose } from './analyticsService';
+import { Storage } from '../infrastructure/adapters/StorageAdapter';
 import { getCombinedMetadata, getClientMetadata } from './metadataService';
 import { getLoyaltyConfig, earnPoints } from './loyaltyService';
 import { getDocsOfflineFirst, getDocOfflineFirst, runTransactionWithFallback, writeOfflineFirst } from '../utils/firestoreOffline.js';
@@ -45,7 +46,7 @@ export const listenToOrders = (restaurantId, startDateISO, callback, branchId = 
     });
     
     if (branchId && branchId !== 'ALL') {
-      orders = orders.filter(o => o.branchId === branchId);
+      orders = orders.filter(o => o.branchId === branchId || !o.branchId);
     }
     
     orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -142,8 +143,7 @@ const archiveOrder = async (restaurantId, orderId, finalData = null) => {
         if (!snap.exists()) return;
 
         const orderData = { ...snap.data(), ...(finalData || {}), archivedAt: new Date().toISOString() };
-        const branchId = orderData.branchId;
-        if (!branchId) throw new Error('BranchId missing');
+        const branchId = orderData.branchId || 'default_branch';
 
         const metaRef = doc(db, `restaurants/${restaurantId}/history_metadata`, branchId);
         const bucketsRef = collection(db, `restaurants/${restaurantId}/history_buckets`);
@@ -194,8 +194,7 @@ const archiveOrder = async (restaurantId, orderId, finalData = null) => {
         if (!snap.exists()) return;
 
         const orderData = { ...snap.data(), ...(finalData || {}), archivedAt: new Date().toISOString() };
-        const branchId = orderData.branchId;
-        if (!branchId) throw new Error('BranchId missing');
+        const branchId = orderData.branchId || 'default_branch';
 
         const metaRef = doc(db, `restaurants/${restaurantId}/history_metadata`, branchId);
         const bucketsRef = collection(db, `restaurants/${restaurantId}/history_buckets`);
@@ -418,18 +417,10 @@ export const updateOrderStatus = async (restaurantId, orderId, status, extraData
     const updatePayload = { status, ...extraData, updatedAt: new Date().toISOString() };
     
     // Logic for archiving
+    // RULE: Only archive on explicit terminal states (completed/cancelled).
+    // Payment registration (isBilled, isCollected) must NEVER skip the logistics
+    // pipeline. Orders must travel: pending → preparing → ready_for_pickup → dispatched → completed.
     let shouldArchive = status === 'cancelled' || status === 'completed';
-    
-    // Auto-archive if dispatched and already billed (for bar/counter/pickup)
-    if (status === 'dispatched') {
-      const isBilled = currentData.isBilled || extraData.isBilled;
-      const isCollected = currentData.isCollected || extraData.isCollected || currentData.paymentStatus === 'paid' || extraData.paymentStatus === 'paid';
-      const isTable = currentData.orderType === 'table';
-      // For Bar/Counter/Pickup: if billed and collected, we can archive on dispatch
-      if (isBilled && isCollected && !isTable) {
-        shouldArchive = true;
-      }
-    }
 
     if (shouldArchive) {
         await archiveOrder(restaurantId, orderId, updatePayload);
@@ -486,22 +477,9 @@ export const updateOrder = async (restaurantId, orderId, data) => {
       return true;
     }
 
-    if (data.isBilled === true) {
-        const orderRef = doc(db, `restaurants/${restaurantId}/active_orders`, orderId);
-        const snap = await getDocOfflineFirst(orderRef);
-        if (snap.exists()) {
-            const currentData = snap.data();
-            const isCollected = currentData.isCollected || data.isCollected || currentData.paymentStatus === 'paid' || data.paymentStatus === 'paid';
-            const isDeliveryPending = currentData.orderType === 'delivery' && !isCollected;
-            const isTable = currentData.orderType === 'table';
-            const isPendingPrep = ['pending', 'preparing'].includes(currentData.status || 'pending');
-            
-            if (!isDeliveryPending && !isTable && !isPendingPrep) {
-                await archiveOrder(restaurantId, orderId, updatePayload);
-                return true;
-            }
-        }
-    }
+    // Billing alone (isBilled=true) does NOT archive the order.
+    // The order must complete the full logistics pipeline before being archived.
+    // Archival only happens via updateOrderStatus('completed') or ('cancelled').
     
     const orderRef = doc(db, `restaurants/${restaurantId}/active_orders`, orderId);
     // Intentar actualizar en activa, si falla (no existe), intentar en inactiva
@@ -874,12 +852,10 @@ export const markOrderAsCollected = async (restaurantId, orderId, cashierMeta, p
       collectedByWaiterId: cashierMeta.id,
       collectedByWaiterName: cashierMeta.name
     };
-    const snap = await getDocOfflineFirst(orderRef);
-    if (snap.exists() && snap.data().isBilled) {
-        await archiveOrder(restaurantId, orderId, updatePayload);
-    } else {
-        await writeOfflineFirst(updateDoc(orderRef, updatePayload));
-    }
+    // Always just update the active order with payment metadata.
+    // Collecting payment does NOT archive the order — it must still go
+    // through the full logistics pipeline (ready → dispatched → completed).
+    await writeOfflineFirst(updateDoc(orderRef, updatePayload));
     return true;
   } catch (error) {
     console.error("Error marking order as collected:", error);
@@ -919,9 +895,7 @@ export const uploadReceipt = async (restaurantId, file) => {
   try {
     const ext = file.name.split('.').pop();
     const fileName = `receipts/${restaurantId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
-    const storageRef = ref(storage, fileName);
-    await uploadBytes(storageRef, file);
-    return await getDownloadURL(storageRef);
+    return await Storage.uploadFile(fileName, file);
   } catch (error) {
     console.error("Error uploading receipt:", error);
     throw error;

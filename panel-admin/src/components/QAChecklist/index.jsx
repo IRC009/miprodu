@@ -32,7 +32,7 @@ export default function QAChecklist({ isExternalTester = false }) {
           <div className="qa-header-icon">🧪</div>
           <div>
             <h2>QA & Procesos</h2>
-            <p>Sistema de pruebas guiadas para CartayMesa</p>
+            <p>Sistema de pruebas guiadas para MiProdu</p>
           </div>
         </div>
         <div className="qa-header-actions">

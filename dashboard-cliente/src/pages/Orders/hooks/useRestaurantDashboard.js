@@ -72,11 +72,11 @@ export function useRestaurantDashboard() {
   const [paymentMethod, setPaymentMethod] = useState('cash');
 
   const PAYMENT_METHODS = [
-    { id: 'cash', label: '💵 Efectivo' },
-    { id: 'card', label: '💳 Tarjeta' },
-    { id: 'transfer', label: '📱 Transferencia' },
-    { id: 'nequi', label: '📲 Nequi' },
-    { id: 'cod', label: '🚚 Pago Contraentrega' }
+    { id: 'cash', label: 'Efectivo' },
+    { id: 'card', label: 'Tarjeta' },
+    { id: 'transfer', label: 'Transferencia' },
+    { id: 'nequi', label: 'Nequi' },
+    { id: 'cod', label: 'Pago Contraentrega' }
   ];
   
   // Partial Refund States
@@ -292,7 +292,7 @@ export function useRestaurantDashboard() {
     unbilledOrders.forEach(order => {
       (order.items || []).forEach((item, iIdx) => {
         for (let u = 0; u < Math.max(item.quantity || 1, 1); u++) {
-          flatItems.push({ key: `${order.id}_${iIdx}_${u}`, name: item.name, price: item.price || 0, bucketId: item.bucketId, orderId: order.id, assignedTo: 'p1' });
+          flatItems.push({ key: `${order.id}_${iIdx}_${u}`, name: item.name, price: item.price || 0, bucketId: item.bucketId, orderId: order.id, assignedTo: 'p1', sku: item.sku || '' });
         }
       });
     });
@@ -312,7 +312,7 @@ export function useRestaurantDashboard() {
         if (personItems.length === 0) continue;
         const consolidated = {};
         personItems.forEach(fi => {
-          if (!consolidated[fi.name]) consolidated[fi.name] = { name: fi.name, price: fi.price, quantity: 0, bucketId: fi.bucketId };
+          if (!consolidated[fi.name]) consolidated[fi.name] = { name: fi.name, price: fi.price, quantity: 0, bucketId: fi.bucketId, sku: fi.sku || '' };
           consolidated[fi.name].quantity += 1;
         });
         const items = Object.values(consolidated);
@@ -348,7 +348,7 @@ export function useRestaurantDashboard() {
       }
       setSplitModal(null); setManagingTable(null);
       fetchArchived();
-      showAlert(`✅ ${persons.filter(p => flatItems.some(fi => fi.assignedTo === p.id)).length} facturas generadas.`, 'División Exitosa', 'success');
+      showAlert(`${persons.filter(p => flatItems.some(fi => fi.assignedTo === p.id)).length} facturas generadas.`, 'División Exitosa', 'success');
     } catch (e) { console.error(e); showAlert('Error al dividir la cuenta.', 'Error', 'error'); }
   };
 
@@ -442,7 +442,7 @@ export function useRestaurantDashboard() {
       await updateDoc(doc(db, `restaurants/${restaurantId}/active_orders`, orderId), {
         status: 'ready_for_pickup'
       });
-      showAlert('¡Pedido marcado como listo! El cliente puede verlo en su pantalla.', 'Listo ✅', 'success');
+      showAlert('¡Pedido marcado como listo! El cliente puede verlo en su pantalla.', 'Listo', 'success');
     } catch (error) {
       console.error(error);
       showAlert('Error al actualizar el pedido.', 'Error', 'error');
@@ -460,7 +460,7 @@ export function useRestaurantDashboard() {
       // Notamos: No cambiamos el status a 'ready' para evitar que se mueva de pestaña inesperadamente.
       // El cliente recibirá la notificación por el campo calledAt.
       await updateDoc(doc(db, `restaurants/${restaurantId}/active_orders`, orderId), updatePayload);
-      showAlert('¡Cliente notificado! Verá la alerta en su pantalla.', '🔔 Llamada enviada', 'success');
+      showAlert('¡Cliente notificado! Verá la alerta en su pantalla.', 'Llamada enviada', 'success');
     } catch (error) {
       console.error(error);
       showAlert('Error al notificar al cliente.', 'Error', 'error');
@@ -506,7 +506,7 @@ export function useRestaurantDashboard() {
           collectedAt: new Date().toISOString()
         });
       }
-      showAlert('Pago validado correctamente.', 'Pago Aprobado ✅', 'success');
+      showAlert('Pago validado correctamente.', 'Pago Aprobado', 'success');
     } catch (error) {
       console.error(error);
       showAlert('Error al validar el pago.', 'Error', 'error');
@@ -523,7 +523,7 @@ export function useRestaurantDashboard() {
         billedAt: null
       });
       
-      showAlert('El pago ha sido rechazado. El cliente debe subir un nuevo comprobante.', 'Pago Rechazado ❌', 'warning');
+      showAlert('El pago ha sido rechazado. El cliente debe subir un nuevo comprobante.', 'Pago Rechazado', 'warning');
     } catch (error) {
       console.error(error);
       showAlert('Error al rechazar el pago.', 'Error', 'error');

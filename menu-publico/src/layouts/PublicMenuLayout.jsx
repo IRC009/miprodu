@@ -50,7 +50,7 @@ export default function PublicMenuLayout() {
 
   // Detectar si el acceso es por dominio personalizado
   // Primero intentamos leerlo del contexto; si no, lo calculamos localmente
-  const PLATFORM_DOMAINS = ['cartaymesa.com', 'web.app', 'firebaseapp.com', 'localhost'];
+  const PLATFORM_DOMAINS = ['miprodu.com', 'web.app', 'firebaseapp.com', 'localhost'];
   const isCustomDomain = isCustomDomainFromContext ??
     !PLATFORM_DOMAINS.some(d =>
       window.location.hostname === d || window.location.hostname.endsWith('.' + d)
@@ -142,12 +142,34 @@ export default function PublicMenuLayout() {
         setIsBranchInactive(isInactive);
         setResolvedBranch(activeBranch);
         
+        let trialDays = 7;
+        try {
+          const { doc, getDoc } = await import('firebase/firestore');
+          const { db } = await import('../services/firebase');
+          const pricingSnap = await getDoc(doc(db, 'platform_settings', 'pricing'));
+          if (pricingSnap.exists() && typeof pricingSnap.data().trialDays === 'number') {
+            trialDays = pricingSnap.data().trialDays;
+          }
+        } catch (e) {
+          console.warn("Error fetching trial days in menu publico layout:", e);
+        }
+
         const sub = restaurantData?.subscription || {};
         const subStatus = sub.status || 'inactive';
-        const isSubActive = subStatus === 'active' || subStatus === 'authorized';
-        const isExplore = sub.isExplore === true || subStatus === 'explore';
-        const globalPlan = isExplore ? 2 : (isSubActive ? (parseInt(sub.planLevel) || 0) : 0);
-        const isMixed = sub.isMixed === true;
+        
+        let isRegTrialActive = false;
+        if (restaurantData?.createdAt) {
+          const createdDate = new Date(restaurantData.createdAt);
+          if (!isNaN(createdDate.getTime())) {
+            const diffTime = new Date().getTime() - createdDate.getTime();
+            const diffDays = diffTime / (1000 * 60 * 60 * 24);
+            isRegTrialActive = diffDays >= 0 && diffDays <= trialDays;
+          }
+        }
+
+        const isSubActive = subStatus === 'active' || subStatus === 'authorized' || isRegTrialActive;
+        const globalPlan = isSubActive ? (isRegTrialActive ? 2 : (parseInt(sub.planLevel) || 0)) : 0;
+        const isMixed = !isRegTrialActive && sub.isMixed === true;
         
         let effectivePlan = globalPlan;
         if (activeBranch) {
@@ -188,25 +210,7 @@ export default function PublicMenuLayout() {
     fetchSettings();
   }, [restaurantId, branchId, restaurantData, selectedTable]);
 
-  const handleCallWaiter = async () => {
-    if (isTableInvalid) {
-      showAlert('No puedes llamar al mesero desde una mesa que no existe.', 'Mesa Inválida', 'error');
-      return;
-    }
-    const bId = resolvedBranch?.id || branchId;
-    if (!restaurantId || !bId || !selectedTable) {
-      showAlert('No se pudo identificar la mesa o la sede para llamar al mesero.', 'Error', 'error');
-      return;
-    }
-    try {
-      const { callWaiter } = await import('../services/waiterCallService');
-      await callWaiter(restaurantId, bId, selectedTable);
-      showAlert('Llamando al mesero... Te atenderemos en breve.', 'Solicitud Enviada', 'success');
-    } catch (error) {
-      console.error("Error calling waiter:", error);
-      showAlert('Ocurrió un error al intentar llamar al mesero. Por favor, intenta de nuevo.', 'Error', 'error');
-    }
-  };
+
 
   // We should also clear cart if ordersEnabled goes false while they have items, but let's just not render it.
 
@@ -241,7 +245,7 @@ export default function PublicMenuLayout() {
         opacityBottom={designConfig?.bgOverlayOpacityBottom}
         bgColor={designConfig?.backgroundColor}
       />
-      {isTableInvalid && (
+      {isTableInvalid && !['noir', 'urban', 'bloom'].includes(designConfig?.template) && (
         <div style={{
           backgroundColor: '#fef2f2',
           color: '#991b1b',
@@ -372,15 +376,7 @@ export default function PublicMenuLayout() {
           </button>
         )}
         <TranslateWidget restaurantId={restaurantId} branchId={resolvedBranch?.id || branchId} />
-         {selectedTable && !isTableInvalid && branchPlanLevel >= 0 && generalSettings?.enableWaiterCalls !== false && (
-          <button 
-            className="fab-btn waiter-call-btn" 
-            aria-label="Llamar Mesero" 
-            onClick={handleCallWaiter}
-          >
-            🔔
-          </button>
-        )}
+
       </div>
 
       {isCartOpen && <CartModal restaurantId={restaurantId} onClose={() => setIsCartOpen(false)} />}

@@ -17,19 +17,28 @@ import { buildBIIntelligence } from './biIntelligenceService';
 export const getFullAnalytics = async (restaurantId, branchId, startDateISO, endDateISO = null) => {
   const endISO = endDateISO || new Date().toISOString();
 
-  // Carga en paralelo - mínimas lecturas Firestore
+  const safeFetch = async (promise, defaultValue) => {
+    try {
+      return await promise;
+    } catch (err) {
+      console.warn("[BI Service] Error fetching analytics section:", err);
+      return defaultValue;
+    }
+  };
+
+  // Carga en paralelo - mínimas lecturas Firestore con tolerancia a fallos por sección
   const [billedOrders, engagement, productEngagement, tableSessions, activeOrders, ingredients, attendanceStats] = await Promise.all([
-    getBilledOrders(restaurantId, branchId, startDateISO, endISO),
-    getEngagementStats(restaurantId, branchId, startDateISO, endISO),
-    getTopProductEngagement(restaurantId, branchId, startDateISO),
-    getTableSessions(restaurantId, branchId, startDateISO),
-    getBranchActiveOrders(restaurantId, branchId === 'ALL' ? null : branchId),
-    getIngredients(restaurantId),
-    getAttendanceAnalytics(restaurantId, new Date(startDateISO), new Date(endISO))
+    safeFetch(getBilledOrders(restaurantId, branchId, startDateISO, endISO), []),
+    safeFetch(getEngagementStats(restaurantId, branchId, startDateISO, endISO), []),
+    safeFetch(getTopProductEngagement(restaurantId, branchId, startDateISO), []),
+    safeFetch(getTableSessions(restaurantId, branchId, startDateISO), []),
+    safeFetch(getBranchActiveOrders(restaurantId, branchId === 'ALL' ? null : branchId), []),
+    safeFetch(getIngredients(restaurantId), []),
+    safeFetch(getAttendanceAnalytics(restaurantId, new Date(startDateISO), new Date(endISO)), { totalHours: 0, averageEntryTime: '--:--', staffSummary: [] })
   ]);
 
   // Obtener movimientos de inventario del periodo (vía Buckets)
-  const movements = await getInventoryMovements(restaurantId, branchId, startDateISO, endISO);
+  const movements = await safeFetch(getInventoryMovements(restaurantId, branchId, startDateISO, endISO), []);
 
   // Mezclar órdenes facturadas con activas para BI en tiempo real
   const orders = [...billedOrders, ...activeOrders];
@@ -327,10 +336,10 @@ const buildEngagementMetrics = (engagement, productEngagement, orders) => {
 
   // Funnel
   const funnel = [
-    { label: 'Visitas al Menú', value: totals.views,          icon: '👁️' },
-    { label: 'Sesiones',        value: totals.sessions,        icon: '🖥️' },
-    { label: 'Añadieron al Carrito', value: totals.cartAdditions, icon: '🛒' },
-    { label: 'Órdenes Creadas', value: digitalCount,           icon: '✅' },
+    { label: 'Visitas al Menú', value: totals.views,          icon: 'views' },
+    { label: 'Sesiones',        value: totals.sessions,        icon: 'sessions' },
+    { label: 'Añadieron al Carrito', value: totals.cartAdditions, icon: 'cart' },
+    { label: 'Órdenes Creadas', value: digitalCount,           icon: 'orders' },
   ];
 
   return { 
@@ -466,7 +475,6 @@ const buildAIInsights = (orders, engagement, tableSessions, ingredients = [], mo
   if (criticalCount > 0) {
     insights.push({
       type: 'danger',
-      icon: '🚨',
       title: 'Alerta de Stock',
       text: `Tienes ${criticalCount} insumos bajo el stock mínimo. Revisa el inventario pronto.`,
     });
@@ -477,7 +485,6 @@ const buildAIInsights = (orders, engagement, tableSessions, ingredients = [], mo
   if (totalWaste > 0) {
     insights.push({
       type: 'warning',
-      icon: '🗑️',
       title: 'Mermas Detectadas',
       text: `Se registraron mermas/ajustes de salida por un volumen de ${totalWaste.toFixed(1)}. Monitorea las causas de pérdida.`,
     });
@@ -487,7 +494,6 @@ const buildAIInsights = (orders, engagement, tableSessions, ingredients = [], mo
   if (avgTicket > 0) {
     insights.push({
       type: 'info',
-      icon: '🎯',
       title: 'Ticket Promedio',
       text: `Tu ticket promedio es $${Math.round(avgTicket).toLocaleString('es-CO')}. ${
         avgTicket > 30000 ? 'Excelente posicionamiento de precio.' : 'Considera estrategias de upselling.'
@@ -498,7 +504,6 @@ const buildAIInsights = (orders, engagement, tableSessions, ingredients = [], mo
   if (convRate > 0) {
     insights.push({
       type: convRate < 15 ? 'warning' : 'success',
-      icon: convRate < 15 ? '⚠️' : '📈',
       title: 'Conversión del Menú',
       text: `De cada 100 personas que ven tu menú, ${convRate.toFixed(1)} hacen un pedido. ${
         convRate < 15 ? 'Considera mejorar fotos y descripciones.' : 'Tu menú convierte muy bien.'
@@ -509,7 +514,6 @@ const buildAIInsights = (orders, engagement, tableSessions, ingredients = [], mo
   if (avgService > 0) {
     insights.push({
       type: avgService > 60 ? 'danger' : avgService > 40 ? 'warning' : 'success',
-      icon: avgService > 60 ? '🔴' : avgService > 40 ? '🟡' : '🟢',
       title: 'Velocidad de Servicio',
       text: `El tiempo promedio desde la comanda hasta el cobro es ${avgService.toFixed(0)} minutos. ${
         avgService > 60 ? 'Hay cuellos de botella significativos en cocina o atención.' :
@@ -521,7 +525,6 @@ const buildAIInsights = (orders, engagement, tableSessions, ingredients = [], mo
   if (avgOccupancy > 0) {
     insights.push({
       type: 'info',
-      icon: '🪑',
       title: 'Rotación de Mesas',
       text: `Tus mesas están ocupadas en promedio ${avgOccupancy.toFixed(0)} minutos por turno. ${
         avgOccupancy < 45 ? 'Alta rotación: más turnos posibles.' :
@@ -534,7 +537,6 @@ const buildAIInsights = (orders, engagement, tableSessions, ingredients = [], mo
   if (topChannel) {
     insights.push({
       type: 'info',
-      icon: topChannel[0] === 'QR' ? '📱' : '🖥️',
       title: 'Canal Dominante',
       text: `El ${topChannel[1]}% de tus pedidos llegan por ${topChannel[0]}. ${
         topChannel[0] === 'QR' ? 'Tu menú digital está generando excelentes resultados.' :
@@ -546,7 +548,6 @@ const buildAIInsights = (orders, engagement, tableSessions, ingredients = [], mo
   if (peakHour > 0) {
     insights.push({
       type: 'info',
-      icon: '⏰',
       title: 'Hora Pico Detectada',
       text: `Tu hora con más ventas es las ${peakHour}:00 hrs. Asegúrate de tener tu equipo completo durante esta franja.`,
     });
@@ -556,7 +557,6 @@ const buildAIInsights = (orders, engagement, tableSessions, ingredients = [], mo
   if (totalCartAbs > 5) {
     insights.push({
       type: 'warning',
-      icon: '🛒',
       title: 'Abandono de Carrito',
       text: `${totalCartAbs} clientes añadieron productos al carrito pero no completaron su pedido. Considera simplificar el proceso de pago.`,
     });

@@ -1,0 +1,442 @@
+/* ── EcommerceMenu.css ──────────────────────────────────────────────────── */
+
+/* NOTE: All text colors use --text-color / --desc-color / --primary-color
+   to properly follow the restaurant's configured theme (dark or light). */
+
+.eco-menu-page {
+  width: 100%;
+  max-width: 100%;
+  min-height: 60vh;
+}
+
+/* ── Search Bar ── */
+.eco-search-bar-wrap {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1.5rem 1.5rem 0;
+}
+.eco-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--card-bg, rgba(128,128,128,0.08));
+  border: 1px solid var(--card-border-color, rgba(128,128,128,0.18));
+  border-radius: 14px;
+  padding: 0.75rem 1rem;
+  max-width: 600px;
+  color: var(--text-color, inherit);
+}
+.eco-search-input {
+  border: none;
+  outline: none;
+  flex: 1;
+  font-size: 0.95rem;
+  background: transparent;
+  color: var(--text-color, inherit);
+}
+.eco-search-input::placeholder { color: var(--desc-color, rgba(128,128,128,0.55)); }
+.eco-search-clear {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--desc-color, rgba(128,128,128,0.6));
+  font-size: 1rem;
+  padding: 0 4px;
+  transition: color 0.15s;
+}
+.eco-search-clear:hover { color: var(--primary-color, inherit); }
+
+/* ── Category Pill Nav ── */
+.eco-cat-nav-wrap {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem 0.5rem;
+}
+.eco-cat-nav {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.eco-cat-nav::-webkit-scrollbar { display: none; }
+.eco-cat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.5rem 1.1rem;
+  border-radius: 99px;
+  border: 1.5px solid var(--card-border-color, rgba(128,128,128,0.25));
+  background: transparent;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-color, inherit);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.18s;
+  flex-shrink: 0;
+}
+.eco-cat-pill:hover {
+  border-color: var(--primary-color, inherit);
+  color: var(--primary-color, inherit);
+}
+.eco-cat-pill.active { color: #fff !important; }
+.eco-cat-pill-img {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* ── Subcategory Filter Bar ── */
+.eco-subcat-filter-wrap {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0.5rem 1.5rem 0.75rem;
+}
+.eco-subcat-filter {
+  display: flex;
+  gap: 0.45rem;
+  overflow-x: auto;
+  padding-bottom: 0.35rem;
+  scrollbar-width: none;
+}
+.eco-subcat-filter::-webkit-scrollbar { display: none; }
+.eco-subcat-filter-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.9rem;
+  border-radius: 99px;
+  border: 1.5px solid;
+  background: transparent;
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.18s;
+  flex-shrink: 0;
+}
+.eco-subcat-filter-pill.active { color: #fff !important; }
+
+/* ── Promos Banner ── */
+.eco-promos-banner {
+  max-width: 1280px;
+  margin: 1rem auto 0;
+  border-radius: 12px;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.9rem;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ── Content Layout ── */
+.eco-content {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+/* ── Sidebar TOC ── */
+.eco-sidebar-toc {
+  position: sticky;
+  top: 88px;
+  background: var(--card-bg, rgba(128,128,128,0.06));
+  border-radius: 16px;
+  padding: 1.25rem;
+  border: 1px solid var(--card-border-color, rgba(128,128,128,0.12));
+  box-shadow: var(--card-shadow, 0 4px 16px rgba(0,0,0,0.04));
+}
+.eco-sidebar-toc h3 {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--desc-color, rgba(128,128,128,0.6));
+  margin-bottom: 0.75rem;
+}
+.eco-toc-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  border: none;
+  background: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-color, inherit);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  margin-bottom: 2px;
+  font-family: inherit;
+}
+.eco-toc-item:hover { background: rgba(128,128,128,0.12); }
+.eco-toc-item.active { font-weight: 700; color: #fff; }
+/* Sub-items inside sidebar */
+.eco-toc-subitem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.4rem 0.75rem 0.4rem 1.5rem;
+  border-radius: 0 8px 8px 0;
+  border: none;
+  border-left: 2.5px solid;
+  background: none;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--desc-color, rgba(128,128,128,0.75));
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 2px;
+  font-family: inherit;
+}
+.eco-toc-subitem:hover { background: rgba(128,128,128,0.08); }
+.eco-toc-subitem.active { font-weight: 700; }
+
+/* ── Products Area ── */
+.eco-products-area { min-width: 0; }
+
+/* ── Category Section ── */
+.eco-category-section {
+  margin-bottom: 3.5rem;
+  scroll-margin-top: 90px;
+}
+.eco-category-header { margin-bottom: 1.5rem; }
+.eco-category-banner {
+  width: 100%;
+  height: 160px;
+  border-radius: 16px;
+  background-size: cover;
+  background-position: center;
+  margin-bottom: 1rem;
+}
+.eco-category-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-color, inherit);
+  letter-spacing: -0.02em;
+  margin: 0 0 0.35rem;
+}
+.eco-category-desc {
+  font-size: 0.9rem;
+  color: var(--desc-color, rgba(128,128,128,0.75));
+  margin: 0;
+}
+
+/* ── Subcategory ── */
+.eco-subcat-group { margin-bottom: 2.5rem; }
+.eco-subcat-header { margin-bottom: 1rem; }
+.eco-subcat-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-color, inherit);
+  padding-bottom: 0.4rem;
+  border-bottom: 2.5px solid;
+  display: inline-block;
+  margin: 0;
+}
+.eco-subcat-banner {
+  width: 100%;
+  border-radius: 12px;
+  object-fit: cover;
+  max-height: 120px;
+}
+/* Active subcategory header (when filtered) */
+.eco-subcat-header-active { margin-bottom: 1.25rem; }
+
+/* ── Products Grid ── */
+.eco-products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.25rem;
+}
+
+/* ── Empty State ── */
+.eco-empty {
+  text-align: center;
+  padding: 5rem 2rem;
+  color: var(--desc-color, rgba(128,128,128,0.65));
+}
+.eco-empty span { font-size: 2.5rem; display: block; margin-bottom: 1rem; }
+.eco-empty p { font-size: 1rem; margin-bottom: 1.25rem; color: var(--desc-color, rgba(128,128,128,0.65)); }
+.eco-empty button {
+  padding: 0.6rem 1.5rem;
+  border-radius: 99px;
+  border: 1.5px solid var(--primary-color, currentColor);
+  background: none;
+  cursor: pointer;
+  color: var(--primary-color, inherit);
+  font-weight: 600;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+.eco-empty button:hover {
+  background: var(--primary-color, transparent);
+  color: #fff;
+}
+
+/* ── Branch Selector ── */
+.eco-branch-selector {
+  max-width: 600px;
+  margin: 5rem auto;
+  padding: 0 1.5rem;
+  text-align: center;
+}
+.eco-branch-selector-title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  color: var(--text-color, inherit);
+}
+.eco-branch-selector-sub {
+  color: var(--desc-color, rgba(128,128,128,0.75));
+  margin-bottom: 2rem;
+}
+.eco-branch-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+.eco-branch-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  border-radius: 16px;
+  border: 1.5px solid var(--card-border-color, rgba(128,128,128,0.18));
+  background: var(--card-bg, rgba(128,128,128,0.06));
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.18s, box-shadow 0.18s;
+  font-family: inherit;
+}
+.eco-branch-card:hover {
+  border-color: var(--primary-color, inherit);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+.eco-branch-card img {
+  width: 70px;
+  height: 60px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.eco-branch-info { flex: 1; }
+.eco-branch-info h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-color, inherit);
+  margin-bottom: 0.25rem;
+}
+.eco-branch-info p {
+  font-size: 0.8rem;
+  color: var(--desc-color, rgba(128,128,128,0.75));
+  margin: 0;
+}
+.eco-branch-arrow { font-size: 1.25rem; font-weight: 700; }
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .eco-content { grid-template-columns: 1fr; }
+  .eco-sidebar-toc { display: none; }
+  .eco-products-grid { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
+}
+@media (max-width: 480px) {
+  .eco-products-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+  .eco-content { padding: 1.25rem 1rem 3rem; }
+  .eco-search-bar-wrap, .eco-cat-nav-wrap { padding-left: 1rem; padding-right: 1rem; }
+}
+
+/* ── Sorting and Header Toolbar ── */
+.eco-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+.eco-sort-select {
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  border: 1px solid var(--card-border-color, rgba(128,128,128,0.25));
+  background: var(--card-bg, rgba(255,255,255,0.05));
+  color: var(--text-color, inherit);
+  font-size: 0.85rem;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  min-width: 160px;
+  transition: border-color 0.15s;
+}
+.eco-sort-select:focus {
+  border-color: var(--primary-color, inherit);
+}
+
+/* ── Pagination styles ── */
+.eco-pagination-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 3rem;
+  flex-wrap: wrap;
+}
+.eco-page-btn {
+  min-width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--card-border-color, rgba(128,128,128,0.2));
+  background: var(--card-bg, rgba(128,128,128,0.05));
+  color: var(--text-color, inherit);
+  font-weight: 700;
+  font-size: 0.875rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.18s;
+}
+.eco-page-btn:hover:not(:disabled) {
+  border-color: var(--primary-color, inherit);
+  color: var(--primary-color, inherit);
+  transform: translateY(-1px);
+}
+.eco-page-btn.active {
+  background: var(--primary-color, #8b1a2e);
+  color: #fff !important;
+  border-color: var(--primary-color, #8b1a2e);
+}
+.eco-page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Load more button (Infinite / Continuous option) */
+.eco-load-more-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 3rem;
+}
+.eco-load-more-btn {
+  padding: 0.8rem 2.5rem;
+  border-radius: 99px;
+  border: none;
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+  transition: transform 0.18s, box-shadow 0.18s;
+}
+.eco-load-more-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+}
+.eco-load-more-btn:active {
+  transform: translateY(0);
+}
+

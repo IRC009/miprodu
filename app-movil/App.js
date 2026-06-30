@@ -19,12 +19,18 @@ const LIGHT = {
   border: '#e5e7eb', primary: '#C9A227', primaryText: '#1e293b',
   text: '#1e293b', sub: '#64748b', muted: '#9ca3af',
   online: '#10b981', offline: '#ef4444',
+  success: '#10b981', danger: '#ef4444', warning: '#f59e0b',
+  info: '#6366f1', badge: '#f1f5f9', badgeText: '#475569',
+  shadow: '#00000015', inputBg: '#ffffff',
 };
 const DARK = {
   bg: '#0f172a', card: '#1e293b', header: '#1e293b', tabBar: '#1e293b',
   border: '#334155', primary: '#C9A227', primaryText: '#0f172a',
   text: '#f1f5f9', sub: '#94a3b8', muted: '#475569',
   online: '#10b981', offline: '#ef4444',
+  success: '#10b981', danger: '#ef4444', warning: '#f59e0b',
+  info: '#818cf8', badge: '#334155', badgeText: '#94a3b8',
+  shadow: '#00000040', inputBg: '#1e293b',
 };
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Wifi, WifiOff, ShoppingBag, User, Bell } from 'lucide-react-native';
@@ -47,7 +53,6 @@ import {
   fetchWaiters, 
   fetchTables,
   subscribeToActiveOrders,
-  subscribeToWaiterCalls,
   logoutUser,
   fetchRestaurantDetails,
   registerPushToken,
@@ -62,8 +67,8 @@ import OfflineBanner from './src/components/OfflineBanner';
 import LockedFeatureScreen from './src/components/LockedFeatureScreen';
 
 export default function App() {
-  const scheme = useColorScheme();
-  const t = scheme === 'dark' ? DARK : LIGHT;
+  const [themeMode, setThemeMode] = useState('light');
+  const t = themeMode === 'dark' ? DARK : LIGHT;
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -79,7 +84,6 @@ export default function App() {
   const [products, setProducts] = useState([]);
   const [waiters, setWaiters] = useState([]);
   const [orders, setOrders] = useState([]);
-  const [waiterCalls, setWaiterCalls] = useState([]);
   const [tables, setTables] = useState([]);
   const [preselectedTableNumber, setPreselectedTableNumber] = useState(null);
   const [restaurant, setRestaurant] = useState(null);
@@ -153,7 +157,7 @@ export default function App() {
     return branches.filter(b => profile.allowedBranches && profile.allowedBranches.includes(b.id));
   }, [branches, profile]);
 
-  // 0. Load notification prefs & request permissions on mount
+  // 0. Load notification prefs, theme & request permissions on mount
   useEffect(() => {
     (async () => {
       const mutedVal = await isMuted();
@@ -163,8 +167,12 @@ export default function App() {
         setCustomWaEnabled(customWaEnabledVal === 'true');
         const customWaPhoneVal = await AsyncStorage.getItem('custom_wa_phone');
         setCustomWaPhone(customWaPhoneVal || '');
+        const storedTheme = await AsyncStorage.getItem('theme_mode');
+        if (storedTheme) {
+          setThemeMode(storedTheme);
+        }
       } catch (err) {
-        console.warn('[App] Error loading custom WA settings from storage:', err);
+        console.warn('[App] Error loading settings from storage:', err);
       }
       await requestNotificationPermissions();
     })();
@@ -434,6 +442,12 @@ export default function App() {
     }
   };
 
+  const handleToggleTheme = async (mode) => {
+    const newMode = mode || (themeMode === 'light' ? 'dark' : 'light');
+    setThemeMode(newMode);
+    await AsyncStorage.setItem('theme_mode', newMode);
+  };
+
   const handleLogout = async () => {
     if (profile?.restaurantId) {
       try {
@@ -450,7 +464,6 @@ export default function App() {
     setProducts([]);
     setOrders([]);
     setWaiters([]);
-    setWaiterCalls([]);
     setTables([]);
   };
 
@@ -459,14 +472,15 @@ export default function App() {
   
   if (loading) {
     content = (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#8b1a2e" />
-        <Text style={styles.loadingText}>Iniciando sistema operativo...</Text>
+      <View style={[styles.loadingContainer, { backgroundColor: t.bg }]}>
+        <ActivityIndicator size="large" color={t.primary} />
+        <Text style={[styles.loadingText, { color: t.text }]}>Iniciando sistema operativo...</Text>
       </View>
     );
   } else if (!user || !profile) {
     content = (
       <LoginScreen
+        t={t}
         onLoginSuccess={(currentUser, staffProfile) => {
           // If a staffProfile was provided (staff login), store it so the
           // auth state listener can use it instead of calling resolveUserContext
@@ -481,6 +495,7 @@ export default function App() {
   } else if (!selectedBranch) {
     content = (
       <BranchSelectionScreen
+        t={t}
         profile={profile}
         branches={branches}
         onSelectBranch={handleSelectBranch}
@@ -542,6 +557,7 @@ export default function App() {
                 tables={tables}
                 customWaEnabled={customWaEnabled}
                 customWaPhone={customWaPhone}
+                t={t}
               />
             )
           )}
@@ -553,6 +569,8 @@ export default function App() {
               orders={orders}
               selectedBranch={selectedBranch}
               planLevel={effectivePlanLevel}
+              products={products}
+              t={t}
             />
           )}
 
@@ -575,6 +593,9 @@ export default function App() {
                 setCustomWaPhone(val);
                 await AsyncStorage.setItem('custom_wa_phone', val);
               }}
+              t={t}
+              themeMode={themeMode}
+              onToggleTheme={handleToggleTheme}
             />
           )}
         </View>
@@ -616,7 +637,7 @@ export default function App() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: t.bg }]}>
       <StatusBar
-        barStyle={scheme === 'dark' ? 'light-content' : 'dark-content'}
+        barStyle={themeMode === 'dark' ? 'light-content' : 'dark-content'}
         backgroundColor={t.header}
       />
       {content}

@@ -46,14 +46,14 @@ async function handleWebhookMP(req, res) {
 
   await logger.log("🔔 Webhook MP Suscripción recibido:", body);
 
-  const preApprovalId = data?.id || body.id;
-  if (!preApprovalId || String(preApprovalId) === "123456") {
+  const resourceId = data?.id || body.id;
+  if (!resourceId || String(resourceId) === "123456") {
     await logger.info("⏭️ Test de MP detectado, ignorando y respondiendo OK.");
     return res.status(200).send("OK");
   }
 
   if (type === "subscription_preapproval" || action?.includes("subscription_preapproval")) {
-
+    const preApprovalId = resourceId;
     try {
       const preApproval = new PreApproval(client);
       const subData = await preApproval.get({ id: preApprovalId });
@@ -66,122 +66,129 @@ async function handleWebhookMP(req, res) {
         if (subData.status === "authorized" || subData.status === "active") {
           // Fetch existing restaurant data to calculate true deltas for upgrades
           const restDoc = await db.collection("restaurants").doc(restaurantId).get();
-          let oldP0 = 0, oldP1 = 0, oldP2 = 0;
-          let wasActive = false;
+          
+          let isNewOrModified = true;
           if (restDoc.exists) {
-            const oldSub = restDoc.data().subscription || {};
-            wasActive = ['active', 'authorized'].includes(oldSub.status);
-            if (wasActive) {
-              if (oldSub.isMixed) {
-                oldP0 = parseInt(oldSub.branchesPlan0 || 0);
-                oldP1 = parseInt(oldSub.branchesPlan1 || 0);
-                oldP2 = parseInt(oldSub.branchesPlan2 || 0);
-              } else {
-                const b = parseInt(oldSub.branches || 1);
-                if (parseInt(oldSub.planLevel) === 0) oldP0 = b;
-                if (parseInt(oldSub.planLevel) === 1) oldP1 = b;
-                if (parseInt(oldSub.planLevel) === 2) oldP2 = b;
+            const currentSub = restDoc.data().subscription || {};
+            const isSameSub = currentSub.id === preApprovalId;
+            const isSamePlan = currentSub.planLevel === 2 && currentSub.branches === numBranches && currentSub.billing === billingCycle;
+            if (isSameSub && isSamePlan && (currentSub.status === "active" || currentSub.status === "authorized") && !currentSub.cancelAtPeriodEnd) {
+              isNewOrModified = false;
+            }
+          }
+
+          if (isNewOrModified) {
+            let oldP0 = 0, oldP1 = 0, oldP2 = 0;
+            let wasActive = false;
+            if (restDoc.exists) {
+              const oldSub = restDoc.data().subscription || {};
+              wasActive = ['active', 'authorized'].includes(oldSub.status);
+              if (wasActive) {
+                if (oldSub.isMixed) {
+                  oldP0 = parseInt(oldSub.branchesPlan0 || 0);
+                  oldP1 = parseInt(oldSub.branchesPlan1 || 0);
+                  oldP2 = parseInt(oldSub.branchesPlan2 || 0);
+                } else {
+                  const b = parseInt(oldSub.branches || 1);
+                  if (parseInt(oldSub.planLevel) === 0) oldP0 = b;
+                  if (parseInt(oldSub.planLevel) === 1) oldP1 = b;
+                  if (parseInt(oldSub.planLevel) === 2) oldP2 = b;
+                }
               }
             }
-          }
-          let nextCycleISO = subData.next_payment_date;
-          
-          if (!nextCycleISO) {
-            const nextCycle = new Date();
-            nextCycle.setDate(nextCycle.getDate() + (billingCycle === 'annual' ? 365 : 30));
-            nextCycleISO = nextCycle.toISOString();
-          }
-
-          const updateData = {
-            "subscription.id": preApprovalId,
-            "subscription.status": subData.status,
-            "subscription.trialUsed": true,
-            "subscription.startDate": new Date().toISOString(),
-            "subscription.cycleEndDate": nextCycleISO,
-            "subscription.cancelAtPeriodEnd": admin.firestore.FieldValue.delete(),
-            "subscription.lastUpdate": admin.firestore.FieldValue.serverTimestamp()
-          };
-
-          if (planLevel !== undefined) updateData["subscription.planLevel"] = parseInt(planLevel);
-          if (numBranches) updateData["subscription.branches"] = numBranches;
-          if (billingCycle) updateData["subscription.billing"] = billingCycle;
-          
-          if (isMixed) {
-            updateData["subscription.isMixed"] = true;
-            updateData["subscription.branchesPlan0"] = branchesPlan0;
-            updateData["subscription.branchesPlan1"] = branchesPlan1;
-            updateData["subscription.branchesPlan2"] = branchesPlan2;
-          } else {
-            updateData["subscription.isMixed"] = admin.firestore.FieldValue.delete();
-            updateData["subscription.branchesPlan0"] = admin.firestore.FieldValue.delete();
-            updateData["subscription.branchesPlan1"] = admin.firestore.FieldValue.delete();
-            updateData["subscription.branchesPlan2"] = admin.firestore.FieldValue.delete();
-          }
-
-          await logger.log(`Actualizando suscripción de restaurante ${restaurantId} en Firestore a plan: ${planLevel}`);
-
-          await db.collection("restaurants").doc(restaurantId).update(updateData);
-
-          // [Failsafe] Platform analytics bucket
-          try {
-            const now = new Date();
-            const weekId = getBogotaStartOfWeek();
-            const year   = weekId.split('-')[0];
-            const newP0 = isMixed ? parseInt(branchesPlan0 || 0) : (parseInt(planLevel) === 0 ? parseInt(numBranches || 1) : 0);
-            const newP1 = isMixed ? parseInt(branchesPlan1 || 0) : (parseInt(planLevel) === 1 ? parseInt(numBranches || 1) : 0);
-            const newP2 = isMixed ? parseInt(branchesPlan2 || 0) : (parseInt(planLevel) === 2 ? parseInt(numBranches || 1) : 0);
+            let nextCycleISO = subData.next_payment_date;
             
-            const diffP0 = newP0 - oldP0;
-            const diffP1 = newP1 - oldP1;
-            const diffP2 = newP2 - oldP2;
-            
-            let lostSeats = 0;
-            if (diffP0 < 0) lostSeats += Math.abs(diffP0);
-            if (diffP1 < 0) lostSeats += Math.abs(diffP1);
-            if (diffP2 < 0) lostSeats += Math.abs(diffP2);
-
-            const updates = { [`weekly.${weekId}.weekId`]: weekId };
-            if (diffP0 > 0) updates[`weekly.${weekId}.newPlanTradicional`] = admin.firestore.FieldValue.increment(diffP0);
-            if (diffP1 > 0) updates[`weekly.${weekId}.newPlanCarta`] = admin.firestore.FieldValue.increment(diffP1);
-            if (diffP2 > 0) updates[`weekly.${weekId}.newPlanCartaMesa`] = admin.firestore.FieldValue.increment(diffP2);
-            
-            // Adjust absolute totals for the graph lines to go up or down automatically
-            if (diffP0 !== 0) updates[`weekly.${weekId}.sedesTradicional`] = admin.firestore.FieldValue.increment(diffP0);
-            if (diffP1 !== 0) updates[`weekly.${weekId}.sedesCarta`] = admin.firestore.FieldValue.increment(diffP1);
-            if (diffP2 !== 0) updates[`weekly.${weekId}.sedesCartaMesa`] = admin.firestore.FieldValue.increment(diffP2);
-
-            if (wasActive && lostSeats > 0) {
-              updates[`weekly.${weekId}.unsubscribed`] = admin.firestore.FieldValue.increment(lostSeats);
+            if (!nextCycleISO) {
+              const nextCycle = new Date();
+              nextCycle.setDate(nextCycle.getDate() + (billingCycle === 'annual' ? 365 : 30));
+              nextCycleISO = nextCycle.toISOString();
             }
 
-            if (Object.keys(updates).length > 1) {
-              await db.doc(`platform_analytics/${year}`).set({
-                year: parseInt(year),
-                updatedAt: now.toISOString()
-              }, { merge: true });
-              await db.doc(`platform_analytics/${year}`).update(updates);
-            }
+            const updateData = {
+              "subscription.id": preApprovalId,
+              "subscription.status": subData.status,
+              "subscription.trialUsed": true,
+              "subscription.startDate": new Date().toISOString(),
+              "subscription.cycleEndDate": nextCycleISO,
+              "subscription.cancelAtPeriodEnd": admin.firestore.FieldValue.delete(),
+              "subscription.lastUpdate": admin.firestore.FieldValue.serverTimestamp(),
+              "subscription.planLevel": 2,
+              "subscription.branches": numBranches,
+              "subscription.branchesPlan2": numBranches,
+              "subscription.isMixed": admin.firestore.FieldValue.delete(),
+              "subscription.branchesPlan0": admin.firestore.FieldValue.delete(),
+              "subscription.branchesPlan1": admin.firestore.FieldValue.delete()
+            };
 
-            // Keep global stats cache in sync
-            const globalUpdates = {};
-            if (diffP0 !== 0) globalUpdates.planTradicional = admin.firestore.FieldValue.increment(diffP0);
-            if (diffP1 !== 0) globalUpdates.planCarta = admin.firestore.FieldValue.increment(diffP1);
-            if (diffP2 !== 0) globalUpdates.planCartaMesa = admin.firestore.FieldValue.increment(diffP2);
-            if (Object.keys(globalUpdates).length > 0) {
-              globalUpdates.updatedAt = new Date().toISOString();
-              await db.doc('platform_settings/stats').set(globalUpdates, { merge: true });
-            }
-          } catch (analyticsErr) {
-            console.warn('[Analytics] platform bucket increment failed:', analyticsErr.message);
-          }
+            if (billingCycle) updateData["subscription.billing"] = billingCycle;
 
-          if (oldSubIdToCancel && oldSubIdToCancel !== preApprovalId) {
+            await logger.log(`Actualizando suscripción de restaurante ${restaurantId} en Firestore a Plan Pro con ${numBranches} sedes (Nueva o Modificada)`);
+
+            await db.collection("restaurants").doc(restaurantId).update(updateData);
+
+            // [Failsafe] Platform analytics bucket
             try {
-              await preApproval.update({ id: oldSubIdToCancel, body: { status: 'cancelled' } });
-              await logger.info(`🗑️ Suscripción anterior cancelada: ${oldSubIdToCancel}`);
-            } catch (e) {
-              await logger.warn(`⚠️ No se pudo cancelar sub anterior ${oldSubIdToCancel}:`, e.message);
+              const now = new Date();
+              const weekId = getBogotaStartOfWeek();
+              const year   = weekId.split('-')[0];
+              const newP0 = 0;
+              const newP1 = 0;
+              const newP2 = parseInt(numBranches || 1);
+              
+              const diffP0 = newP0 - oldP0;
+              const diffP1 = newP1 - oldP1;
+              const diffP2 = newP2 - oldP2;
+              
+              let lostSeats = 0;
+              if (diffP0 < 0) lostSeats += Math.abs(diffP0);
+              if (diffP1 < 0) lostSeats += Math.abs(diffP1);
+              if (diffP2 < 0) lostSeats += Math.abs(diffP2);
+
+              const updates = { [`weekly.${weekId}.weekId`]: weekId };
+              if (diffP0 > 0) updates[`weekly.${weekId}.newPlanTradicional`] = admin.firestore.FieldValue.increment(diffP0);
+              if (diffP1 > 0) updates[`weekly.${weekId}.newPlanCarta`] = admin.firestore.FieldValue.increment(diffP1);
+              if (diffP2 > 0) updates[`weekly.${weekId}.newPlanCartaMesa`] = admin.firestore.FieldValue.increment(diffP2);
+              
+              // Adjust absolute totals for the graph lines to go up or down automatically
+              if (diffP0 !== 0) updates[`weekly.${weekId}.sedesTradicional`] = admin.firestore.FieldValue.increment(diffP0);
+              if (diffP1 !== 0) updates[`weekly.${weekId}.sedesCarta`] = admin.firestore.FieldValue.increment(diffP1);
+              if (diffP2 !== 0) updates[`weekly.${weekId}.sedesCartaMesa`] = admin.firestore.FieldValue.increment(diffP2);
+
+              if (wasActive && lostSeats > 0) {
+                updates[`weekly.${weekId}.unsubscribed`] = admin.firestore.FieldValue.increment(lostSeats);
+              }
+
+              if (Object.keys(updates).length > 1) {
+                await db.doc(`platform_analytics/${year}`).set({
+                  year: parseInt(year),
+                  updatedAt: now.toISOString()
+                }, { merge: true });
+                await db.doc(`platform_analytics/${year}`).update(updates);
+              }
+
+              // Keep global stats cache in sync
+              const globalUpdates = {};
+              if (diffP0 !== 0) globalUpdates.planTradicional = admin.firestore.FieldValue.increment(diffP0);
+              if (diffP1 !== 0) globalUpdates.planCarta = admin.firestore.FieldValue.increment(diffP1);
+              if (diffP2 !== 0) globalUpdates.planCartaMesa = admin.firestore.FieldValue.increment(diffP2);
+              if (Object.keys(globalUpdates).length > 0) {
+                globalUpdates.updatedAt = new Date().toISOString();
+                await db.doc('platform_settings/stats').set(globalUpdates, { merge: true });
+              }
+            } catch (analyticsErr) {
+              console.warn('[Analytics] platform bucket increment failed:', analyticsErr.message);
             }
+
+            if (oldSubIdToCancel && oldSubIdToCancel !== preApprovalId) {
+              try {
+                await preApproval.update({ id: oldSubIdToCancel, body: { status: 'cancelled' } });
+                await logger.info(`🗑️ Suscripción anterior cancelada: ${oldSubIdToCancel}`);
+              } catch (e) {
+                await logger.warn(`⚠️ No se pudo cancelar sub anterior ${oldSubIdToCancel}:`, e.message);
+              }
+            }
+          } else {
+            await logger.info(`⏭️ Suscripción existente y sin cambios detectada. Evitando renovación automática sin cobro aprobado.`);
           }
         } else if (subData.status === "cancelled") {
           await logger.log(`Suscripción ${preApprovalId} cancelada en Mercado Pago para el restaurante ${restaurantId}.`);
@@ -231,6 +238,77 @@ async function handleWebhookMP(req, res) {
     } catch (error) {
       await logger.error("❌ Error procesando Webhook MP Suscripción:", error);
     }
+  } else if (type === "subscription_authorized_payment" || action?.includes("subscription_authorized_payment")) {
+    const authorizedPaymentId = resourceId;
+    try {
+      await logger.log(`⏳ Consultando pago autorizado ${authorizedPaymentId} en Mercado Pago...`);
+      const response = await fetch(`https://api.mercadopago.com/authorized_payments/${authorizedPaymentId}`, {
+        headers: {
+          "Authorization": `Bearer ${config.MP_ACCESS_TOKEN.replace(/\r?\n|\r/g, "").trim()}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error(`Mercado Pago API error: ${response.status} ${await response.text()}`);
+      }
+      const paymentData = await response.json();
+      await logger.log(`📦 Detalle de pago autorizado recibido:`, paymentData);
+
+      const preapprovalId = paymentData.preapproval_id;
+      const paymentStatus = paymentData.status;
+
+      if (!preapprovalId) {
+        await logger.warn(`⚠️ No se encontró preapproval_id en el pago autorizado.`);
+        return res.status(200).send("OK");
+      }
+
+      // Buscar restaurante con esta suscripción activa
+      const restSnap = await db.collection("restaurants")
+        .where("subscription.id", "==", preapprovalId)
+        .limit(1)
+        .get();
+
+      if (restSnap.empty) {
+        await logger.warn(`⚠️ No se encontró ningún restaurante con la suscripción ${preapprovalId}`);
+        return res.status(200).send("OK");
+      }
+
+      const restDoc = restSnap.docs[0];
+      const restaurantId = restDoc.id;
+      const currentSub = restDoc.data().subscription || {};
+
+      if (currentSub.lastPaymentId === authorizedPaymentId) {
+        await logger.info(`⏭️ Este pago (${authorizedPaymentId}) ya fue procesado previamente.`);
+        return res.status(200).send("OK");
+      }
+
+      if (paymentStatus === "approved") {
+        await logger.log(`✅ Pago aprobado para la suscripción ${preapprovalId} del restaurante ${restaurantId}. Extendiendo vigencia...`);
+
+        const preApproval = new PreApproval(client);
+        const subData = await preApproval.get({ id: preapprovalId });
+        
+        let nextCycleISO = subData.next_payment_date;
+        if (!nextCycleISO) {
+          const billingCycle = currentSub.billing || "monthly";
+          const nextCycle = new Date();
+          nextCycle.setDate(nextCycle.getDate() + (billingCycle === 'annual' ? 365 : 30));
+          nextCycleISO = nextCycle.toISOString();
+        }
+
+        await db.collection("restaurants").doc(restaurantId).update({
+          "subscription.status": "active",
+          "subscription.cycleEndDate": nextCycleISO,
+          "subscription.lastPaymentId": authorizedPaymentId,
+          "subscription.lastUpdate": admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        await logger.info(`🎉 Vigencia del restaurante ${restaurantId} extendida hasta ${nextCycleISO}`);
+      } else {
+        await logger.warn(`❌ El pago de la suscripción ${preapprovalId} para el restaurante ${restaurantId} está en estado: ${paymentStatus}. No se extiende la vigencia.`);
+      }
+    } catch (error) {
+      await logger.error("❌ Error procesando Webhook MP Pago Autorizado:", error);
+    }
   }
 
   res.status(200).send("OK");
@@ -243,6 +321,13 @@ async function handleWebhookOrderPayment(req, res) {
   const logger = createLogger("webhookOrderPayment");
   cors(req, res, async () => {
     const { type, data, action } = req.body;
+
+    // Si es un evento de suscripción preapproval, redirigir a handleWebhookMP
+    if (type === "subscription_preapproval" || action?.includes("subscription_preapproval")) {
+      await logger.info("🔀 Redirigiendo evento de suscripción a handleWebhookMP");
+      return handleWebhookMP(req, res);
+    }
+
     const isPaymentEvent = type === "payment" || action?.startsWith("payment");
     const paymentId = data?.id;
 

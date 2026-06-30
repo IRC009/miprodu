@@ -1,5 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
+import { User, Scissors, CreditCard } from 'lucide-react';
 import s from '../POS.module.css';
 
 /* Paleta de colores por persona — se pasan como CSS custom properties */
@@ -28,7 +29,7 @@ export default function POSSplitBillModal({
         {/* Header */}
         <div className={s.splitHeader}>
           <div>
-            <h3 className={s.splitHeaderTitle}>✂️ Dividir Cuenta</h3>
+            <h3 className={s.splitHeaderTitle} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Scissors size={18} /> Dividir Cuenta</h3>
             <p className={s.splitHeaderSubtitle}>Asigna productos a cada persona y genera facturas separadas</p>
           </div>
           <button className={s.splitCloseBtn} onClick={onClose}>×</button>
@@ -45,7 +46,7 @@ export default function POSSplitBillModal({
                 className={s.personChip}
                 style={{ '--chip-color': color, '--chip-bg': bg, '--chip-border': border }}
               >
-                <span className={s.personChipIcon}>👤</span>
+                <span className={s.personChipIcon}><User size={12} /></span>
                 <input
                   className={s.personNameInput}
                   value={p.name}
@@ -60,10 +61,10 @@ export default function POSSplitBillModal({
                     prev.map(pp => pp.id === p.id ? { ...pp, paymentMethod: e.target.value } : pp)
                   )}
                 >
-                  <option value="cash">💵 Efectivo</option>
-                  <option value="card">💳 Tarjeta</option>
-                  <option value="transfer">📱 Transfer</option>
-                  <option value="nequi">📲 Nequi</option>
+                  <option value="cash">Efectivo</option>
+                  <option value="card">Tarjeta</option>
+                  <option value="transfer">Transfer</option>
+                  <option value="nequi">Nequi</option>
                 </select>
                 {splitPersons.length > 2 && (
                   <button
@@ -106,7 +107,10 @@ export default function POSSplitBillModal({
                 const rowBg = pIdx >= 0 ? PERSON_COLORS[pIdx % PERSON_COLORS.length].rowBg : 'transparent';
                 return (
                   <tr key={item.key} className={s.itemRow} style={{ '--row-bg': rowBg }}>
-                    <td className={s.itemNameCell}>{item.name}</td>
+                    <td className={s.itemNameCell}>
+                      {item.name}
+                      {item.sku && <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block', fontWeight: 600 }}>SKU: {item.sku}</span>}
+                    </td>
                     <td className={s.itemPriceCell}>${(item.price || 0).toLocaleString()}</td>
                     <td className={s.assignCell}>
                       <div className={s.assignButtonsRow}>
@@ -152,7 +156,7 @@ export default function POSSplitBillModal({
                   className={s.personTotalCard}
                   style={{ '--card-color': color, '--card-bg': bg, '--card-border': `rgba(0,0,0,0.08)` }}
                 >
-                  <div className={s.personTotalName}>👤 {p.name}</div>
+                  <div className={s.personTotalName} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><User size={12} /> {p.name}</div>
                   <div className={s.personTotalAmount}>${total.toLocaleString()}</div>
                   <div className={s.personTotalCount}>{count} prod.</div>
                 </div>
@@ -161,8 +165,8 @@ export default function POSSplitBillModal({
           </div>
           <div className={s.splitActionsRow}>
             <button className="pos-btn-cancel" onClick={onClose}>Cancelar</button>
-            <button className="pos-btn-confirm open" disabled={isSubmitting} onClick={onConfirmSplit}>
-              💳 Facturar División
+            <button className="pos-btn-confirm open" disabled={isSubmitting} onClick={onConfirmSplit} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <CreditCard size={14} /> Facturar División
             </button>
           </div>
         </div>

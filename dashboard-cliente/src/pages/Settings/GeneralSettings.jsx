@@ -22,9 +22,25 @@ import {
   KeyRound,
   Eye,
   EyeOff,
-  ClipboardCheck
+  ClipboardCheck,
+  CheckCircle2,
+  Save
 } from 'lucide-react';
 import './SettingsStyles.css';
+
+const Instagram = ({ size = 16, style, ...props }) => (
+  <svg viewBox="0 0 24 24" width={size} height={size} stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" style={style} {...props}>
+    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+  </svg>
+);
+
+const Facebook = ({ size = 16, style, ...props }) => (
+  <svg viewBox="0 0 24 24" width={size} height={size} stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" style={style} {...props}>
+    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+  </svg>
+);
 
 export default function GeneralSettings() {
   const { restaurantId: RESTAURANT_ID, planLevel: subscriptionPlanLevel, userProfile, subscription } = useSubscription();
@@ -50,6 +66,7 @@ export default function GeneralSettings() {
     handleSave,
     handlePaymentConfigChange,
     handleWhatsappConfigChange,
+    handleMarketingPixelsChange,
     ownerPin, setOwnerPin,
     ownerOldPinInput, setOwnerOldPinInput,
     ownerNewPinInput, setOwnerNewPinInput
@@ -58,7 +75,7 @@ export default function GeneralSettings() {
   // Si la sede tiene planLevel explícito úsalo; si no tiene (undefined/null), heredar el global.
   // Esto evita bloquear features cuando la sede nunca fue asignada a un plan específico.
   const currentBranch = branches.find(b => b.id === selectedBranchId);
-  const globalPlanLevel = (subscription?.status === 'active' || subscription?.status === 'authorized' || subscription?.status === 'explore' || subscription?.isExplore === true)
+  const globalPlanLevel = (subscription?.status === 'active' || subscription?.status === 'authorized')
     ? parseInt(subscription?.planLevel) || 0
     : 0;
   const branchPlan = currentBranch && currentBranch.planLevel !== undefined && currentBranch.planLevel !== null && currentBranch.planLevel !== -1
@@ -137,56 +154,67 @@ export default function GeneralSettings() {
 
   return (
     <div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '2rem' }}>
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="page-title">Configuración {selectedBranchId ? `de ${selectedBranch?.name}` : 'General'}</h1>
-            <p className="page-subtitle">{selectedBranchId ? 'Personaliza los parámetros específicos de esta sede' : 'Información principal de tu restaurante'}</p>
-          </div>
+      {/* ── Sticky Save Bar ── */}
+      <div className="settings-save-bar">
+        <div className="settings-save-bar-left">
+          <h1>Configuración {selectedBranchId ? `de ${selectedBranch?.name}` : 'de sede'}</h1>
+          <p>Personaliza la información, seguridad y operación de tu negocio.</p>
         </div>
-
-        <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: '14px', padding: '1rem 1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-          <div style={{
-            width: '40px', height: '40px', borderRadius: '8px',
-            backgroundColor: '#fdf2f4', display: 'flex',
-            alignItems: 'center', justifyContent: 'center',
-            color: '#8b1a2e'
-          }}>
-            <Building2 size={20} />
-          </div>
-          <div style={{ flex: 1 }}>
-            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', display: 'block', marginBottom: '2px' }}>Seleccionar Sede para configurar</label>
-            <select 
-              className="form-input" 
-              style={{ border: 'none', padding: '0', fontSize: '1rem', fontWeight: 600, color: '#111827', background: 'transparent', cursor: 'pointer' }}
-              value={selectedBranchId}
-              onChange={(e) => setSelectedBranchId(e.target.value)}
-            >
-              <option value="">Restaurante Global (Configuración Base)</option>
-              {branches.map(b => (
-                <option key={b.id} value={b.id}>{b.name} ({b.city})</option>
-              ))}
-            </select>
-          </div>
-          {selectedBranchId && (() => {
-            const bPlan = (selectedBranch?.planLevel !== undefined && selectedBranch?.planLevel !== null) ? selectedBranch.planLevel : 0;
-            return (
-              <span className="badge" style={{ background: bPlan === 2 ? '#1a0a10' : (bPlan === 1 ? '#8B1A2E' : (bPlan === 0 ? '#10b981' : '#E5E7EB')), color: '#fff', padding: '6px 12px' }}>
-                Plan {bPlan === 2 ? 'Carta y Mesa' : (bPlan === 1 ? 'Carta' : 'Tradicional')}
-              </span>
-            );
-          })()}
+        <div className="settings-save-bar-right">
+          {saving === false && (
+            <span className="settings-saved-indicator">
+              <CheckCircle2 size={14} /> Cambios guardados
+            </span>
+          )}
+          <button type="button" className="btn-secondary" onClick={() => window.location.reload()}>Cancelar</button>
+          <button type="submit" className="btn-primary-amber" disabled={saving}>
+            {saving ? 'Guardando...' : <><Save size={15} /> Guardar cambios</>}
+          </button>
         </div>
       </div>
 
-      {/* ── Código del Restaurante para Personal ── */}
+      {/* ── Branch Selector ── */}
+      <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: '14px', padding: '1rem 1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', marginBottom: '1.5rem' }}>
+        <div style={{
+          width: '40px', height: '40px', borderRadius: '10px',
+          background: 'linear-gradient(135deg,#FEF3C7,#FDE68A)',
+          border: '1px solid #FCD34D',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#B45309'
+        }}>
+          <Building2 size={20} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', display: 'block', marginBottom: '2px', letterSpacing: '0.04em' }}>Sede a configurar</label>
+          <select 
+            className="form-input" 
+            style={{ border: 'none', padding: '0', fontSize: '1rem', fontWeight: 700, color: '#111827', background: 'transparent', cursor: 'pointer' }}
+            value={selectedBranchId}
+            onChange={(e) => setSelectedBranchId(e.target.value)}
+          >
+            <option value="">Negocio Global (Configuración Base)</option>
+            {branches.map(b => (
+              <option key={b.id} value={b.id}>{b.name} ({b.city})</option>
+            ))}
+          </select>
+        </div>
+        {selectedBranchId && (() => {
+          const bPlan = (selectedBranch?.planLevel !== undefined && selectedBranch?.planLevel !== null) ? selectedBranch.planLevel : 0;
+          return (
+            <span className="badge" style={{ background: bPlan >= 2 ? '#1a0a10' : (bPlan === 1 ? '#8B1A2E' : '#10b981'), color: '#fff', padding: '6px 12px' }}>
+              Plan {bPlan >= 2 ? 'Pro' : (bPlan === 1 ? 'Carta' : 'Tradicional')}
+            </span>
+          );
+        })()}
+      </div>
+
+      {/* ── Código de la Tienda para Personal ── */}
       {!selectedBranchId && (() => {
         const displayRestaurantCode = globalRestaurant?.slug || RESTAURANT_ID;
         return (
           <div style={{ background: 'linear-gradient(135deg, #fdf2f4, #fbf2f4)', border: '1px solid #f9d5db', borderRadius: '14px', padding: '1rem 1.5rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#8b1a2e', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <ClipboardCheck size={14} /> Código del Restaurante — Para tu Personal
+                <ClipboardCheck size={14} /> Código de la Tienda — Para tu Personal
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', marginTop: '6px' }}>
                 <code style={{ fontFamily: 'monospace', fontSize: '0.95rem', fontWeight: 800, color: '#8b1a2e', background: '#fff', border: '1px solid #f9d5db', borderRadius: '8px', padding: '4px 12px', letterSpacing: '0.04em' }}>
@@ -214,72 +242,78 @@ export default function GeneralSettings() {
       <form onSubmit={handleSave}>
         <div className="section-card">
           <div className="section-card-header">
-            <div className="section-card-title">
-              <div className="section-card-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Building2 size={18} style={{ color: 'var(--primary)' }} />
-              </div>
-              <h3>Información Básica</h3>
+            <div className="section-card-icon">
+              <Building2 size={22} />
+            </div>
+            <div className="section-card-title-group">
+              <h3>Información básica</h3>
+              <p>Datos generales de tu sede y preferencias principales.</p>
             </div>
           </div>
           <div className="section-card-body">
-            <div className="form-group" style={{ maxWidth: '500px' }}>
-              <label className="form-label">Nombre del Restaurante</label>
-              <input required type="text" className="form-input" name="restaurantName" value={config.restaurantName} onChange={handleChange} />
-            </div>
-            <div className="form-group" style={{ maxWidth: '500px' }}>
-              <label className="form-label">Enlace Personalizado (Slug)</label>
-              <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Crea el link: /r/<strong>mi-restaurante</strong></p>
-              <div style={{ position: 'relative' }}>
-                <input 
-                  type="text" 
-                  className={`form-input ${slugStatus === 'taken' ? 'border-red-500' : ''}`} 
-                  name="slug" 
-                  value={config.slug} 
-                  onChange={(e) => {
-                    handleChange(e);
-                    if (slugStatus !== 'idle') setSlugStatus('idle');
-                  }} 
-                  placeholder="Ej: mi-restaurante" 
-                  pattern="[a-zA-Z0-9\-]+" 
-                  disabled={!!selectedBranchId}
-                />
-                {slugStatus === 'taken' && (
-                  <p style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '4px', fontWeight: 600 }}>❌ Este enlace ya está en uso.</p>
-                )}
-                {selectedBranchId && (
-                  <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>ℹ️ El slug se configura únicamente en la configuración global.</p>
-                )}
+            <div className="settings-form-grid">
+              <div className="form-group">
+                <label className="form-label">Nombre del negocio / Tienda</label>
+                <input required type="text" className="form-input" name="restaurantName" value={config.restaurantName} onChange={handleChange} />
               </div>
+              <div className="form-group">
+                <label className="form-label">Correo administrativo</label>
+                <input type="email" className="form-input" name="adminEmail" value={config.adminEmail || ''} onChange={handleChange} placeholder="hola@minegocio.com" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Nombre comercial (opcional)</label>
+                <input type="text" className="form-input" name="commercialName" value={config.commercialName || ''} onChange={handleChange} placeholder="Mi Negocio" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Moneda</label>
+                <select className="form-input" name="currency" value={config.currency} onChange={handleChange}>
+                  <option value="COP">Peso colombiano (COP)</option>
+                  <option value="USD">Dólar estadounidense (USD)</option>
+                  <option value="EUR">Euro (EUR)</option>
+                  <option value="MXN">Peso mexicano (MXN)</option>
+                  <option value="PEN">Sol peruano (PEN)</option>
+                  <option value="CLP">Peso chileno (CLP)</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">NIT / RUT</label>
+                <input type="text" className="form-input" name="taxId" value={config.taxId} onChange={handleChange} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Zona horaria</label>
+                <select className="form-input" name="timezone" value={config.timezone || 'America/Bogota'} onChange={handleChange}>
+                  <option value="America/Bogota">Colombia / América-Bogotá</option>
+                  <option value="America/Mexico_City">México (America/Mexico_City)</option>
+                  <option value="America/Lima">Perú (America/Lima)</option>
+                  <option value="America/Santiago">Chile (America/Santiago)</option>
+                  <option value="America/Caracas">Venezuela (America/Caracas)</option>
+                  <option value="America/Buenos_Aires">Argentina (America/Buenos_Aires)</option>
+                  <option value="America/Guayaquil">Ecuador (America/Guayaquil)</option>
+                  <option value="Europe/Madrid">España (Europe/Madrid)</option>
+                  <option value="America/New_York">USA - Este (America/New_York)</option>
+                </select>
+              </div>
+              {!selectedBranchId && (
+                <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                  <label className="form-label">Enlace Personalizado (Slug)</label>
+                  <p style={{ fontSize: '0.78rem', color: '#6B7280', marginBottom: '0.4rem' }}>Crea el link: /r/<strong>mi-negocio</strong></p>
+                  <input 
+                    type="text" 
+                    className={`form-input ${slugStatus === 'taken' ? 'border-red-500' : ''}`} 
+                    name="slug" 
+                    value={config.slug} 
+                    onChange={(e) => { handleChange(e); if (slugStatus !== 'idle') setSlugStatus('idle'); }} 
+                    placeholder="Ej: mi-negocio" 
+                    pattern="[a-zA-Z0-9\-]+" 
+                    style={{ maxWidth: '380px' }}
+                  />
+                  {slugStatus === 'taken' && <p style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '4px', fontWeight: 600 }}>Este enlace ya está en uso.</p>}
+                </div>
+              )}
             </div>
-            <div className="form-group" style={{ maxWidth: '500px' }}>
-              <label className="form-label">NIT / RUT</label>
-              <input type="text" className="form-input" name="taxId" value={config.taxId} onChange={handleChange} />
-            </div>
-            <div className="form-group" style={{ maxWidth: '500px' }}>
-              <label className="form-label">Moneda</label>
-              <select className="form-input" name="currency" value={config.currency} onChange={handleChange}>
-                <option value="COP">Pesos Colombianos (COP)</option>
-                <option value="USD">Dólares Estadounidenses (USD)</option>
-                <option value="EUR">Euros (EUR)</option>
-              </select>
-            </div>
-            <div className="form-group" style={{ maxWidth: '500px' }}>
-              <label className="form-label">Zona Horaria</label>
-              <select className="form-input" name="timezone" value={config.timezone || 'America/Bogota'} onChange={handleChange}>
-                <option value="America/Bogota">Colombia (America/Bogota)</option>
-                <option value="America/Mexico_City">México (America/Mexico_City)</option>
-                <option value="America/Lima">Perú (America/Lima)</option>
-                <option value="America/Santiago">Chile (America/Santiago)</option>
-                <option value="America/Caracas">Venezuela (America/Caracas)</option>
-                <option value="America/Buenos_Aires">Argentina (America/Buenos_Aires)</option>
-                <option value="America/Guayaquil">Ecuador (America/Guayaquil)</option>
-                <option value="Europe/Madrid">España (Europe/Madrid)</option>
-                <option value="America/New_York">USA - Este (America/New_York)</option>
-              </select>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                Define la fecha y hora oficial del local para reservas, disponibilidad de menú y reportes.
-              </p>
-            </div>
+            <p style={{ fontSize: '0.78rem', color: '#9CA3AF', marginTop: '1.25rem', borderTop: '1px solid #F3F4F6', paddingTop: '1rem' }}>
+              Esta información se mostrará en tus documentos y facturación.
+            </p>
           </div>
         </div>
 
@@ -289,7 +323,7 @@ export default function GeneralSettings() {
           const isLocked = globalPlanLevel < 2 && !isSuperAdmin;
           return (
             <div style={{ marginBottom: '1.5rem', position: 'relative' }}>
-              {isLocked && renderLockOverlay('Carta y Mesa', 'Dominio Personalizado', 'Permite que tus clientes accedan usando tu propio dominio (ej: menu.mi-restaurante.com) con SSL y HTTPS automático.', '16px')}
+              {isLocked && renderLockOverlay('Pro', 'Dominio Personalizado', 'Permite que tus clientes accedan usando tu propio dominio (ej: menu.mi-restaurante.com) con SSL y HTTPS automático.', '16px')}
               <div style={{ opacity: isLocked ? 0.5 : 1, pointerEvents: isLocked ? 'none' : 'auto' }}>
                 <CustomDomainPanel 
                   restaurantId={RESTAURANT_ID} 
@@ -302,44 +336,48 @@ export default function GeneralSettings() {
 
         <div className="section-card">
           <div className="section-card-header">
-            <div className="section-card-title">
-              <div className="section-card-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Share2 size={18} style={{ color: 'var(--primary)' }} />
-              </div>
-              <h3>Redes Sociales</h3>
+            <div className="section-card-icon icon-share">
+              <Share2 size={22} />
+            </div>
+            <div className="section-card-title-group">
+              <h3>Redes sociales</h3>
+              <p>Conecta tus redes para que tus clientes puedan encontrarte.</p>
             </div>
           </div>
           <div className="section-card-body">
-            <div className="form-group" style={{ maxWidth: '500px' }}>
-              <label className="form-label">Instagram URL</label>
-              <input type="text" className="form-input" name="instagram" placeholder="https://instagram.com/tu-restaurante" value={config.instagram} onChange={handleChange} />
-            </div>
-            <div className="form-group" style={{ maxWidth: '500px' }}>
-              <label className="form-label">Facebook URL</label>
-              <input type="text" className="form-input" name="facebook" value={config.facebook} onChange={handleChange} />
-            </div>
-            <div className="form-group" style={{ maxWidth: '500px' }}>
-              <label className="form-label">TikTok URL</label>
-              <input type="text" className="form-input" name="tiktok" value={config.tiktok} onChange={handleChange} />
-            </div>
-            <div className="form-group" style={{ maxWidth: '500px' }}>
-              <label className="form-label">WhatsApp (Red Social)</label>
-              <input type="text" className="form-input" name="whatsapp" placeholder="Ej: 573001234567 o https://wa.me/573001234567" value={config.whatsapp || ''} onChange={handleChange} />
+            <div className="settings-social-grid">
+              <div className="form-group">
+                <label className="social-label"><Instagram size={14} style={{ color: '#E1306C' }} /> Instagram URL</label>
+                <input type="text" className="form-input" name="instagram" placeholder="instagram.com/minegocio" value={config.instagram} onChange={handleChange} />
+              </div>
+              <div className="form-group">
+                <label className="social-label"><Facebook size={14} style={{ color: '#1877F2' }} /> Facebook URL</label>
+                <input type="text" className="form-input" name="facebook" placeholder="facebook.com/minegocio" value={config.facebook} onChange={handleChange} />
+              </div>
+              <div className="form-group">
+                <label className="social-label"><span style={{ fontWeight: 800, fontSize: '0.75rem', background: '#010101', color: '#fff', borderRadius: '4px', padding: '1px 4px' }}>TT</span> TikTok URL</label>
+                <input type="text" className="form-input" name="tiktok" placeholder="tiktok.com/@minegocio" value={config.tiktok} onChange={handleChange} />
+              </div>
+              <div className="form-group">
+                <label className="social-label"><MessageSquare size={14} style={{ color: '#25D366' }} /> WhatsApp (Número)</label>
+                <input type="text" className="form-input" name="whatsapp" placeholder="+57 300 123 4567" value={config.whatsapp || ''} onChange={handleChange} />
+              </div>
             </div>
           </div>
         </div>
 
         <div className="section-card">
           <div className="section-card-header">
-            <div className="section-card-title">
-              <div className="section-card-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <ShieldCheck size={18} style={{ color: 'var(--primary)' }} />
-              </div>
+            <div className="section-card-icon icon-shield">
+              <ShieldCheck size={22} />
+            </div>
+            <div className="section-card-title-group">
               <h3>Seguridad</h3>
+              <p>Configura las opciones de seguridad para tu negocio.</p>
             </div>
           </div>
           <div className="section-card-body" style={{ position: 'relative', overflow: 'hidden' }}>
-            {branchPlan < 1 && renderLockOverlay('Carta', 'Seguridad')}
+            {branchPlan < 1 && renderLockOverlay('Pro', 'Seguridad')}
             <div style={{ opacity: branchPlan < 1 ? 0.5 : 1, pointerEvents: branchPlan < 1 ? 'none' : 'auto' }}>
               <div className="toggle-row">
                 <div className="toggle-row-info">
@@ -433,7 +471,7 @@ export default function GeneralSettings() {
                   </div>
 
                   <p style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '6px', lineHeight: '1.4' }}>
-                    💡 <em>{ownerPin ? 'Ingresa el PIN actual para poder cambiarlo.' : 'Este PIN se pedirá al operar la caja o facturar. Guárdalo al terminar.'}</em>
+                    <em>{ownerPin ? 'Ingresa el PIN actual para poder cambiarlo.' : 'Este PIN se pedirá al operar la caja o facturar. Guárdalo al terminar.'}</em>
                   </p>
                 </div>
               )}
@@ -460,32 +498,7 @@ export default function GeneralSettings() {
                   <span className="toggle-switch-track" style={{ cursor: branchPlan < 1 ? 'not-allowed' : 'pointer' }} />
                 </label>
               </div>
-              <div className="toggle-row" style={{ paddingTop: '1.5rem', borderTop: '1px solid #E5E7EB', marginTop: '1.5rem', opacity: realBranchPlan < 1 ? 0.7 : 1 }}>
-                <div className="toggle-row-info">
-                  <span className="toggle-row-label" style={{ color: realBranchPlan < 1 ? 'var(--text-muted)' : 'inherit', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    Permitir Múltiples Meseros por Mesa
-                    {realBranchPlan < 1 && (
-                      <Link to="/subscription" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none', color: '#8B1A2E', fontSize: '0.75rem', fontWeight: 700, padding: '2px 8px', background: '#fdf2f4', border: '1px solid #f9d5db', borderRadius: '6px' }}>
-                        <Lock size={10} /> Bloqueado (Plan Carta)
-                      </Link>
-                    )}
-                  </span>
-                  <span className="toggle-row-desc">
-                    Si está activo, varios meseros podrán agregar pedidos y productos a la misma mesa simultáneamente. Si está inactivo, la mesa quedará bloqueada para el mesero que tomó el primer pedido hasta que se facture.
-                  </span>
-                </div>
-                <label className="toggle-switch">
-                  <input 
-                    type="checkbox" 
-                    name="allowMultipleWaitersPerTable" 
-                    checked={realBranchPlan < 1 ? false : (config.allowMultipleWaitersPerTable || false)} 
-                    onChange={handleChange} 
-                    disabled={realBranchPlan < 1}
-                    style={{ cursor: realBranchPlan < 1 ? 'not-allowed' : 'pointer' }}
-                  />
-                  <span className="toggle-switch-track" style={{ cursor: realBranchPlan < 1 ? 'not-allowed' : 'pointer' }} />
-                </label>
-              </div>
+
 
             </div>
           </div>
@@ -493,17 +506,18 @@ export default function GeneralSettings() {
 
         <div className="section-card">
           <div className="section-card-header">
-            <div className="section-card-title">
-              <div className="section-card-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Activity size={18} style={{ color: 'var(--primary)' }} />
-              </div>
+            <div className="section-card-icon" style={{ background: 'linear-gradient(135deg,#D1FAE5,#A7F3D0)', border: '1px solid #6EE7B7', color: '#065F46' }}>
+              <Activity size={22} />
+            </div>
+            <div className="section-card-title-group">
               <h3>Estado Operativo</h3>
+              <p>Controla si tu negocio está abierto para recibir pedidos.</p>
             </div>
           </div>
           <div className="section-card-body">
             <div className="toggle-row">
               <div className="toggle-row-info">
-                <span className="toggle-row-label">Restaurante Abierto</span>
+                <span className="toggle-row-label">Tienda / Negocio Abierto</span>
                 <span className="toggle-row-desc">Permite recibir pedidos y reservas desde el menú público</span>
               </div>
               <label className="toggle-switch">
@@ -514,143 +528,16 @@ export default function GeneralSettings() {
           </div>
         </div>
 
-        {/* ── Configuración de Reservas ── */}
-        <div className="section-card" style={{ position: 'relative', overflow: 'hidden' }}>
-          <div className="section-card-header">
-            <div className="section-card-title">
-              <div className="section-card-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                📅
-              </div>
-              <h3>Configuración de Reservas</h3>
-            </div>
-          </div>
-          {branchPlan < 2 && renderLockOverlay('Carta y Mesa', 'Reservas Online')}
-          <div className="section-card-body" style={{ opacity: branchPlan < 2 ? 0.5 : 1, pointerEvents: branchPlan < 2 ? 'none' : 'auto' }}>
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-              Define el horario y los parámetros de los <strong>Time Slots</strong> que verán los clientes al reservar mesa. 
-              Las mesas disponibles se calculan automáticamente según la capacidad y flexibilidad configuradas en cada sede.
-            </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem' }}>
-              {/* Hora apertura */}
-              <div className="form-group">
-                <label className="form-label">🕐 Hora de Apertura</label>
-                <input
-                  type="time"
-                  className="form-input"
-                  name="openingTime"
-                  value={config.openingTime || '12:00'}
-                  onChange={handleChange}
-                  disabled={branchPlan < 2}
-                />
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                  Primer slot disponible del día
-                </p>
-              </div>
-
-              {/* Hora cierre */}
-              <div className="form-group">
-                <label className="form-label">🕙 Hora de Cierre</label>
-                <input
-                  type="time"
-                  className="form-input"
-                  name="closingTime"
-                  value={config.closingTime || '23:00'}
-                  onChange={handleChange}
-                  disabled={branchPlan < 2}
-                />
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                  El último slot incluye tiempo de estadía
-                </p>
-              </div>
-
-              {/* Duración promedio de estadía */}
-              <div className="form-group">
-                <label className="form-label">⏱️ Estadía promedio (minutos)</label>
-                <select
-                  className="form-input"
-                  name="averageStayMinutes"
-                  value={config.averageStayMinutes || 120}
-                  onChange={handleChange}
-                  disabled={branchPlan < 2}
-                >
-                  <option value={60}>60 min (1 hora)</option>
-                  <option value={90}>90 min (1h 30m)</option>
-                  <option value={120}>120 min (2 horas)</option>
-                  <option value={150}>150 min (2h 30m)</option>
-                  <option value={180}>180 min (3 horas)</option>
-                </select>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                  Cuánto tiempo ocupa una mesa por reserva
-                </p>
-              </div>
-
-              {/* Intervalo entre slots */}
-              <div className="form-group">
-                <label className="form-label">🔁 Intervalo entre slots</label>
-                <select
-                  className="form-input"
-                  name="slotIntervalMinutes"
-                  value={config.slotIntervalMinutes || 30}
-                  onChange={handleChange}
-                  disabled={branchPlan < 2}
-                >
-                  <option value={15}>Cada 15 minutos</option>
-                  <option value={30}>Cada 30 minutos</option>
-                  <option value={60}>Cada hora</option>
-                </select>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                  Frecuencia de los botones de hora
-                </p>
-              </div>
-
-              {/* Anticipación Mínima (Lead Time) */}
-              <div className="form-group">
-                <label className="form-label">⏳ Anticipación mínima para reservar</label>
-                <select
-                  className="form-input"
-                  name="reservationLeadTimeMinutes"
-                  value={config.reservationLeadTimeMinutes || 60}
-                  onChange={handleChange}
-                  disabled={branchPlan < 2}
-                >
-                  <option value={0}>Inmediato (Sin anticipación)</option>
-                  <option value={15}>15 minutos antes</option>
-                  <option value={30}>30 minutos antes</option>
-                  <option value={60}>1 hora antes</option>
-                  <option value={120}>2 horas antes</option>
-                  <option value={180}>3 horas antes</option>
-                  <option value={240}>4 horas antes</option>
-                  <option value={1440}>1 día de anticipación</option>
-                </select>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                  Tiempo mínimo antes de la reserva para poder agendar
-                </p>
-              </div>
-            </div>
-
-            {/* Preview del rango de slots */}
-            {branchPlan >= 2 && (
-              <div style={{ marginTop: '1.25rem', padding: '1rem 1.25rem', background: '#f0fdf4', borderRadius: '10px', border: '1px solid #bbf7d0' }}>
-                <p style={{ fontSize: '0.82rem', color: '#15803d', fontWeight: 600, margin: 0 }}>
-                  📋 Vista previa: Los clientes verán slots de{' '}
-                  <strong>{config.openingTime || '12:00'}</strong> a{' '}
-                  <strong>{config.closingTime || '23:00'}</strong>, cada{' '}
-                  <strong>{config.slotIntervalMinutes || 30} min</strong>, con reservas de{' '}
-                  <strong>{config.averageStayMinutes || 120} min</strong> de duración.
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
 
         <div className="section-card">
           <div className="section-card-header">
-            <div className="section-card-title">
-              <div className="section-card-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <ShoppingBag size={18} style={{ color: 'var(--primary)' }} />
-              </div>
+            <div className="section-card-icon icon-delivery">
+              <ShoppingBag size={22} />
+            </div>
+            <div className="section-card-title-group">
               <h3>Sistema de Pedidos</h3>
+              <p>Configura canales de venta, domicilios y opciones de entrega.</p>
             </div>
           </div>
           <div className="section-card-body" style={{ position: 'relative', overflow: 'hidden' }}>
@@ -738,7 +625,7 @@ export default function GeneralSettings() {
                         style={{ width: '18px', height: '18px', cursor: (branchPlan < 1 && !config.enableWhatsAppDirectDelivery) ? 'not-allowed' : 'pointer' }}
                       />
                       <label htmlFor="enableDeliveryGPSRequest" className="form-label" style={{ margin: 0, cursor: (branchPlan < 1 && !config.enableWhatsAppDirectDelivery) ? 'not-allowed' : 'pointer', fontWeight: 600 }}>
-                        🗺️ Mostrar botón GPS para domicilios <span style={{ fontSize: '0.72rem', background: '#dcfce7', color: '#15803d', padding: '2px 6px', borderRadius: '4px', fontWeight: 700, marginLeft: '4px' }}>OPCIONAL</span>
+                        Mostrar botón GPS para domicilios <span style={{ fontSize: '0.72rem', background: '#dcfce7', color: '#15803d', padding: '2px 6px', borderRadius: '4px', fontWeight: 700, marginLeft: '4px' }}>OPCIONAL</span>
                       </label>
                     </div>
                     <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.35rem', marginLeft: '1.75rem', lineHeight: '1.4', marginBottom: '1rem' }}>
@@ -756,7 +643,7 @@ export default function GeneralSettings() {
                         style={{ width: '18px', height: '18px', cursor: (branchPlan < 1 && !config.enableWhatsAppDirectDelivery) ? 'not-allowed' : 'pointer' }}
                       />
                       <label htmlFor="requireDeliveryGPS" className="form-label" style={{ margin: 0, cursor: (branchPlan < 1 && !config.enableWhatsAppDirectDelivery) ? 'not-allowed' : 'pointer', fontWeight: 600 }}>
-                        📍 Requerir GPS obligatorio para domicilios <span style={{ fontSize: '0.72rem', background: '#fee2e2', color: '#b91c1c', padding: '2px 6px', borderRadius: '4px', fontWeight: 700, marginLeft: '4px' }}>OBLIGATORIO</span>
+                        Requerir GPS obligatorio para domicilios <span style={{ fontSize: '0.72rem', background: '#fee2e2', color: '#b91c1c', padding: '2px 6px', borderRadius: '4px', fontWeight: 700, marginLeft: '4px' }}>OBLIGATORIO</span>
                       </label>
                     </div>
                     <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.35rem', marginLeft: '1.75rem', lineHeight: '1.4', marginBottom: 0 }}>
@@ -765,6 +652,27 @@ export default function GeneralSettings() {
                   </div>
                 </div>
               )}
+
+              {/* ── Correo Electrónico del Cliente ── */}
+              <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '1rem', marginTop: '1rem' }}>
+                <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>Correo Electrónico</p>
+                <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <input
+                    type="checkbox"
+                    name="requireCustomerEmail"
+                    id="requireCustomerEmail"
+                    checked={config.requireCustomerEmail || false}
+                    onChange={handleChange}
+                    style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                  />
+                  <label htmlFor="requireCustomerEmail" className="form-label" style={{ margin: 0, cursor: 'pointer', fontWeight: 600 }}>
+                    Pedir correo electrónico al hacer un pedido <span style={{ fontSize: '0.72rem', background: '#dbeafe', color: '#1d4ed8', padding: '2px 6px', borderRadius: '4px', fontWeight: 700, marginLeft: '4px' }}>OPCIONAL</span>
+                  </label>
+                </div>
+                <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.35rem', marginLeft: '1.75rem', lineHeight: '1.4', marginBottom: 0 }}>
+                  Muestra un campo de correo electrónico en el formulario del pedido. El correo recopilado alimenta automáticamente los píxeles de marketing (Meta, Google Ads, TikTok) para mejorar la optimización de campañas.
+                </p>
+              </div>
 
               <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
                 <input 
@@ -786,176 +694,6 @@ export default function GeneralSettings() {
                 </label>
               </div>
 
-              {/* ── CANALES EN LOCAL ── */}
-              <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '1rem', marginBottom: '0.25rem' }}>En el Local</p>
-
-              <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <input 
-                  type="checkbox" 
-                  name="enableTableOrders" 
-                  id="enableTableOrders" 
-                  checked={config.enableTableOrders !== false && branchPlan >= 2} 
-                  onChange={handleChange} 
-                  disabled={branchPlan < 2}
-                  style={{ width: '20px', height: '20px', cursor: branchPlan < 2 ? 'not-allowed' : 'pointer' }} 
-                />
-                <label htmlFor="enableTableOrders" className="form-label" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', cursor: branchPlan < 2 ? 'not-allowed' : 'pointer' }}>
-                  Activar Pedidos en el Sitio (Mesa / Barra)
-                  {branchPlan < 2 && (
-                    <Link to="/subscription" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none', color: '#8B1A2E', fontSize: '0.75rem', fontWeight: 700, padding: '2px 8px', background: '#fdf2f4', border: '1px solid #f9d5db', borderRadius: '6px' }}>
-                      <Lock size={10} /> Bloqueado (Mejorar Plan)
-                    </Link>
-                  )}
-                </label>
-              </div>
-
-              {config.enableTableOrders && branchPlan >= 2 && (
-                <div style={{ marginLeft: '2rem', marginBottom: '1.5rem', padding: '1rem', background: '#f8fafc', borderRadius: '8px' }}>
-                  <label className="form-label" style={{ marginBottom: '1rem', display: 'block', fontWeight: 600 }}>Identificación del Pedido</label>
-                  <div style={{ display: 'flex', gap: '2rem' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: branchPlan < 2 ? 'not-allowed' : 'pointer' }}>
-                      <input type="radio" name="orderIdentificationMode" value="tables" checked={config.orderIdentificationMode !== 'counter'} onChange={handleChange} disabled={branchPlan < 2} />
-                      Por Número de Mesa
-                    </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: branchPlan < 2 ? 'not-allowed' : 'pointer' }}>
-                      <input type="radio" name="orderIdentificationMode" value="counter" checked={config.orderIdentificationMode === 'counter'} onChange={handleChange} disabled={branchPlan < 2} />
-                      Por Nombre de Cliente (Barra/Mostrador)
-                    </label>
-                  </div>
-                  <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.75rem' }}>
-                    {config.orderIdentificationMode === 'counter' 
-                      ? '✅ Los clientes solo ingresarán su nombre. Ideal para barras o locales sin mesas fijas.' 
-                      : '✅ Los clientes deberán ingresar su número de mesa para ser ubicados.'}
-                  </p>
-
-                  <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '1.25rem', borderTop: '1px solid #e2e8f0', paddingTop: '1rem' }}>
-                    <input 
-                      type="checkbox" 
-                      name="enableTableGPSValidation" 
-                      id="enableTableGPSValidation" 
-                      checked={config.enableTableGPSValidation || false} 
-                      onChange={handleChange} 
-                      disabled={branchPlan < 2}
-                      style={{ width: '18px', height: '18px', cursor: branchPlan < 2 ? 'not-allowed' : 'pointer' }}
-                    />
-                    <label htmlFor="enableTableGPSValidation" className="form-label" style={{ margin: 0, cursor: branchPlan < 2 ? 'not-allowed' : 'pointer', fontWeight: 600 }}>
-                      📍 Requerir validación GPS para pedidos en mesa <span style={{ fontSize: '0.72rem', background: '#fee2e2', color: '#b91c1c', padding: '2px 6px', borderRadius: '4px', fontWeight: 700, marginLeft: '4px' }}>OBLIGATORIO</span>
-                    </label>
-                  </div>
-                  <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.35rem', marginLeft: '1.75rem', lineHeight: '1.4', marginBottom: '0.5rem' }}>
-                    Si está activo y el cliente elige <strong>pagar en efectivo</strong>, deberá validar su ubicación GPS para confirmar que está físicamente en el local.
-                  </p>
-
-                  {config.enableTableGPSValidation && (
-                    <div style={{ marginLeft: '1.75rem', marginTop: '0.25rem', marginBottom: '1rem', padding: '0.75rem 1rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <label htmlFor="tableGPSRadiusLimit" style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155', margin: 0 }}>Límite de distancia permitido:</label>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                        <input type="number" name="tableGPSRadiusLimit" id="tableGPSRadiusLimit" className="form-input" style={{ width: '80px', padding: '6px 10px', fontSize: '0.85rem', fontWeight: 'bold', textAlign: 'center', margin: 0, borderRadius: '6px', border: '1px solid #cbd5e1' }} value={config.tableGPSRadiusLimit !== undefined ? config.tableGPSRadiusLimit : 30} onChange={handleChange} disabled={branchPlan < 2} min={5} max={1000} />
-                        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#64748b' }}>metros</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* ── PEDIDOS A LA MESA POR WHATSAPP (Plan Tradicional) ── */}
-              <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
-                <input 
-                  type="checkbox" 
-                  name="enableWhatsAppTableOrders" 
-                  id="enableWhatsAppTableOrders" 
-                  checked={config.enableWhatsAppTableOrders || false} 
-                  onChange={handleChange} 
-                  style={{ width: '20px', height: '20px', cursor: 'pointer' }} 
-                />
-                <label htmlFor="enableWhatsAppTableOrders" className="form-label" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                  Activar Pedidos desde la Mesa por WhatsApp (el pedido llega directo al WhatsApp - Plan Tradicional)
-                  <span style={{ fontSize: '0.72rem', background: '#dcfce7', color: '#15803d', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>Plan Tradicional</span>
-                </label>
-              </div>
-              <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.35rem', marginLeft: '2.25rem', lineHeight: '1.4', marginBottom: '0.5rem' }}>
-                El cliente ingresa su número de mesa, el sistema valida que existe y redirige el pedido a WhatsApp. No crea una orden activa en el dashboard.
-              </p>
-
-              {config.enableWhatsAppTableOrders && (
-                <div style={{ marginLeft: '2rem', marginBottom: '1.5rem', padding: '1rem', background: '#f0fdf4', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
-                  <div className="form-group" style={{ maxWidth: '500px' }}>
-                    <label className="form-label" style={{ fontWeight: 600 }}>
-                      📱 Número de WhatsApp para recibir pedidos desde la mesa
-                    </label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
-                      name="whatsappTableNumber" 
-                      value={config.whatsappTableNumber || ''} 
-                      onChange={handleChange} 
-                      placeholder="Ej: 573001234567" 
-                    />
-                    <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.25rem' }}>
-                      Número general del restaurante para pedidos de mesa. Puede ser diferente al número de domicilios. Con código de país sin el + (ej: 57 para Colombia).
-                    </p>
-                  </div>
-
-                  {/* Enrutamiento al mesero responsable */}
-                  <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #a7f3d0' }}>
-                    <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
-                      <input 
-                        type="checkbox" 
-                        name="enableWaiterWhatsAppRouting" 
-                        id="enableWaiterWhatsAppRouting" 
-                        checked={config.enableWaiterWhatsAppRouting || false} 
-                        onChange={handleChange} 
-                        style={{ width: '18px', height: '18px', cursor: 'pointer' }} 
-                      />
-                      <label htmlFor="enableWaiterWhatsAppRouting" className="form-label" style={{ margin: 0, cursor: 'pointer', fontWeight: 600, color: '#065f46' }}>
-                        🧑‍🍳 Enviar al mesero responsable de la mesa
-                      </label>
-                    </div>
-                    <p style={{ fontSize: '0.78rem', color: '#047857', marginLeft: '1.75rem', lineHeight: '1.4', marginBottom: 0 }}>
-                      Si la mesa tiene un mesero asignado con teléfono registrado (en Mi Equipo), el pedido le llegará directamente a él. Si no tiene teléfono o no hay mesero asignado, llega al número general de arriba.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
-                <input 
-                  type="checkbox" 
-                  name="enableWaiterCalls" 
-                  id="enableWaiterCalls" 
-                  checked={config.enableWaiterCalls !== false} 
-                  onChange={handleChange} 
-                  style={{ width: '20px', height: '20px', cursor: 'pointer' }} 
-                />
-                <label htmlFor="enableWaiterCalls" className="form-label" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                  Activar "Llamar al Mesero" para clientes en mesa
-                </label>
-              </div>
-              <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.35rem', marginLeft: '2.25rem', lineHeight: '1.4', marginBottom: '0.5rem' }}>
-                Permite a los clientes solicitar asistencia desde su mesa.
-              </p>
-
-              {config.enableWaiterCalls !== false && (
-                <div style={{ marginLeft: '2rem', marginBottom: '1rem', padding: '1rem', background: '#f8fafc', borderRadius: '8px' }}>
-                  <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <input 
-                      type="checkbox" 
-                      name="onlyAssignedWaitersSeeCalls" 
-                      id="onlyAssignedWaitersSeeCalls" 
-                      checked={config.onlyAssignedWaitersSeeCalls || false} 
-                      onChange={handleChange} 
-                      style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                    />
-                    <label htmlFor="onlyAssignedWaitersSeeCalls" className="form-label" style={{ margin: 0, cursor: 'pointer', fontWeight: 600 }}>
-                      Mostrar llamados solo a meseros responsables
-                    </label>
-                  </div>
-                  <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.35rem', marginLeft: '1.75rem', lineHeight: '1.4', marginBottom: 0 }}>
-                    Si está activo, los llamados son visibles únicamente para el mesero asignado a la mesa.
-                  </p>
-                </div>
-              )}
-
               {/* ── VISIBILIDAD EN CAJA Y MENÚ ── */}
               <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '1rem', marginBottom: '0.25rem' }}>Visibilidad en Caja y Menú Público</p>
               <div style={{ padding: '1.25rem', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
@@ -963,10 +701,6 @@ export default function GeneralSettings() {
                   Desmarca las opciones que desees ocultar/desactivar tanto de la Caja POS como del Menú Público.
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 600 }}>
-                    <input type="checkbox" name="enableTableService" checked={config.enableTableService !== false} onChange={handleChange} style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
-                    Servicio a Mesa
-                  </label>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 600 }}>
                     <input type="checkbox" name="enableBarService" checked={config.enableBarService !== false} onChange={handleChange} style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
                     Servicio en Barra / Mostrador
@@ -984,11 +718,12 @@ export default function GeneralSettings() {
 
         <div className="section-card">
           <div className="section-card-header">
-            <div className="section-card-title">
-              <div className="section-card-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <CreditCard size={18} style={{ color: 'var(--primary)' }} />
-              </div>
+            <div className="section-card-icon icon-payment">
+              <CreditCard size={22} />
+            </div>
+            <div className="section-card-title-group">
               <h3>Opciones de Pago</h3>
+              <p>Configura los métodos de pago disponibles para tus clientes.</p>
             </div>
           </div>
           <div className="section-card-body" style={{ position: 'relative', overflow: 'hidden' }}>
@@ -1033,7 +768,7 @@ export default function GeneralSettings() {
                   </div>
                 </div>
                 <p style={{ marginTop: '1rem', fontSize: '0.85rem', color: '#ef4444', fontWeight: 500 }}>
-                  ⚠️ Si deshabilitas estas opciones, los clientes no podrán finalizar sus pedidos.
+                  Si deshabilitas estas opciones, los clientes no podrán finalizar sus pedidos.
                 </p>
               </div>
 
@@ -1042,7 +777,7 @@ export default function GeneralSettings() {
                 {globalPlanLevel < 1 && renderLockOverlay('Carta', 'Pago por Transferencia / Comprobante', 'Permite a tus clientes pagar mostrando sus cuentas de Nequi, Daviplata o banco y subiendo foto del comprobante.', '16px')}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: globalPlanLevel < 1 ? 0.6 : 1 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <h4 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: '#8b1a2e' }}>📲 Pago por Transferencia / Comprobante</h4>
+                    <h4 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: '#8b1a2e' }}>Pago por Transferencia / Comprobante</h4>
                     <p style={{ fontSize: '0.82rem', color: '#8b1a2e', opacity: 0.8, margin: '4px 0 0' }}>
                       El cliente verá tus cuentas y deberá subir foto del comprobante antes de confirmar el pedido.
                     </p>
@@ -1182,7 +917,7 @@ export default function GeneralSettings() {
                             />
                           </div>
                           <div style={{ gridColumn: '1 / -1', borderTop: '1px dashed #e2e8f0', paddingTop: '0.75rem', marginTop: '0.25rem' }}>
-                            <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#8b1a2e', display: 'block', marginBottom: '6px' }}>📲 Código QR de Pago (Opcional)</label>
+                            <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#8b1a2e', display: 'block', marginBottom: '6px' }}>Código QR de Pago (Opcional)</label>
                             {acc.qrCodeUrl ? (
                               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                                 <img 
@@ -1197,7 +932,7 @@ export default function GeneralSettings() {
                                     rel="noreferrer" 
                                     style={{ fontSize: '0.8rem', color: '#8b1a2e', textDecoration: 'underline', fontWeight: 600, display: 'block', marginBottom: '4px' }}
                                   >
-                                    🔍 Ver tamaño completo
+                                    Ver tamaño completo
                                   </a>
                                   <button
                                     type="button"
@@ -1253,7 +988,7 @@ export default function GeneralSettings() {
                                     display: 'inline-block'
                                   }}
                                 >
-                                  📤 Subir Imagen de Código QR (Nequi/Daviplata/etc.)
+                                  Subir Imagen de Código QR (Nequi/Daviplata/etc.)
                                 </label>
                               </div>
                             )}
@@ -1268,7 +1003,7 @@ export default function GeneralSettings() {
                               }}
                               style={{ padding: '0.3rem 0.75rem', background: '#fef2f2', color: '#ef4444', border: '1px solid #fecaca', borderRadius: '6px', fontWeight: 600, cursor: globalPlanLevel < 1 ? 'not-allowed' : 'pointer', fontSize: '0.78rem' }}
                             >
-                              🗑️ Eliminar Cuenta
+                              Eliminar Cuenta
                             </button>
                           </div>
                         </div>
@@ -1284,15 +1019,16 @@ export default function GeneralSettings() {
         {/* ── PASARELAS DE PAGO ONLINE (CARTA) ── */}
         <div className="section-card">
           <div className="section-card-header">
-            <div className="section-card-title">
-              <div className="section-card-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <CreditCard size={18} style={{ color: 'var(--primary)' }} />
-              </div>
+            <div className="section-card-icon icon-payment">
+              <CreditCard size={22} />
+            </div>
+            <div className="section-card-title-group">
               <h3>Pasarelas de Pago Online</h3>
+              <p>Acepta tarjetas, PSE y más directamente desde tu menú digital.</p>
             </div>
           </div>
           <div className="section-card-body" style={{ position: 'relative', overflow: 'hidden' }}>
-            {globalPlanLevel < 2 && renderLockOverlay('Carta y Mesa', 'Pasarelas de Pago Online', 'Permite a tus clientes pagar sus pedidos directamente desde el menú digital usando tarjetas de crédito, débito, PSE, Bold o Mercado Pago.')}
+            {globalPlanLevel < 2 && renderLockOverlay('Pro', 'Pasarelas de Pago Online', 'Permite a tus clientes pagar sus pedidos directamente desde el menú digital usando tarjetas de crédito, débito, PSE, Bold o Mercado Pago.')}
             <div style={{ opacity: globalPlanLevel < 2 ? 0.5 : 1, pointerEvents: globalPlanLevel < 2 ? 'none' : 'auto' }}>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
                 Habilita pagos con tarjeta crédito/débito desde el menú público. Los clientes podrán pagar antes de que el pedido llegue al dashboard, el cual aparecerá <strong>ya facturado automáticamente</strong>.
@@ -1345,7 +1081,7 @@ export default function GeneralSettings() {
                         <li style={{ marginTop: '0.5rem' }}>
                           En el menú lateral de tu aplicación en MP, ve a <strong>Webhooks</strong> y agrega esta URL exacta:<br/>
                           <code style={{ background: '#bae6fd', padding: '4px 8px', borderRadius: 6, display: 'inline-block', marginTop: '4px', userSelect: 'all', wordBreak: 'break-all' }}>
-                            https://webhookorderpayment-zq66x56soq-uc.a.run.app
+                            https://us-central1-miprodu-fec00.cloudfunctions.net/webhookOrderPayment
                           </code><br/>
                           <em>(Marca la casilla "payment" en Eventos para recibir las confirmaciones).</em>
                         </li>
@@ -1425,7 +1161,7 @@ export default function GeneralSettings() {
                     </div>
                     {config.payments?.mercadoPago?.accessToken && config.payments?.mercadoPago?.publicKey && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', color: '#16a34a', fontWeight: 600 }}>
-                        <span>✅</span> Credenciales de Mercado Pago configuradas
+                        <span>✓</span> Credenciales de Mercado Pago configuradas
                       </div>
                     )}
                   </div>
@@ -1482,7 +1218,7 @@ export default function GeneralSettings() {
                         <li style={{ marginTop: '0.5rem' }}>
                           En esa misma sección (o en la de <strong>Webhooks</strong>), agrega esta URL exacta para recibir notificaciones:<br/>
                           <code style={{ background: '#ddd6fe', padding: '4px 8px', borderRadius: 6, display: 'inline-block', marginTop: '4px', userSelect: 'all', wordBreak: 'break-all' }}>
-                            https://webhookorderbold-zq66x56soq-uc.a.run.app
+                            https://us-central1-miprodu-fec00.cloudfunctions.net/webhookOrderBold
                           </code>
                         </li>
                       </ol>
@@ -1561,7 +1297,7 @@ export default function GeneralSettings() {
                     </div>
                     {config.payments?.bold?.apiKey && config.payments?.bold?.secretKey && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', color: '#16a34a', fontWeight: 600 }}>
-                        <span>✅</span> Credenciales Bold configuradas
+                        <span>✓</span> Credenciales Bold configuradas
                       </div>
                     )}
                   </div>
@@ -1569,13 +1305,13 @@ export default function GeneralSettings() {
               </div>
 
               <p style={{ marginTop: '1.5rem', fontSize: '0.82rem', color: '#64748b' }}>
-                ⚠️ Las credenciales se almacenan de forma segura y solo se usan desde el servidor para verificar pagos.
+                Las credenciales se almacenan de forma segura y solo se usan desde el servidor para verificar pagos.
               </p>
             </div>
           </div>
         </div>
 
-        {/* ── NOTIFICACIONES DE WHATSAPP (CARTA Y MESA) ── */}
+        {/* ── NOTIFICACIONES DE WHATSAPP (PLAN PRO) ── */}
         <div className="card mb-4" style={{ border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
@@ -1594,7 +1330,7 @@ export default function GeneralSettings() {
           </p>
           
           <div style={{ padding: '1.5rem', border: '2px solid ' + (config.whatsappNotifications?.enabled ? '#8b1a2e' : '#e2e8f0'), borderRadius: '16px', background: config.whatsappNotifications?.enabled ? 'rgba(139,26,46,0.02)' : '#fff', transition: 'all 0.3s ease', position: 'relative', overflow: 'hidden' }}>
-            {globalPlanLevel < 2 && renderLockOverlay('Carta y Mesa', 'Notificaciones por WhatsApp', 'Envía notificaciones automáticas de cambio de estado (ej. Recibido, Preparando, Listo) al celular de tu cliente usando la API oficial de Meta.', '16px')}
+            {globalPlanLevel < 2 && renderLockOverlay('Pro', 'Notificaciones por WhatsApp', 'Envía notificaciones automáticas de cambio de estado (ej. Recibido, Preparando, Listo) al celular de tu cliente usando la API oficial de Meta.', '16px')}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <span style={{ fontWeight: 'bold', color: '#8b1a2e', fontSize: '1.1rem' }}>Activar Notificaciones de Estado</span>
@@ -1685,48 +1421,126 @@ export default function GeneralSettings() {
           </div>
         </div>
 
-        {/* ── PROPINAS Y DESCUENTOS (CARTA Y MESA) ── */}
-        <div className="section-card">
-          <div className="section-card-header">
-            <div className="section-card-title">
-              <div className="section-card-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Percent size={18} style={{ color: 'var(--primary)' }} />
+        {/* ── PÍXELES DE MARKETING ── */}
+        {!selectedBranchId && (
+          <div className="section-card">
+            <div className="section-card-header">
+              <div className="section-card-icon icon-marketing">
+                <Activity size={22} />
               </div>
-              <h3>Propinas y Descuentos</h3>
-            </div>
-          </div>
-          <div className="section-card-body" style={{ position: 'relative', overflow: 'hidden' }}>
-            {branchPlan < 2 && renderLockOverlay('Carta y Mesa', 'Propinas y Descuentos', 'Habilita la opción de sugerir propinas porcentuales en las facturas/cuentas digitales y configurar descuentos automáticos para tus comensales.')}
-            <div style={{ opacity: branchPlan < 2 ? 0.5 : 1, pointerEvents: branchPlan < 2 ? 'none' : 'auto' }}>
-              <div className="form-group" style={{ maxWidth: '500px' }}>
-                <label className="form-label">
-                  Porcentaje de Propina Sugerida (%)
-                </label>
-                <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-                  Si es mayor a 0, se mostrará como "Propina Sugerida" en la cuenta y factura del cliente.
-                </p>
-                <input 
-                  type="number" 
-                  className="form-input" 
-                  name="suggestedTipPercentage" 
-                  value={branchPlan < 2 ? 0 : (config.suggestedTipPercentage || 0)} 
-                  onChange={handleChange} 
-                  disabled={branchPlan < 2}
-                  min="0"
-                  max="100"
-                />
+              <div className="section-card-title-group">
+                <h3>Píxeles de Marketing y Analítica</h3>
+                <p>Conecta Meta, Google Ads y TikTok para medir y optimizar tus campañas.</p>
               </div>
             </div>
+            <div className="section-card-body">
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem', lineHeight: 1.6 }}>
+                Conecta tus píxeles de publicidad para medir conversiones, optimizar campañas y hacer remarketing. 
+                <strong> Si un campo está vacío, ese píxel NO se cargará</strong>, evitando impacto en la velocidad del sitio.
+              </p>
+
+              {/* Meta Pixel */}
+              <div style={{ padding: '1.25rem', background: '#f0f4ff', borderRadius: '14px', border: '1px solid #c7d7fa', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.85rem' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'linear-gradient(135deg, #1877f2, #0d65d9)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 900, fontSize: '1.1rem', boxShadow: '0 2px 8px rgba(24,119,242,0.25)' }}>f</div>
+                  <div>
+                    <h4 style={{ margin: 0, fontWeight: 800, color: '#1a3a6b', fontSize: '0.95rem' }}>Meta Pixel (Facebook & Instagram Ads)</h4>
+                    <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: '#1877f2', fontWeight: 600 }}>
+                      <a href="https://business.facebook.com/events_manager" target="_blank" rel="noreferrer" style={{ color: '#1877f2', textDecoration: 'underline' }}>
+                        Obtener ID → Meta Events Manager
+                      </a>
+                    </p>
+                  </div>
+                  {config.marketingPixels?.metaPixelId && (
+                    <span style={{ marginLeft: 'auto', background: '#dcfce7', color: '#15803d', fontSize: '0.72rem', fontWeight: 700, padding: '3px 10px', borderRadius: '20px', border: '1px solid #bbf7d0' }}>✓ Activo</span>
+                  )}
+                </div>
+                <div className="form-group" style={{ maxWidth: '480px', marginBottom: 0 }}>
+                  <label className="form-label">ID del Píxel de Meta</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={config.marketingPixels?.metaPixelId || ''}
+                    onChange={(e) => handleMarketingPixelsChange('metaPixelId', e.target.value.trim())}
+                    placeholder="Ej: 1234567890123456"
+                  />
+                  <p style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '4px' }}>Solo los dígitos numéricos del Pixel ID. Deja vacío para desactivar.</p>
+                </div>
+              </div>
+
+              {/* Google Ads */}
+              <div style={{ padding: '1.25rem', background: '#fffbf0', borderRadius: '14px', border: '1px solid #fde68a', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.85rem' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'linear-gradient(135deg, #fbbc04, #ea4335)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 900, fontSize: '1rem', boxShadow: '0 2px 8px rgba(251,188,4,0.3)' }}>G</div>
+                  <div>
+                    <h4 style={{ margin: 0, fontWeight: 800, color: '#78350f', fontSize: '0.95rem' }}>Google Ads (gtag)</h4>
+                    <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: '#b45309', fontWeight: 600 }}>
+                      <a href="https://ads.google.com/aw/overview" target="_blank" rel="noreferrer" style={{ color: '#b45309', textDecoration: 'underline' }}>
+                        Obtener ID → Google Ads → Herramientas → Seguimiento de conversiones
+                      </a>
+                    </p>
+                  </div>
+                  {config.marketingPixels?.googleAdsId && (
+                    <span style={{ marginLeft: 'auto', background: '#dcfce7', color: '#15803d', fontSize: '0.72rem', fontWeight: 700, padding: '3px 10px', borderRadius: '20px', border: '1px solid #bbf7d0' }}>✓ Activo</span>
+                  )}
+                </div>
+                <div className="form-group" style={{ maxWidth: '480px', marginBottom: 0 }}>
+                  <label className="form-label">ID de Medición (Measurement ID)</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={config.marketingPixels?.googleAdsId || ''}
+                    onChange={(e) => handleMarketingPixelsChange('googleAdsId', e.target.value.trim())}
+                    placeholder="Ej: AW-123456789 o G-XXXXXXXXXX"
+                  />
+                  <p style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '4px' }}>Acepta tanto Google Ads (AW-...) como Google Analytics 4 (G-...). Deja vacío para desactivar.</p>
+                </div>
+              </div>
+
+              {/* TikTok Pixel */}
+              <div style={{ padding: '1.25rem', background: '#f0fafa', borderRadius: '14px', border: '1px solid #99f6e4' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.85rem' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#010101', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 900, fontSize: '0.85rem', boxShadow: '0 2px 8px rgba(0,0,0,0.25)', letterSpacing: '-0.5px' }}>TT</div>
+                  <div>
+                    <h4 style={{ margin: 0, fontWeight: 800, color: '#134e4a', fontSize: '0.95rem' }}>TikTok Pixel</h4>
+                    <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: '#0d9488', fontWeight: 600 }}>
+                      <a href="https://ads.tiktok.com/i18n/events_manager" target="_blank" rel="noreferrer" style={{ color: '#0d9488', textDecoration: 'underline' }}>
+                        Obtener ID → TikTok Events Manager
+                      </a>
+                    </p>
+                  </div>
+                  {config.marketingPixels?.tiktokPixelId && (
+                    <span style={{ marginLeft: 'auto', background: '#dcfce7', color: '#15803d', fontSize: '0.72rem', fontWeight: 700, padding: '3px 10px', borderRadius: '20px', border: '1px solid #bbf7d0' }}>✓ Activo</span>
+                  )}
+                </div>
+                <div className="form-group" style={{ maxWidth: '480px', marginBottom: 0 }}>
+                  <label className="form-label">ID del Pixel de TikTok</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={config.marketingPixels?.tiktokPixelId || ''}
+                    onChange={(e) => handleMarketingPixelsChange('tiktokPixelId', e.target.value.trim())}
+                    placeholder="Ej: C4ABCD1234EFGH"
+                  />
+                  <p style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '4px' }}>Código alfanumérico del Pixel ID de TikTok. Deja vacío para desactivar.</p>
+                </div>
+              </div>
+
+              <p style={{ marginTop: '1rem', fontSize: '0.8rem', color: '#64748b', background: '#f8fafc', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                <strong>Optimización automática:</strong> Cada píxel se inyecta solo si su ID está configurado. Sin ID = sin script = carga más rápida para tus clientes.
+              </p>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="section-card">
           <div className="section-card-header">
-            <div className="section-card-title">
-              <div className="section-card-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Globe2 size={18} style={{ color: 'var(--primary)' }} />
-              </div>
+            <div className="section-card-icon icon-globe">
+              <Globe2 size={22} />
+            </div>
+            <div className="section-card-title-group">
               <h3>Idiomas y Traducción</h3>
+              <p>Define el idioma original del menú y las opciones de traducción.</p>
             </div>
           </div>
           <div className="section-card-body">

@@ -46,12 +46,12 @@ const BarChartIcon = () => (
 );
 
 const BENEFITS = [
-  { Icon: SmartphoneIcon, title: 'Menú Digital Interactivo',  text: 'Tus clientes pueden navegar por tu menú de forma intuitiva, ver fotos de alta calidad y detalles de cada plato desde cualquier dispositivo.' },
-  { Icon: ScanIcon,       title: 'Escaneo QR Rápido',         text: 'Genera códigos QR dinámicos para tus mesas. Un escaneo y tus clientes estarán navegando por tu menú al instante.' },
-  { Icon: CalendarIcon,   title: 'Gestión de Reservas',       text: 'Permite a tus clientes reservar su mesa directamente desde el menú, con notificaciones en tiempo real a tu panel.' },
-  { Icon: UsersIcon,      title: 'CRM y Remarketing',         text: 'Capta datos valiosos (WhatsApp, Email) a cambio de promociones y úsalos para campañas de remarketing automatizadas.' },
-  { Icon: BuildingIcon,   title: 'Múltiples Sedes',           text: 'Administra el menú y los precios de diferentes locales desde un único panel centralizado.' },
-  { Icon: BarChartIcon,   title: 'Estadísticas en Vivo',      text: 'Analiza qué platos se ven más, qué promociones funcionan mejor y optimiza tu menú basado en datos reales.' },
+  { Icon: SmartphoneIcon, title: 'Catálogo Digital Interactivo', text: 'Tus clientes pueden navegar por tu catálogo de forma intuitiva, ver fotos de alta calidad, precios y detalles de cada producto desde cualquier dispositivo.' },
+  { Icon: ScanIcon,       title: 'Acceso por Link o QR',         text: 'Genera códigos QR dinámicos para tus empaques, stands o vitrinas. Tus clientes estarán navegando por tu catálogo al instante.' },
+  { Icon: CalendarIcon,   title: 'Gestión de Stock',             text: 'Controla el stock en tiempo real y permite a tus clientes reservar productos directamente desde tu catálogo online.' },
+  { Icon: UsersIcon,      title: 'CRM y Remarketing',            text: 'Capta datos valiosos (WhatsApp, Email) de tus compradores y úsalos para campañas de remarketing automatizadas.' },
+  { Icon: BuildingIcon,   title: 'Múltiples Tiendas',            text: 'Administra los catálogos y precios de diferentes sucursales o tiendas desde un único panel centralizado.' },
+  { Icon: BarChartIcon,   title: 'Estadísticas en Vivo',         text: 'Analiza qué productos se ven más, qué promociones funcionan mejor y optimiza tu catálogo basado en datos reales.' },
 ];
 
 export default function Benefits() {
@@ -74,7 +74,7 @@ export default function Benefits() {
         <SectionTitle
           badge="Beneficios"
           title="Todo lo que necesitas en una sola plataforma"
-          subtitle="Diseñado específicamente para aumentar las ventas y fidelizar a los comensales de tu restaurante."
+          subtitle="Diseñado específicamente para aumentar las ventas y fidelizar a tus clientes."
         />
         <div className="benefits-grid">
           {BENEFITS.map((b, i) => (

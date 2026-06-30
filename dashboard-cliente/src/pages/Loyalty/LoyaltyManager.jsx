@@ -49,7 +49,7 @@ export default function LoyaltyManager() {
           <div style={{ fontSize: '4rem', marginBottom: '1.5rem' }}>⭐</div>
           <h2 style={{ fontWeight: 900, fontSize: '1.8rem', color: '#1e293b', marginBottom: '0.5rem' }}>Sistema de Puntos</h2>
           <p style={{ maxWidth: 500, margin: '0 auto 2rem', color: '#64748b', fontSize: '1.05rem' }}>
-            Fideliza a tus clientes con un programa de puntos personalizable. Disponible exclusivamente en el <strong>Plan Carta y Mesa</strong>.
+            Fideliza a tus clientes con un programa de puntos personalizable. Disponible exclusivamente en el <strong>Plan Pro</strong>.
           </p>
           <button className="btn-primary" style={{ padding: '12px 40px' }} onClick={() => window.location.href = '/subscription'}>
             Actualizar Plan

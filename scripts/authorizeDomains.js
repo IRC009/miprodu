@@ -22,9 +22,11 @@ const DOMAINS_TO_ADD = [
   'dashboardcliente.firebaseapp.com',
   'menupublico-digital.web.app',
   'menupublico-digital.firebaseapp.com',
-  'cartaymesa.com',
-  'www.cartaymesa.com',
-  'admin.cartaymesa.com'
+  'miprodu.com',
+  'www.miprodu.com',
+  'admin.miprodu.com',
+  'app.miprodu.com',
+  'menu.miprodu.com'
 ];
 
 const DOMAINS_TO_REMOVE = [

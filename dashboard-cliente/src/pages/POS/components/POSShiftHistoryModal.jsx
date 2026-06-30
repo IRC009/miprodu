@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getCashMovements } from '../../../services/posService';
 import { getShiftOrders } from '../../../services/orderService';
 import { getAuditLogs } from '../../../services/auditService';
+import { Clipboard, Shield, DollarSign } from 'lucide-react';
 
 export default function POSShiftHistoryModal({ isOpen, onClose, restaurantId, activeShift }) {
   const [activeTab, setActiveTab] = useState('movements'); // 'movements' | 'orders' | 'audit'
@@ -43,7 +44,7 @@ export default function POSShiftHistoryModal({ isOpen, onClose, restaurantId, ac
       <div className="saas-modal-content" style={{ maxWidth: '700px', width: '90%', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
         <div style={{ padding: '1.5rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900 }}>📊 Control del Turno</h2>
+            <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Clipboard size={20} /> Control del Turno</h2>
             <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Turno iniciado: {activeShift?.openedAt ? new Date(activeShift.openedAt).toLocaleString() : 'Caja Abierta'}</p>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer' }}>&times;</button>
@@ -52,9 +53,9 @@ export default function POSShiftHistoryModal({ isOpen, onClose, restaurantId, ac
         {/* Tabs */}
         <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
           {[
-            { id: 'movements', label: '💸 Movimientos', icon: '💰' },
-            { id: 'orders', label: '🧾 Facturas', icon: '📄' },
-            { id: 'audit', label: '🛡️ Auditoría', icon: '🔍' }
+            { id: 'movements', label: 'Movimientos', icon: <DollarSign size={16} /> },
+            { id: 'orders', label: 'Facturas', icon: <Clipboard size={16} /> },
+            { id: 'audit', label: 'Auditoría', icon: <Shield size={16} /> }
           ].map(tab => (
             <button
               key={tab.id}
@@ -74,7 +75,7 @@ export default function POSShiftHistoryModal({ isOpen, onClose, restaurantId, ac
                 gap: '8px'
               }}
             >
-              <span>{tab.icon}</span> {tab.label}
+              {tab.icon} {tab.label}
             </button>
           ))}
         </div>

@@ -113,7 +113,7 @@
           "source": "/apps/*.apk",
           "headers": [
             { "key": "Content-Type", "value": "application/vnd.android.package-archive" },
-            { "key": "Content-Disposition", "value": "attachment; filename=\"CartayMesa.apk\"" },
+            { "key": "Content-Disposition", "value": "attachment; filename=\"miprodu.apk\"" },
             { "key": "Cache-Control", "value": "public, max-age=86400" }
           ]
         }

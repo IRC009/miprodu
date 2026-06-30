@@ -71,7 +71,7 @@ export default function RestaurantsTable({ restaurants, onGenerateLink, onEnterR
                     {(() => {
                       const url = (res.customDomain && res.customDomainStatus === 'active')
                         ? `https://${res.customDomain}`
-                        : `https://menu.cartaymesa.com/r/${res.slug}`;
+                        : `https://miprodu.com/r/${res.slug}`;
                       return (
                         <a
                           href={url}
@@ -146,10 +146,7 @@ export default function RestaurantsTable({ restaurants, onGenerateLink, onEnterR
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                     {(() => {
                       const sub = res.subscription || {};
-                      const isMixed = sub.isMixed === true;
-                      const contracted = isMixed
-                        ? (parseInt(sub.branchesPlan0) || 0) + (parseInt(sub.branchesPlan1) || 0) + (parseInt(sub.branchesPlan2) || 0)
-                        : (parseInt(sub.branches) || 1);
+                      const contracted = parseInt(sub.branchesPlan2 || sub.branches || 1);
                       return (
                         <>
                           <span style={{
@@ -160,15 +157,6 @@ export default function RestaurantsTable({ restaurants, onGenerateLink, onEnterR
                           }}>
                             {contracted} contratada{contracted !== 1 ? 's' : ''}
                           </span>
-                          {isMixed && (
-                            <div style={{ fontSize: '0.68rem', color: '#64748b' }}>
-                              P0: <span style={{ color: '#fbbf24' }}>{sub.branchesPlan0 || 0}</span>
-                              {' · '}
-                              P1: <span style={{ color: '#a78bfa' }}>{sub.branchesPlan1 || 0}</span>
-                              {' · '}
-                              P2: <span style={{ color: '#34d399' }}>{sub.branchesPlan2 || 0}</span>
-                            </div>
-                          )}
                           <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: '500' }}>
                             Físicas: <span style={{ color: '#cbd5e1' }}>{res.branchCount}</span>
                             {' · Reg: '}<span style={{ color: '#cbd5e1' }}>{res.registeredBranchCount}</span>
@@ -179,12 +167,10 @@ export default function RestaurantsTable({ restaurants, onGenerateLink, onEnterR
                   </div>
                 </td>
                 <td style={styles.td}>
-                  <span style={styles.badge(res.subscription?.status === 'active' || res.subscription?.status === 'authorized' || res.subscription?.status === 'explore')}>
+                  <span style={styles.badge(res.subscription?.status === 'active' || res.subscription?.status === 'authorized')}>
                     {res.subscription?.planLevel === 2
-                      ? '🚀 Carta y Mesa'
-                      : res.subscription?.planLevel === 1
-                        ? '📋 Carta'
-                        : '⛔ Sin Plan'}
+                      ? '🚀 Plan Pro'
+                      : '⛔ Sin Plan'}
                   </span>
                   <div style={{ fontSize: '0.68rem', color: '#64748b', marginTop: '4px' }}>
                     {res.subscription?.status || 'inactive'}

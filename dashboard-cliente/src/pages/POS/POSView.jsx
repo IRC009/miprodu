@@ -12,7 +12,7 @@ import POSCheckoutModal from './components/POSCheckoutModal';
 import POSLoyaltyRedeemModal from './components/POSLoyaltyRedeemModal';
 import POSSplitBillModal from './components/POSSplitBillModal';
 import POSShiftHistoryModal from './components/POSShiftHistoryModal';
-import { Lock, Store } from 'lucide-react';
+import { Lock, Store, Printer, History, Infinity, MapPin, Search, Image, ShoppingCart, Scissors, MessageSquare, FileText, CreditCard, AlertTriangle } from 'lucide-react';
 import { createOrder } from '../../services/orderService';
 import { printTicket } from '../../utils/printTicket';
 
@@ -47,15 +47,11 @@ export default function POSView() {
     isTableOccupied, setIsTableOccupied, isWaiterSelectDisabled, filteredProducts,
     handleTableNumberChange, handleAddMovement, handleOpenShift, handleCloseShift,
     handleConfirmClose, handleCheckoutClick, processCheckout, handlePrintAccount, handleSearchLoyaltyCustomer,
-    handlePOSLogin, handleWhatsAppPOSOrder
+    handlePOSLogin, handleWhatsAppPOSOrder,
+    isEcommerce
   } = usePOSView();
 
-  const {
-    subscribedBranches,
-    subscribedBranches1,
-    subscribedBranches2,
-    isMixed
-  } = useSubscription();
+  const { subscribedBranches } = useSubscription();
 
   const [autoPrintInvoice, setAutoPrintInvoice] = React.useState(
     () => localStorage.getItem('autoPrintInvoice') === 'true'
@@ -182,7 +178,7 @@ export default function POSView() {
             borderBottom: '1px solid #f59e0b',
             letterSpacing: '0.02em'
           }}>
-            📡 Sin conexión — Modo Offline · Las órdenes se guardarán localmente y se sincronizarán al reconectar
+            Sin conexión — Modo Offline · Las órdenes se guardarán localmente y se sincronizarán al reconectar
           </div>
         )}
 
@@ -207,7 +203,8 @@ export default function POSView() {
                 boxSizing: 'border-box'
               }}
             >
-              <span>🖨️ Auto-Impresión</span>
+              <Printer size={16} />
+              <span>Auto-Impresión</span>
               <span style={{ fontSize: '0.6rem', opacity: 0.7 }}>{showPrintSettings ? '▲' : '▼'}</span>
             </button>
             
@@ -280,11 +277,11 @@ export default function POSView() {
           )}
           </div>
            {alwaysOpenShift ? (
-             <span className="shift-status-badge">♾️ Sin Arqueo</span>
+             <span className="shift-status-badge"><Infinity size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} />Sin Arqueo</span>
            ) : activeShift ? (
              <div className={s.shiftActions}>
-                <button className={`shift-status-btn ${s.shiftBtnSecondary}`} onClick={() => setIsShiftHistoryOpen(true)}>🛡️ Historial</button>
-                <button className={`shift-status-btn ${s.shiftBtnSecondary}`} onClick={() => setMovementModal({ type: 'out' })}>💸 Egresos / Gastos</button>
+                <button className={`shift-status-btn ${s.shiftBtnSecondary}`} onClick={() => setIsShiftHistoryOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><History size={14} /> Historial</button>
+                <button className={`shift-status-btn ${s.shiftBtnSecondary}`} onClick={() => setMovementModal({ type: 'out' })}>Egresos / Gastos</button>
                 <button className="shift-status-btn open" onClick={() => { 
                    if (!isCajaOwner && !isOwner) {
                      showAlert('Solo el responsable que abrió la caja o el administrador pueden cerrarla.', 'Acción Denegada', 'error');
@@ -292,7 +289,7 @@ export default function POSView() {
                    }
                    setShiftModal('close'); 
                    setWaiterId(activeShift.openedByWaiterId); 
-                 }}>🔓 Caja Abierta (Caja {activeShift.cashRegister || 1})</button>
+                 }}>Caja Abierta (Caja {activeShift.cashRegister || 1})</button>
              </div>
           ) : (
             <button className="shift-status-btn closed" onClick={() => { setShiftModal('open'); setWaiterId(authenticatedUserId || ''); }}>
@@ -343,16 +340,13 @@ export default function POSView() {
       ) : (() => {
         const currentBranchObj = branches.find(b => b.id === selectedBranch);
         const currentBranchPlanRaw = currentBranchObj ? (currentBranchObj.planLevel ?? planLevel) : planLevel;
-        const currentBranchPlan = currentBranchPlanRaw < 0 ? 0 : currentBranchPlanRaw;
+        const currentBranchPlan = currentBranchPlanRaw;
         
-        if (currentBranchPlan < 0) {
+        if (currentBranchPlan < 2) {
           // Detectar si hay slots de plan pagado sin asignar
-          const assignedPaid = branches.filter(b => (b.planLevel ?? -1) >= 1).length;
-          const hasUnassignedSlots = isMixed
-            ? (branches.filter(b => b.planLevel === 1).length < subscribedBranches1 ||
-               branches.filter(b => b.planLevel === 2).length < subscribedBranches2)
-            : (planLevel > 0 && assignedPaid < subscribedBranches);
-
+          const assignedPaid = branches.filter(b => b.planLevel === 2).length;
+          const hasUnassignedSlots = planLevel === 2 && assignedPaid < subscribedBranches;
+ 
           return (
             <div className={`pos-closed-state ${s.blockedState}`}>
               {/* Elegant red padlock badge, replacing the emoji */}
@@ -371,11 +365,11 @@ export default function POSView() {
               </div>
               <h2 className={s.blockedTitle}>Caja Bloqueada en esta Sede</h2>
                <p className={s.blockedText}>
-                La sede <strong>{currentBranchObj?.name}</strong> tiene el <strong>Plan Tradicional</strong> y no puede operar la Caja POS.
+                La sede <strong>{currentBranchObj?.name}</strong> no tiene el <strong>Plan Pro</strong> activo y no puede operar la Caja POS.
               </p>
               {branches.length >= 1 && (
                 <div style={{ margin: '1rem 0 1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.65rem' }}>
-                  <label style={{ fontWeight: 700, fontSize: '0.85rem', color: '#475569' }}>📍 Cambiar de Sede activa:</label>
+                  <label style={{ fontWeight: 700, fontSize: '0.85rem', color: '#475569', display: 'inline-flex', alignItems: 'center', gap: '4px' }}><MapPin size={14} /> Cambiar de Sede activa:</label>
                   <select 
                     className="branch-selector" 
                     value={selectedBranch} 
@@ -384,7 +378,7 @@ export default function POSView() {
                   >
                     {branches.map(b => (
                       <option key={b.id} value={b.id}>
-                        {b.name} {b.planLevel === 0 ? '(Plan Tradicional ❌)' : b.planLevel === 1 ? '(Plan Carta ✅)' : '(Plan Carta y Mesa ✅)'}
+                        {b.name} {b.planLevel === 2 ? '(Plan Pro - Activo)' : '(Sin Plan Activo)'}
                       </option>
                     ))}
                   </select>
@@ -399,7 +393,7 @@ export default function POSView() {
                   }}>
                     <div style={{ fontWeight: 700, color: '#92400e', marginBottom: '0.3rem' }}>⚡ Tienes un plan disponible sin asignar</div>
                     <div style={{ fontSize: '0.85rem', color: '#78350f', lineHeight: 1.5 }}>
-                      Compraste el <strong>Plan {planLevel === 1 ? 'Carta' : 'Carta y Mesa'}</strong> pero esta sede aún no lo tiene activo.
+                      Compraste el <strong>Plan Pro</strong> pero esta sede aún no lo tiene activo.
                       Ve a <strong>Gestión de Sedes</strong>, edita esta sede y asígnale el plan para desbloquear la Caja POS de inmediato.
                     </div>
                     <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
@@ -415,7 +409,7 @@ export default function POSView() {
                 </>
               ) : (
                 <p className={s.blockedText} style={{ marginTop: 0 }}>
-                  Para usar la Caja POS debes mejorar el plan de esta sede a <strong>Plan Carta</strong> o superior.
+                  Para usar la Caja POS debes activar el <strong>Plan Pro</strong> en esta sede.
                 </p>
               )}
               <button className="btn-secondary" onClick={() => navigate('/subscription')}
@@ -429,24 +423,53 @@ export default function POSView() {
         return (
         <div className="pos-main-layout">
           <section className="pos-products-section">
-            <div className="pos-search-bar"><span className="pos-search-icon">🔍 </span><input type="text" placeholder="Buscar..." className="pos-search-input" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} /></div>
+            <div className="pos-search-bar"><Search size={16} className="pos-search-icon" style={{ marginRight: '6px', color: '#64748b' }} /><input type="text" placeholder="Buscar..." className="pos-search-input" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} /></div>
             <nav className="pos-categories">
               <button onClick={() => setSelectedCategory('ALL')} className={`pos-category-btn ${selectedCategory === 'ALL' ? 'active' : ''}`}>Todas</button>
               {categories.map(c => <button key={c.id} onClick={() => setSelectedCategory(c.id)} className={`pos-category-btn ${selectedCategory === c.id ? 'active' : ''}`}>{c.name}</button>)}
             </nav>
-            <div className="pos-products-grid">
+             <div className="pos-products-grid">
               {filteredProducts.map(product => (
                 <article key={product.id} className="pos-product-card" onClick={() => addToCart(product)}>
-                  {product.imageUrl ? <img src={product.imageUrl} alt={product.name} className="pos-product-image" /> : <div className="pos-product-no-image">📸</div>}
-                  <div className="pos-product-info"><h4>{product.name}</h4><span className="pos-product-price">${product.price.toLocaleString()}</span></div>
+                  {product.imageUrl ? <img src={product.imageUrl} alt={product.name} className="pos-product-image" /> : <div className="pos-product-no-image"><Image size={24} style={{ color: '#94a3b8' }} /></div>}
+                  <div className="pos-product-info">
+                    <h4>{product.name}</h4>
+                    {product.sku && (
+                      <span style={{ display: 'block', fontSize: '0.72rem', color: '#64748b', fontWeight: 600, marginBottom: '2px' }}>SKU: {product.sku}</span>
+                    )}
+                    <span className="pos-product-price">${product.price.toLocaleString()}</span>
+                  </div>
                 </article>
               ))}
             </div>
           </section>
 
           <aside className="pos-cart-section">
-            <header className="pos-cart-header"><h3>🛒 Carrito {billingSessionLabel && <span className={s.sessionLabel}>({billingSessionLabel})</span>}</h3><button onClick={()=>setCart([])} className="pos-remove-btn">Vaciar</button></header>
-            <div className="pos-cart-items">{cart.length === 0 ? <div className="pos-cart-empty">Vacío</div> : cart.map((item, idx) => <div key={idx} className="pos-cart-item"><div className="pos-item-info"><div className="pos-item-name">{item.name}</div><div className="pos-item-price">${item.price.toLocaleString()}</div></div><div className="pos-item-controls-wrapper"><div className="pos-item-controls"><button className="pos-qty-btn" onClick={() => updateCartQuantity(idx, -1)}>−</button><span className="pos-item-qty">{item.quantity}</span><button className="pos-qty-btn" onClick={() => updateCartQuantity(idx, 1)}>+</button></div></div></div>)}</div>
+            <header className="pos-cart-header"><h3><ShoppingCart size={18} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Carrito {billingSessionLabel && <span className={s.sessionLabel}>({billingSessionLabel})</span>}</h3><button onClick={()=>setCart([])} className="pos-remove-btn">Vaciar</button></header>
+            <div className="pos-cart-items">
+              {cart.length === 0 ? (
+                <div className="pos-cart-empty">Vacío</div>
+              ) : (
+                cart.map((item, idx) => (
+                  <div key={idx} className="pos-cart-item">
+                    <div className="pos-item-info">
+                      <div className="pos-item-name">{item.name}</div>
+                      {item.sku && (
+                        <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600, margin: '2px 0' }}>SKU: {item.sku}</div>
+                      )}
+                      <div className="pos-item-price">${item.price.toLocaleString()}</div>
+                    </div>
+                    <div className="pos-item-controls-wrapper">
+                      <div className="pos-item-controls">
+                        <button className="pos-qty-btn" onClick={() => updateCartQuantity(idx, -1)}>−</button>
+                        <span className="pos-item-qty">{item.quantity}</span>
+                        <button className="pos-qty-btn" onClick={() => updateCartQuantity(idx, 1)}>+</button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
             
             <div className="pos-cart-summary">
                 <div className="pos-total-row"><span>Total:</span><span>${cartTotal.toLocaleString()}</span></div>
@@ -458,24 +481,33 @@ export default function POSView() {
                     const flat = [];
                     cart.forEach((item, iIdx) => {
                       for (let u = 0; u < Math.max(item.quantity || 1, 1); u++) {
-                        flat.push({ key: `${iIdx}_${u}`, name: item.name, price: item.price || 0, bucketId: item.bucketId, assignedTo: 'sp1' });
+                        flat.push({ key: `${iIdx}_${u}`, name: item.name, price: item.price || 0, bucketId: item.bucketId, sku: item.sku || '', assignedTo: 'sp1' });
                       }
                     });
                     setSplitFlatItems(flat);
                     setSplitPersons([{ id: 'sp1', name: 'Persona 1', paymentMethod: 'cash' }, { id: 'sp2', name: 'Persona 2', paymentMethod: 'cash' }]);
                     setSplitModal(true);
                   }}>
-                  ✂️ Dividir Cuenta Parcial
+                  <Scissors size={14} style={{ marginRight: '4px' }} /> Dividir Cuenta Parcial
                 </button>
             </div>
 
             <div className="pos-order-options">
                 {(() => {
                   const configObj = selectedBranchData || restaurant || {};
-                  
-                  const isTableEnabled = (currentBranchPlan >= 2 && configObj.enableTableService !== false) || (currentBranchPlan === 1 && configObj.enableTableService !== false) || configObj.enableWhatsAppTableOrders === true;
-                  const isTableLocked = (currentBranchPlan > 0 && configObj.enableTableService !== false) && currentBranchPlan < 2 && !configObj.enableWhatsAppTableOrders;
-                  const isBarEnabled = currentBranchPlan > 0 && configObj.enableBarService !== false;
+
+                  // In eCommerce mode, Mesa/Barra/Rápido are restaurant-only—suppress them
+                  const isTableEnabled = !isEcommerce &&
+                    branchTables.length > 0 &&
+                    ((currentBranchPlan >= 2 && configObj.enableTableService !== false) ||
+                     (currentBranchPlan === 1 && configObj.enableTableService !== false) ||
+                     configObj.enableWhatsAppTableOrders === true);
+                  const isTableLocked = !isEcommerce &&
+                    branchTables.length > 0 &&
+                    (currentBranchPlan > 0 && configObj.enableTableService !== false) &&
+                    currentBranchPlan < 2 &&
+                    !configObj.enableWhatsAppTableOrders;
+                  const isBarEnabled = !isEcommerce && currentBranchPlan > 0 && configObj.enableBarService !== false;
                   const isDeliveryEnabled = (currentBranchPlan > 0 && configObj.enableWhatsAppOrders !== false) || configObj.enableWhatsAppDirectDelivery === true;
                   const isFastEnabled = currentBranchPlan > 0 && configObj.enableFastService !== false;
                   
@@ -486,7 +518,7 @@ export default function POSView() {
                           className={`pos-option-btn ${orderType === 'table' ? 'active' : ''} ${isTableLocked ? 'locked' : ''}`} 
                           onClick={() => {
                             if (isTableLocked) {
-                              showAlert('El servicio a mesa requiere el Plan Carta y Mesa para operar las mesas y comandas.', 'Función Bloqueada', 'warning');
+                              showAlert('El servicio a mesa requiere el Plan Pro para operar las mesas y comandas.', 'Función Bloqueada', 'warning');
                             } else {
                               setOrderType('table');
                             }
@@ -494,17 +526,17 @@ export default function POSView() {
                           disabled={!!location.state?.tableNumber}
                           style={isTableLocked ? { opacity: 0.6, position: 'relative' } : {}}
                         >
-                          {isTableLocked ? '🔒 Mesa' : '🪑 Mesa'}
+                          {isTableLocked ? 'Mesa (Bloqueado)' : 'Mesa'}
                         </button>
                       )}
                       {isBarEnabled && (
-                        <button className={`pos-option-btn ${orderType === 'bar' ? 'active' : ''}`} onClick={() => setOrderType('bar')} disabled={!!location.state?.tableNumber}>🍸 Barra</button>
+                        <button className={`pos-option-btn ${orderType === 'bar' ? 'active' : ''}`} onClick={() => setOrderType('bar')} disabled={!!location.state?.tableNumber}>Barra</button>
                       )}
                       {isDeliveryEnabled && (
-                        <button className={`pos-option-btn ${orderType === 'delivery' ? 'active' : ''}`} onClick={() => setOrderType('delivery')} disabled={!!location.state?.tableNumber}>🏠 Domicilio</button>
+                        <button className={`pos-option-btn ${orderType === 'delivery' ? 'active' : ''}`} onClick={() => setOrderType('delivery')} disabled={!!location.state?.tableNumber}>Domicilio</button>
                       )}
                       {isFastEnabled && (
-                        <button className={`pos-option-btn ${orderType === 'fast' ? 'active' : ''}`} onClick={() => setOrderType('fast')} disabled={!!location.state?.tableNumber}>⚡ Rápido</button>
+                        <button className={`pos-option-btn ${orderType === 'fast' ? 'active' : ''}`} onClick={() => setOrderType('fast')} disabled={!!location.state?.tableNumber}>Rápido</button>
                       )}
                     </>
                   );
@@ -514,10 +546,16 @@ export default function POSView() {
             <div className="pos-order-form">
                 {orderType === 'table' ? (
                     <>
-                        <select className="form-input" value={tableNumber} onChange={e => handleTableNumberChange(e.target.value)} disabled={!!location.state?.tableNumber}><option value="">Mesa *</option>{branchTables.map(t => <option key={t.id} value={t.number}>Mesa {t.number}</option>)}</select>
+                        {branchTables.length === 0 ? (
+                          <div style={{ padding: '0.75rem 1rem', background: '#fef9c3', border: '1px solid #fde047', borderRadius: 10, fontSize: '0.82rem', color: '#713f12', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <AlertTriangle size={16} /> No hay mesas configuradas en esta sede. Créalas en <strong>Administrar → Mesas</strong> para habilitar el servicio a mesa.
+                          </div>
+                        ) : (
+                          <select className="form-input" value={tableNumber} onChange={e => handleTableNumberChange(e.target.value)} disabled={!!location.state?.tableNumber}><option value="">Mesa *</option>{branchTables.map(t => <option key={t.id} value={t.number}>Mesa {t.number}</option>)}</select>
+                        )}
                         {!isBranchUnipersonal && (
                           <select className="form-input" value={assignedWaiterId} onChange={e => setAssignedWaiterId(e.target.value)} disabled={isWaiterSelectDisabled}>
-                            <option value="">Mesero (Opcional)</option>
+                            <option value="">{isEcommerce ? 'Vendedor (Opcional)' : 'Mesero (Opcional)'}</option>
                             {filteredWaiters.map(w => {
                               const roleDisplay = w.role === 'dueño' || w.role === 'owner' || w.role === 'admin' ? 'Administración' : w.role?.toUpperCase() || 'PERSONAL';
                               return <option key={w.id} value={w.id}>{w.name} ({roleDisplay})</option>;
@@ -561,7 +599,7 @@ export default function POSView() {
                     <>
                         {!isBranchUnipersonal && (
                           <select className="form-input" value={assignedWaiterId} onChange={e => setAssignedWaiterId(e.target.value)} disabled={isWaiterSelectDisabled}>
-                            <option value="">Atendido por...</option>
+                            <option value="">{isEcommerce ? 'Vendedor (Opcional)' : 'Atendido por...'}</option>
                             {filteredWaiters.map(w => {
                               const roleDisplay = w.role === 'dueño' || w.role === 'owner' || w.role === 'admin' ? 'Administración' : w.role?.toUpperCase() || 'PERSONAL';
                               return <option key={w.id} value={w.id}>{w.name} ({roleDisplay})</option>;
@@ -583,7 +621,7 @@ export default function POSView() {
                     <>
                         {!isBranchUnipersonal && (
                           <select className="form-input" value={assignedWaiterId} onChange={e => setAssignedWaiterId(e.target.value)} disabled={isWaiterSelectDisabled}>
-                            <option value="">Mesero / Domiciliario</option>
+                            <option value="">{isEcommerce ? 'Vendedor / Domiciliario' : 'Responsable / Domiciliario'}</option>
                             {filteredWaiters.map(w => {
                               const roleDisplay = w.role === 'dueño' || w.role === 'owner' || w.role === 'admin' ? 'Administración' : w.role?.toUpperCase() || 'PERSONAL';
                               return <option key={w.id} value={w.id}>{w.name} ({roleDisplay})</option>;
@@ -620,7 +658,7 @@ export default function POSView() {
                       onClick={() => handleWhatsAppPOSOrder()} 
                       disabled={isSubmitting || cart.length === 0 || (orderType === 'table' && !tableNumber)}
                     >
-                      <span>💬 Enviar a WhatsApp</span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><MessageSquare size={14} /> Enviar a WhatsApp</span>
                     </button>
                   </div>
                 );
@@ -629,10 +667,10 @@ export default function POSView() {
               return (
                 <div className={`pos-order-options ${s.actionButtonsRow}`}>
                     <div className={s.actionButtonsInner}>
-                        <button className={`pos-submit-btn ${s.orderBtn}`} onClick={() => handleCheckoutClick('order')} disabled={isSubmitting || orderType === 'fast' || (cart.length === 0 && orderType !== 'table')}>📋 Ordenar</button>
-                        <button className={`pos-submit-btn ${s.printBtn}`} onClick={handlePrintAccount} disabled={cart.length === 0}>🖨️ Cuenta</button>
+                        <button className={`pos-submit-btn ${s.orderBtn}`} onClick={() => handleCheckoutClick('order')} disabled={isSubmitting || orderType === 'fast' || (cart.length === 0 && orderType !== 'table')} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}><FileText size={14} /> Ordenar</button>
+                        <button className={`pos-submit-btn ${s.printBtn}`} onClick={handlePrintAccount} disabled={cart.length === 0} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}><Printer size={14} /> Cuenta</button>
                     </div>
-                    {showBillingButton && <button className="pos-submit-btn btn-primary" onClick={() => handleCheckoutClick('bill')} disabled={isSubmitting || cart.length === 0}>💳 Pagar y Facturar</button>}
+                    {showBillingButton && <button className="pos-submit-btn btn-primary" onClick={() => handleCheckoutClick('bill')} disabled={isSubmitting || cart.length === 0} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}><CreditCard size={14} /> Pagar y Facturar</button>}
                 </div>
               );
             })()}
@@ -723,7 +761,7 @@ export default function POSView() {
                 const pItems = splitFlatItems.filter(fi => fi.assignedTo === person.id);
                 if (pItems.length === 0) continue;
                 const consolidated = {};
-                pItems.forEach(fi => { if (!consolidated[fi.name]) consolidated[fi.name] = { name: fi.name, price: fi.price, quantity: 0, bucketId: fi.bucketId }; consolidated[fi.name].quantity += 1; });
+                pItems.forEach(fi => { if (!consolidated[fi.name]) consolidated[fi.name] = { name: fi.name, price: fi.price, quantity: 0, bucketId: fi.bucketId, sku: fi.sku || '' }; consolidated[fi.name].quantity += 1; });
                 const items = Object.values(consolidated);
                 const total = items.reduce((s, i) => s + i.price * i.quantity, 0);
                 const isCollected = person.paymentMethod !== 'cod';
@@ -738,7 +776,7 @@ export default function POSView() {
               const resetWaiterId = isUserWaiter ? authenticatedUserId : '';
 
               setCart([]); setTableNumber(''); setCustomerName(''); setAssignedWaiterId(resetWaiterId); setGlobalObservations(''); setEditingOrderIds([]); setBillingSessionLabel(''); setSplitModal(false);
-              showAlert(`✅ ${splitPersons.filter(p => splitFlatItems.some(fi => fi.assignedTo === p.id)).length} facturas generadas.`, 'División Exitosa', 'success');
+              showAlert(`${splitPersons.filter(p => splitFlatItems.some(fi => fi.assignedTo === p.id)).length} facturas generadas.`, 'División Exitosa', 'success');
               navigate('/restaurante');
             } catch (e) { console.error(e); showAlert('Error al dividir.', 'Error', 'error'); } finally { setIsSubmitting(false); }
           }}
@@ -927,7 +965,7 @@ function POSAuthModal({ waiters, handlePOSLogin, navigate, branches, selectedBra
 
           {error && (
             <div style={{ color: '#dc2626', fontSize: '0.85rem', marginBottom: '1.5rem', fontWeight: 700 }}>
-              ❌ {error}
+              {error}
             </div>
           )}
 

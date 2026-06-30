@@ -3,6 +3,7 @@ import { useSubscription } from '../../context/SubscriptionContext';
 import { useRestaurantData } from '../../context/RestaurantDataContext';
 import { useAlert } from '../../context/AlertContext';
 import { Link, useNavigate } from 'react-router-dom';
+import { Sparkles, Palette, Edit2, Trash2, Settings, Plus, FolderOpen, Tag, Store } from 'lucide-react';
 import './MenuManager.css';
 
 import { uploadCategoryBanner } from '../../services/menuService';
@@ -36,9 +37,6 @@ export default function MenuManager() {
   const products = React.useMemo(() => {
     return rawProducts || [];
   }, [rawProducts]);
-
-  const isCatLimitReached = false;
-  const isProdLimitReached = false;
 
   // 2. Drag and Drop Hook
   const {
@@ -124,14 +122,14 @@ export default function MenuManager() {
         </div>
       ) : !isLoading && (!rawCategories || rawCategories.length === 0) ? (
         <div className="card" style={{ textAlign: 'center', padding: '4rem 2rem', maxWidth: '600px', margin: '2rem auto', borderRadius: '16px', boxShadow: 'var(--shadow-md)', border: '1px solid var(--border-light)' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1.5rem' }}>✨</div>
+          <div style={{ fontSize: '3rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'center', color: 'var(--primary)' }}><Sparkles size={48} /></div>
           <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '1rem' }}>Crea tu Menú Digital</h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '2rem', maxWidth: '460px', marginLeft: 'auto', marginRight: 'auto' }}>
             ¡Parece que aún no tienes categorías ni platos creados! Comienza eligiendo una de nuestras plantillas profesionales diseñadas para restaurantes, cafés y bares para configurar tu diseño en segundos.
           </p>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link to="/design" className="btn-primary" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', fontWeight: 700 }}>
-              🎨 Elegir Plantilla
+              <Palette size={16} /> Elegir Plantilla
             </Link>
             <button onClick={() => openCatModal()} className="btn-secondary" style={{ padding: '0.75rem 1.5rem', fontWeight: 600 }}>
               + Crear Categoría Manual
@@ -145,29 +143,12 @@ export default function MenuManager() {
             <div className="categories-header">
               <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Categorías</h3>
               <button 
-                className={isCatLimitReached ? "btn-primary limit-blocked-btn" : "btn-primary"} 
+                className="btn-primary" 
                 style={{ 
                   padding: '0.4rem 0.8rem', 
-                  fontSize: '0.875rem',
-                  ...(isCatLimitReached ? {
-                    opacity: 0.65,
-                    cursor: 'pointer',
-                    backgroundColor: '#64748b',
-                    borderColor: '#64748b'
-                  } : {})
+                  fontSize: '0.875rem'
                 }} 
-                onClick={() => {
-                  if (isCatLimitReached) {
-                    showAlert(
-                      "Has alcanzado el límite de 3 categorías del Plan Tradicional. Para crear categorías y productos ilimitados, te invitamos a actualizar al Plan Carta.",
-                      "Límite de Categorías Alcanzado",
-                      "warning",
-                      () => navigate('/subscription')
-                    );
-                  } else {
-                    openCatModal();
-                  }
-                }}
+                onClick={() => openCatModal()}
               >
                 + Añadir
               </button>
@@ -189,9 +170,9 @@ export default function MenuManager() {
                             {cat.startTime && cat.endTime && ` • ${cat.startTime}-${cat.endTime}`}
                           </div>
                         </div>
-                        <div className="category-item-actions desktop-only">
-                          <button onClick={(e) => { e.stopPropagation(); openCatModal(cat); }} className="cat-action-btn" title="Editar">✏️</button>
-                          <button onClick={(e) => { e.stopPropagation(); handleDeleteCategory(cat.id); }} className="cat-action-btn delete" title="Eliminar">🗑️</button>
+                        <div className="category-item-actions desktop-only" style={{ display: 'flex', gap: '4px' }}>
+                          <button onClick={(e) => { e.stopPropagation(); openCatModal(cat); }} className="cat-action-btn" title="Editar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Edit2 size={12} /></button>
+                          <button onClick={(e) => { e.stopPropagation(); handleDeleteCategory(cat.id); }} className="cat-action-btn delete" title="Eliminar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={12} /></button>
                         </div>
                       </div>
                   );
@@ -212,41 +193,25 @@ export default function MenuManager() {
                   <button 
                     onClick={() => openCatModal(currentCategoryObj)} 
                     className="mobile-only-inline cat-edit-inline-btn"
+                    style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                   >
-                    ✏️
+                    <Edit2 size={12} />
                   </button>
                 )}
               </h3>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <button 
                   className="btn-primary" 
-                  style={{ backgroundColor: '#475569' }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: '#475569' }}
                   disabled={!activeCategory} 
                   onClick={() => setShowSubcatModal(true)}
                 >
-                  ⚙️ Nueva Subcategoría
+                  <Settings size={14} /> Nueva Subcategoría
                 </button>
                 <button 
-                  className={isProdLimitReached ? "btn-primary limit-blocked-btn" : "btn-primary"} 
-                  disabled={!activeCategory && !isProdLimitReached}
-                  style={isProdLimitReached ? {
-                    opacity: 0.65,
-                    cursor: 'pointer',
-                    backgroundColor: '#64748b',
-                    borderColor: '#64748b'
-                  } : {}}
-                  onClick={() => {
-                    if (isProdLimitReached) {
-                      showAlert(
-                        "Has alcanzado el límite de 20 productos del Plan Tradicional. Para crear categorías y productos ilimitados, te invitamos a actualizar al Plan Carta.",
-                        "Límite de Productos Alcanzado",
-                        "warning",
-                        () => navigate('/subscription')
-                      );
-                    } else {
-                      openProdModal();
-                    }
-                  }}
+                  className="btn-primary" 
+                  disabled={!activeCategory}
+                  onClick={() => openProdModal()}
                 >
                   + Añadir Producto
                 </button>
@@ -283,9 +248,10 @@ export default function MenuManager() {
                       fontWeight: 600,
                       display: 'inline-flex',
                       alignItems: 'center',
+                      gap: '4px'
                     }}
                   >
-                    📂 {sub.name}
+                    <FolderOpen size={12} /> {sub.name}
                   </span>
                 ))}
               </div>
@@ -326,21 +292,26 @@ export default function MenuManager() {
                         <div className="product-info">
                           <div className="product-name-row">
                             <div className="product-name">{prod.name}</div>
-                            <div className="product-actions">
-                              <button onClick={() => openProdModal(prod)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', fontSize: '0.9rem' }}>✏️</button>
-                              <button onClick={() => handleDeleteProduct(prod)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', fontSize: '0.9rem' }}>🗑️</button>
+                            <div className="product-actions" style={{ display: 'flex', gap: '4px' }}>
+                              <button onClick={() => openProdModal(prod)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', display: 'inline-flex', alignItems: 'center' }} title="Editar"><Edit2 size={14} /></button>
+                              <button onClick={() => handleDeleteProduct(prod)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', display: 'inline-flex', alignItems: 'center' }} title="Eliminar"><Trash2 size={14} /></button>
                             </div>
                           </div>
                           <div className="product-desc">{prod.description}</div>
                           <div className="product-price">{formatPrice(prod.price)}</div>
-                          <div className="product-badges">
-                            {prod.subcategory && (
-                              <span style={{ fontSize: '0.72rem', backgroundColor: '#f1f5f9', padding: '2px 7px', borderRadius: '4px', color: '#475569' }}>
-                                📂 {prod.subcategory}
+                          <div className="product-badges" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+                            {prod.sku && (
+                              <span style={{ fontSize: '0.72rem', backgroundColor: '#fef3c7', padding: '2px 7px', borderRadius: '4px', color: '#d97706', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                <Tag size={10} /> SKU: {prod.sku}
                               </span>
                             )}
-                            <span style={{ fontSize: '0.72rem', backgroundColor: '#e0e7ff', padding: '2px 7px', borderRadius: '4px', color: '#4338ca' }}>
-                              🏪 {isGlobal ? '0 sedes' : `${prod.branchIds.length} sedes`}
+                            {prod.subcategory && (
+                              <span style={{ fontSize: '0.72rem', backgroundColor: '#f1f5f9', padding: '2px 7px', borderRadius: '4px', color: '#475569', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                <FolderOpen size={10} /> {prod.subcategory}
+                              </span>
+                            )}
+                            <span style={{ fontSize: '0.72rem', backgroundColor: '#e0e7ff', padding: '2px 7px', borderRadius: '4px', color: '#4338ca', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <Store size={10} /> {isGlobal ? '0 sedes' : `${prod.branchIds.length} sedes`}
                             </span>
                           </div>
                         </div>

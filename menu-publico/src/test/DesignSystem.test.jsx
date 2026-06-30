@@ -4,15 +4,23 @@ import { useRestaurantDesign } from '../hooks/useRestaurantDesign';
 import * as firestore from 'firebase/firestore';
 
 // Mock de Firebase
-vi.mock('firebase/firestore', () => ({
-  getFirestore: vi.fn(),
-  initializeFirestore: vi.fn(() => ({})),
-  persistentLocalCache: vi.fn(),
-  persistentMultipleTabManager: vi.fn(),
-  doc: vi.fn(),
-  getDoc: vi.fn(),
-  onSnapshot: vi.fn(() => vi.fn()), // Mock returns an unsubscribe function
-}));
+vi.mock('firebase/firestore', () => {
+  const getDocMock = vi.fn();
+  return {
+    getFirestore: vi.fn(),
+    initializeFirestore: vi.fn(() => ({})),
+    persistentLocalCache: vi.fn(),
+    persistentMultipleTabManager: vi.fn(),
+    doc: vi.fn(),
+    getDoc: getDocMock,
+    onSnapshot: vi.fn((ref, callback) => {
+      getDocMock(ref).then(snap => {
+        if (callback) callback(snap);
+      }).catch(() => {});
+      return vi.fn();
+    }),
+  };
+});
 
 describe('useRestaurantDesign hook', () => {
   const restaurantId = 'test-res';

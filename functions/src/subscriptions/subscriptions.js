@@ -9,7 +9,7 @@ const { PLAN_CONFIG, calcularDiasRestantes } = require("./pricing");
 
 if (!admin.apps.length) admin.initializeApp();
 const db = admin.firestore();
-const client = new MercadoPagoConfig({ accessToken: config.MP_ACCESS_TOKEN, options: { timeout: 30000 } });
+const client = new MercadoPagoConfig({ accessToken: String(config.MP_ACCESS_TOKEN || "").replace(/\r?\n|\r/g, "").trim(), options: { timeout: 30000 } });
 
 function getBogotaStartOfWeek() {
   const formatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' });
@@ -30,25 +30,17 @@ function getBogotaStartOfWeek() {
  * Soporta primera suscripción (trial gratis) y cambio de plan (prorrateo).
  */
 async function handleCreateSubscription(request) {
-  const { restaurantId, planLevel, payerEmail, billing, branches, addBranches, mixedPlans } = request.data;
+  const { restaurantId, payerEmail, billing, branches, addBranches } = request.data;
 
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "El usuario debe estar autenticado.");
   }
 
-  if (!restaurantId || planLevel === undefined || !payerEmail) {
-    throw new HttpsError("invalid-argument", "Faltan parámetros requeridos (restaurantId, planLevel, payerEmail).");
+  if (!restaurantId || !payerEmail) {
+    throw new HttpsError("invalid-argument", "Faltan parámetros requeridos (restaurantId, payerEmail).");
   }
 
-  const levelInt = parseInt(planLevel);
-  const isMixed = !!mixedPlans;
-  const p0Branches = isMixed ? (parseInt(mixedPlans[0]) || 0) : 0;
-  const p1Branches = isMixed ? (parseInt(mixedPlans[1]) || 0) : 0;
-  const p2Branches = isMixed ? (parseInt(mixedPlans[2]) || 0) : 0;
-
-  if (!isMixed && ![0, 1, 2].includes(levelInt)) {
-    throw new HttpsError("invalid-argument", "planLevel inválido. Debe ser 0, 1 o 2.");
-  }
+  const levelInt = 2;
 
   // ── Cargar precios efectivos desde Firestore (server-side source of truth) ──
   let EFFECTIVE_CONFIG = { ...PLAN_CONFIG };
@@ -66,16 +58,12 @@ async function handleCreateSubscription(request) {
 
       if (promoActive && promo.plans) {
         EFFECTIVE_CONFIG = {
-          0: { ...PLAN_CONFIG[0], ...(promo.plans[0] || {}), annualTotal: (promo.plans[0]?.monthly || PLAN_CONFIG[0].monthly) * 10, annualPerMonth: Math.round(((promo.plans[0]?.monthly || PLAN_CONFIG[0].monthly) * 10) / 12) },
-          1: { ...PLAN_CONFIG[1], ...(promo.plans[1] || {}), annualTotal: (promo.plans[1]?.monthly || PLAN_CONFIG[1].monthly) * 10, annualPerMonth: Math.round(((promo.plans[1]?.monthly || PLAN_CONFIG[1].monthly) * 10) / 12) },
           2: { ...PLAN_CONFIG[2], ...(promo.plans[2] || {}), annualTotal: (promo.plans[2]?.monthly || PLAN_CONFIG[2].monthly) * 10, annualPerMonth: Math.round(((promo.plans[2]?.monthly || PLAN_CONFIG[2].monthly) * 10) / 12) },
         };
         promoApplied = true;
         console.log('💸 Precio promocional aplicado:', JSON.stringify(EFFECTIVE_CONFIG));
       } else {
         EFFECTIVE_CONFIG = {
-          0: { ...PLAN_CONFIG[0], ...(base[0] || {}), annualTotal: (base[0]?.monthly || PLAN_CONFIG[0].monthly) * 10, annualPerMonth: Math.round(((base[0]?.monthly || PLAN_CONFIG[0].monthly) * 10) / 12) },
-          1: { ...PLAN_CONFIG[1], ...(base[1] || {}), annualTotal: (base[1]?.monthly || PLAN_CONFIG[1].monthly) * 10, annualPerMonth: Math.round(((base[1]?.monthly || PLAN_CONFIG[1].monthly) * 10) / 12) },
           2: { ...PLAN_CONFIG[2], ...(base[2] || {}), annualTotal: (base[2]?.monthly || PLAN_CONFIG[2].monthly) * 10, annualPerMonth: Math.round(((base[2]?.monthly || PLAN_CONFIG[2].monthly) * 10) / 12) },
         };
       }
@@ -84,17 +72,17 @@ async function handleCreateSubscription(request) {
     console.warn('[pricing] No se pudo leer platform_settings/pricing, usando fallback:', pricingErr.message);
   }
 
-  const planData = EFFECTIVE_CONFIG[isMixed ? 2 : levelInt];
-  const numBranches = isMixed ? (p0Branches + p1Branches + p2Branches) : Math.max(1, parseInt(branches) || 1);
+  const planData = EFFECTIVE_CONFIG[2];
+  const numBranches = Math.max(1, parseInt(branches) || 1);
   const billingCycle = billing === "annual" ? "annual" : "monthly";
 
   const cycleAmount = billingCycle === "annual"
-    ? (isMixed ? (EFFECTIVE_CONFIG[0].annualTotal * p0Branches) + (EFFECTIVE_CONFIG[1].annualTotal * p1Branches) + (EFFECTIVE_CONFIG[2].annualTotal * p2Branches) : planData.annualTotal * numBranches)
-    : (isMixed ? (EFFECTIVE_CONFIG[0].monthly * p0Branches) + (EFFECTIVE_CONFIG[1].monthly * p1Branches) + (EFFECTIVE_CONFIG[2].monthly * p2Branches) : planData.monthly * numBranches);
+    ? planData.annualTotal * numBranches
+    : planData.monthly * numBranches;
 
   const monthlyEquivalent = billingCycle === "annual"
-    ? (isMixed ? Math.round((EFFECTIVE_CONFIG[0].annualTotal / 12) * p0Branches) + Math.round((EFFECTIVE_CONFIG[1].annualTotal / 12) * p1Branches) + Math.round((EFFECTIVE_CONFIG[2].annualTotal / 12) * p2Branches) : Math.round((planData.annualTotal / 12) * numBranches))
-    : (isMixed ? (EFFECTIVE_CONFIG[0].monthly * p0Branches) + (EFFECTIVE_CONFIG[1].monthly * p1Branches) + (EFFECTIVE_CONFIG[2].monthly * p2Branches) : planData.monthly * numBranches);
+    ? Math.round((planData.annualTotal / 12) * numBranches)
+    : planData.monthly * numBranches;
 
   try {
     const preApproval = new PreApproval(client);
@@ -107,17 +95,47 @@ async function handleCreateSubscription(request) {
       (existingSub.status === "authorized" || existingSub.status === "active") &&
       existingSub.id;
 
-    // mixed plans also count current levels
-    const currentP0 = existingSub?.isMixed ? (parseInt(existingSub.branchesPlan0) || 0) : (parseInt(existingSub?.planLevel) === 0 ? (parseInt(existingSub.branches) || 1) : 0);
-    const currentP1 = existingSub?.isMixed ? (parseInt(existingSub.branchesPlan1) || 0) : (parseInt(existingSub?.planLevel) === 1 ? (parseInt(existingSub.branches) || 1) : 0);
-    const currentP2 = existingSub?.isMixed ? (parseInt(existingSub.branchesPlan2) || 0) : (parseInt(existingSub?.planLevel) === 2 ? (parseInt(existingSub.branches) || 1) : 0);
-
     const isChangingPlan = hasActivePlan && (
-      parseInt(existingSub.planLevel) !== levelInt || 
       addBranches || 
       existingSub.cancelAtPeriodEnd === true
     );
     const alreadyUsedTrial = existingSub?.trialUsed === true;
+
+    // Calcular días gratis restantes del registro del restaurante
+    let regTrialDaysRemaining = 0;
+    const createdAtVal = restaurantSnap.exists ? restaurantSnap.data()?.createdAt : null;
+    if (createdAtVal) {
+      let createdDate;
+      if (typeof createdAtVal.toDate === 'function') {
+        createdDate = createdAtVal.toDate();
+      } else if (createdAtVal.seconds !== undefined) {
+        createdDate = new Date(createdAtVal.seconds * 1000);
+      } else {
+        createdDate = new Date(createdAtVal);
+      }
+
+      if (!isNaN(createdDate.getTime())) {
+        let configTrialDays = 7;
+        try {
+          const pricingSnap = await db.doc('platform_settings/pricing').get();
+          if (pricingSnap.exists) {
+            const data = pricingSnap.data();
+            if (typeof data.trialDays === 'number' && data.trialDays >= 1) {
+              configTrialDays = data.trialDays;
+            }
+          }
+        } catch (e) {
+          console.warn('[pricing] Error reading trialDays:', e.message);
+        }
+
+        const nowTime = new Date();
+        const diffTime = nowTime.getTime() - createdDate.getTime();
+        const diffDays = diffTime / (1000 * 60 * 60 * 24);
+        if (diffDays >= 0 && diffDays < configTrialDays) {
+          regTrialDaysRemaining = Math.max(0, Math.ceil(configTrialDays - diffDays));
+        }
+      }
+    }
 
     const now = new Date();
     const cycleEnd = existingSub?.cycleEndDate ? new Date(existingSub.cycleEndDate) : null;
@@ -132,28 +150,12 @@ async function handleCreateSubscription(request) {
       const diasRestantes = calcularDiasRestantes(existingSub);
       const oldCycleMonthly = (() => {
         const oldBilling = existingSub.billing || "monthly";
-        const savedMonthly0 = existingSub.promotionPrice?.[0]?.monthly || EFFECTIVE_CONFIG[0].monthly;
-        const savedMonthly1 = existingSub.promotionPrice?.[1]?.monthly || EFFECTIVE_CONFIG[1].monthly;
         const savedMonthly2 = existingSub.promotionPrice?.[2]?.monthly || EFFECTIVE_CONFIG[2].monthly;
-        const savedAnnual0  = savedMonthly0 * 10;
-        const savedAnnual1  = savedMonthly1 * 10;
         const savedAnnual2  = savedMonthly2 * 10;
-        if (existingSub.isMixed) {
-          const oldP0 = parseInt(existingSub.branchesPlan0) || 0;
-          const oldP1 = parseInt(existingSub.branchesPlan1) || 0;
-          const oldP2 = parseInt(existingSub.branchesPlan2) || 0;
-          return oldBilling === "annual"
-            ? Math.round((savedAnnual0 / 12) * oldP0) + Math.round((savedAnnual1 / 12) * oldP1) + Math.round((savedAnnual2 / 12) * oldP2)
-            : (savedMonthly0 * oldP0) + (savedMonthly1 * oldP1) + (savedMonthly2 * oldP2);
-        } else {
-          const oldLevel = parseInt(existingSub.planLevel);
-          const oldMonthly = oldLevel === 2 ? savedMonthly2 : (oldLevel === 1 ? savedMonthly1 : savedMonthly0);
-          const oldAnnual  = oldLevel === 2 ? savedAnnual2  : (oldLevel === 1 ? savedAnnual1  : savedAnnual0);
-          const oldBranches = parseInt(existingSub.branches) || 1;
-          return oldBilling === "annual"
-            ? Math.round((oldAnnual / 12) * oldBranches)
-            : oldMonthly * oldBranches;
-        }
+        const oldBranches = parseInt(existingSub.branches) || 1;
+        return oldBilling === "annual"
+          ? Math.round((savedAnnual2 / 12) * oldBranches)
+          : savedMonthly2 * oldBranches;
       })();
       const credit = Math.round((oldCycleMonthly / 30) * diasRestantes);
 
@@ -173,29 +175,34 @@ async function handleCreateSubscription(request) {
       freeTrial = { frequency: diasRestantes, frequency_type: "days" };
       oldSubIdToCancel = existingSub.id;
     } else if (!alreadyUsedTrial) {
-      // Read trialDays dynamically from Firestore (configured from Admin Panel)
-      let configuredTrialDays = 7;
+      // Read subTrialDays dynamically from Firestore (configured from Admin Panel)
+      let configuredSubTrialDays = 0;
       try {
         const pricingSnap2 = await db.doc('platform_settings/pricing').get();
         if (pricingSnap2.exists) {
-          const td = pricingSnap2.data()?.trialDays;
-          if (typeof td === 'number' && td >= 1) configuredTrialDays = td;
+          const td = pricingSnap2.data()?.subTrialDays;
+          if (typeof td === 'number' && td >= 0) configuredSubTrialDays = td;
         }
       } catch (trialErr) {
-        console.warn('[trial] No se pudo leer trialDays, usando fallback 7:', trialErr.message);
+        console.warn('[trial] No se pudo leer subTrialDays, usando fallback 0:', trialErr.message);
       }
-      freeTrial = { frequency: configuredTrialDays, frequency_type: "days" };
+      
+      const totalTrialDays = configuredSubTrialDays + regTrialDaysRemaining;
+      
+      if (totalTrialDays > 0) {
+        freeTrial = { frequency: totalTrialDays, frequency_type: "days" };
+      } else {
+        freeTrial = null;
+      }
     }
 
-    const planLabel = isMixed ? "Personalizado" : planData.label;
+    const planLabel = planData.label;
     const cycleLabel = billingCycle === "annual" ? "Anual" : "Mensual";
     const branchLabel = numBranches > 1 ? `${numBranches} sedes` : "1 sede";
 
     const payload = {
       reason: `MiProdu · Plan ${planLabel} · ${branchLabel} · ${cycleLabel}`,
-      external_reference: isMixed 
-        ? `${restaurantId}|mixed|${p0Branches}|${p1Branches}|${p2Branches}|${billingCycle}${oldSubIdToCancel ? "|" + oldSubIdToCancel : ""}`
-        : `${restaurantId}|${levelInt}|${numBranches}|${billingCycle}${oldSubIdToCancel ? "|" + oldSubIdToCancel : ""}`,
+      external_reference: `${restaurantId}|${levelInt}|${numBranches}|${billingCycle}${oldSubIdToCancel ? "|" + oldSubIdToCancel : ""}`,
       payer_email: payerEmail,
       auto_recurring: {
         frequency: billingCycle === "annual" ? 12 : 1,
@@ -203,8 +210,8 @@ async function handleCreateSubscription(request) {
         transaction_amount: transactionAmount,
         currency_id: config.CURRENCY || "COP",
       },
-      back_url: "https://app.cartaymesa.com/subscription-status",
-      notification_url: "https://webhookmp-zq66x56soq-uc.a.run.app",
+      back_url: "https://app.miprodu.com/subscription-status",
+      notification_url: "https://webhookmp-pq3tokpi6q-uc.a.run.app",
       status: "pending",
     };
 
@@ -221,8 +228,6 @@ async function handleCreateSubscription(request) {
         await db.collection('restaurants').doc(restaurantId).set({
           subscription: {
             promotionPrice: {
-              0: { monthly: EFFECTIVE_CONFIG[0].monthly, annualTotal: EFFECTIVE_CONFIG[0].annualTotal },
-              1: { monthly: EFFECTIVE_CONFIG[1].monthly, annualTotal: EFFECTIVE_CONFIG[1].annualTotal },
               2: { monthly: EFFECTIVE_CONFIG[2].monthly, annualTotal: EFFECTIVE_CONFIG[2].annualTotal },
             }
           }

@@ -34,7 +34,7 @@ export default function AttendanceHistoryModal({ isOpen, onClose, restaurantId }
     <div className="modal-overlay" style={{ zIndex: 1000 }}>
       <div className="modal-box" style={{ maxWidth: '800px', width: '90%', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h2 className="modal-title" style={{ margin: 0 }}>⏱️ Historial de Asistencia y Turnos</h2>
+          <h2 className="modal-title" style={{ margin: 0 }}>Historial de Asistencia y Turnos</h2>
           <button style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer' }} onClick={onClose}>✕</button>
         </div>
         
@@ -50,7 +50,7 @@ export default function AttendanceHistoryModal({ isOpen, onClose, restaurantId }
             <option value={30}>Últimos 30 días</option>
           </select>
           <button className="btn-secondary" style={{ padding: '0.5rem 1rem' }} onClick={loadLogs} disabled={loading}>
-            {loading ? 'Cargando...' : '🔄 Actualizar'}
+            {loading ? 'Cargando...' : 'Actualizar'}
           </button>
         </div>
 
@@ -83,7 +83,7 @@ export default function AttendanceHistoryModal({ isOpen, onClose, restaurantId }
                           color: isClockIn ? '#10b981' : '#ef4444', 
                           border: `1px solid ${isClockIn ? '#10b981' : '#ef4444'}` 
                         }}>
-                          {isClockIn ? '🟢 Entrada' : '🔴 Salida'}
+                          {isClockIn ? 'Entrada' : 'Salida'}
                         </span>
                       </td>
                       <td style={{ fontWeight: 600 }}>{log.waiterName}</td>

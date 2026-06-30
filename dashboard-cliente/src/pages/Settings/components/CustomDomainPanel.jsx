@@ -332,10 +332,10 @@ export default function CustomDomainPanel({ restaurantId, restaurantData }) {
                     </td>
                     <td style={{ padding: '10px 12px' }}>
                       <div style={S.codeBox}>
-                        <span style={{ fontFamily: 'monospace', color: '#1E293B' }}>menu.cartaymesa.com</span>
+                        <span style={{ fontFamily: 'monospace', color: '#1E293B' }}>miprodu.com</span>
                         <button
                           style={{ ...S.btnOutline, padding: '4px 10px', fontSize: '0.75rem' }}
-                          onClick={() => handleCopy('menu.cartaymesa.com')}
+                          onClick={() => handleCopy('miprodu.com')}
                         >
                           <Copy size={12} />
                           {copied ? '¡Copiado!' : 'Copiar'}

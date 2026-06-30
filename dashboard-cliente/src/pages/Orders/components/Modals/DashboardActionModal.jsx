@@ -2,6 +2,7 @@ import React from 'react';
 import { useDashboard } from '../../context/DashboardContext';
 import { printTicket } from '../../../../utils/printTicket';
 import { updateOrder } from '../../../../services/orderService';
+import { Trash2, Undo2, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 export default function DashboardActionModal() {
   const {
@@ -51,8 +52,8 @@ export default function DashboardActionModal() {
     <div className="rd-modal-overlay" style={{ background: 'rgba(15, 23, 42, 0.9)', backdropFilter: 'blur(8px)', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 20000 }}>
           <div className="rd-modal-content" style={{ maxWidth: '450px', borderRadius: '32px', padding: '3rem', border: '1px solid rgba(255,255,255,0.1)', background: 'white' }}>
             <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-              <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>
-                {isCancellation ? '🚫' : '↩️'}
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem', color: isCancellation ? '#ef4444' : '#64748b' }}>
+                {isCancellation ? <Trash2 size={48} strokeWidth={1.5} /> : <Undo2 size={48} strokeWidth={1.5} />}
               </div>
               <h2 style={{ fontSize: '1.75rem', fontWeight: 900, color: '#0f172a' }}>
                 {title}
@@ -124,10 +125,16 @@ export default function DashboardActionModal() {
                 </div>
               </div>
               
-              <div style={{ textAlign: 'center', fontSize: '0.75rem', color: actionIsMerma ? '#e11d48' : '#059669', fontWeight: 600 }}>
-                {actionIsMerma 
-                  ? '⚠️ Se registrará como pérdida (Merma/Baja)' 
-                  : '✅ Se repondrán los insumos al inventario (si aplica)'}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', textAlign: 'center', fontSize: '0.75rem', color: actionIsMerma ? '#e11d48' : '#059669', fontWeight: 600 }}>
+                {actionIsMerma ? (
+                  <>
+                    <AlertTriangle size={14} /> Se registrará como pérdida (Merma/Baja)
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 size={14} /> Se repondrán los insumos al inventario (si aplica)
+                  </>
+                )}
               </div>
 
               <div className="modal-actions" style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>

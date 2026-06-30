@@ -53,19 +53,18 @@ export function useGeneralSettings(restaurantId, globalPlanLevel, globalRestaura
       mercadoPago: { enabled: false, accessToken: '', publicKey: '' },
       bold: { enabled: false, apiKey: '', secretKey: '' }
     },
+    marketingPixels: {
+      metaPixelId: '',
+      googleAdsId: '',
+      tiktokPixelId: ''
+    },
     allowAllCashiersToBill: false,
     requireOwnerPinInUnipersonal: false,
     alwaysOpenShift: false,
     tableGPSRadiusLimit: 30,
-    // ── Parámetros de Reservas ──
-    openingTime: '12:00',
-    closingTime: '23:00',
-    averageStayMinutes: 120,
-    slotIntervalMinutes: 30,
-    reservationLeadTimeMinutes: 60,
     timezone: 'America/Bogota'
   });
-  
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [slugStatus, setSlugStatus] = useState('idle');
@@ -85,7 +84,7 @@ export function useGeneralSettings(restaurantId, globalPlanLevel, globalRestaura
     if (mapped !== selectedBranchId) {
       setSelectedBranchId(mapped);
     }
-  }, [globalBranchId]);
+  }, [globalBranchId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (restaurantId) {
@@ -128,7 +127,12 @@ export function useGeneralSettings(restaurantId, globalPlanLevel, globalRestaura
           enableBarService: data.enableBarService ?? true,
           enableFastService: data.enableFastService ?? true,
           tableGPSRadiusLimit: data.tableGPSRadiusLimit || 30,
-          originalLanguage: data.originalLanguage || 'es'
+          originalLanguage: data.originalLanguage || 'es',
+          marketingPixels: {
+            metaPixelId: data.marketingPixels?.metaPixelId || '',
+            googleAdsId: data.marketingPixels?.googleAdsId || '',
+            tiktokPixelId: data.marketingPixels?.tiktokPixelId || ''
+          }
         }));
         setLoading(false);
       }).catch(() => setLoading(false));
@@ -186,21 +190,20 @@ export function useGeneralSettings(restaurantId, globalPlanLevel, globalRestaura
             secretKey: globalRestaurant.payments?.bold?.secretKey || ''
           }
         },
+        marketingPixels: {
+          metaPixelId: globalRestaurant.marketingPixels?.metaPixelId || '',
+          googleAdsId: globalRestaurant.marketingPixels?.googleAdsId || '',
+          tiktokPixelId: globalRestaurant.marketingPixels?.tiktokPixelId || ''
+        },
         allowAllCashiersToBill: globalRestaurant.allowAllCashiersToBill || false,
         allowMultipleWaitersPerTable: globalRestaurant.allowMultipleWaitersPerTable || false,
         requireOwnerPinInUnipersonal: globalRestaurant.requireOwnerPinInUnipersonal || false,
         alwaysOpenShift: globalRestaurant.alwaysOpenShift || false,
         tableGPSRadiusLimit: globalRestaurant.tableGPSRadiusLimit || 30,
-        // ── Parámetros de Reservas ──
-        openingTime: globalRestaurant.openingTime || '12:00',
-        closingTime: globalRestaurant.closingTime || '23:00',
-        averageStayMinutes: globalRestaurant.averageStayMinutes || 120,
-        slotIntervalMinutes: globalRestaurant.slotIntervalMinutes || 30,
-        reservationLeadTimeMinutes: globalRestaurant.reservationLeadTimeMinutes || 60,
         timezone: globalRestaurant.timezone || 'America/Bogota'
       }));
     }
-  }, [selectedBranchId, globalRestaurant, branches, restaurantId]);
+  }, [selectedBranchId, globalRestaurant, branches, restaurantId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!globalLoading) setLoading(false);
@@ -325,8 +328,6 @@ export function useGeneralSettings(restaurantId, globalPlanLevel, globalRestaura
         }
       }
 
-
-
       // Si el usuario desactiva todas las opciones de canales, dejamos Servicio Rápido activo por defecto
       const hasAnyChannelActive = 
         (sanitizedConfig.enableTableService !== false) || 
@@ -416,8 +417,6 @@ export function useGeneralSettings(restaurantId, globalPlanLevel, globalRestaura
     }
   };
 
-
-
   const handlePaymentConfigChange = (gateway, field, value) => {
     // Determine current effective plan level
     const currentPlanLevel = selectedBranchId 
@@ -469,6 +468,16 @@ export function useGeneralSettings(restaurantId, globalPlanLevel, globalRestaura
     }));
   };
 
+  const handleMarketingPixelsChange = (field, value) => {
+    setConfig(prev => ({
+      ...prev,
+      marketingPixels: {
+        ...(prev.marketingPixels || {}),
+        [field]: value
+      }
+    }));
+  };
+
   return {
     config, setConfig,
     loading,
@@ -482,6 +491,7 @@ export function useGeneralSettings(restaurantId, globalPlanLevel, globalRestaura
     handleSave,
     handlePaymentConfigChange,
     handleWhatsappConfigChange,
+    handleMarketingPixelsChange,
     ownerPin, setOwnerPin,
     ownerOldPinInput, setOwnerOldPinInput,
     ownerNewPinInput, setOwnerNewPinInput

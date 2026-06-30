@@ -135,7 +135,7 @@ export default function ProductDetailsModal({
             <>
               <div className="product-modal-obs-group" style={{ marginBottom: '1.5rem', opacity: isAvailable ? 1 : 0.6 }}>
                 <label className="product-modal-label" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', opacity: 0.7 }}>Observaciones</label>
-                <input type="text" className="product-modal-input" disabled={!isAvailable} value={observations} onChange={e => setObservations(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)', background: isDark ? '#1e293b' : '#f8fafc', color: isDark ? 'white' : 'black', boxSizing: 'border-box', cursor: isAvailable ? 'text' : 'not-allowed' }} placeholder={isAvailable ? "Ej: sin cebolla, salsa aparte..." : "No disponible fuera de horario"} />
+                <input type="text" className="product-modal-input" disabled={!isAvailable} value={observations} onChange={e => setObservations(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)', background: isDark ? '#1e293b' : '#f8fafc', color: isDark ? 'white' : 'black', boxSizing: 'border-box', cursor: isAvailable ? 'text' : 'not-allowed' }} placeholder={isAvailable ? "Ej: Talla M, color azul, o especificaciones..." : "No disponible fuera de horario"} />
               </div>
               <button 
                 onClick={isAvailable ? handleConfirm : undefined} 

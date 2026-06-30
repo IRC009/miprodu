@@ -1,20 +1,19 @@
 import { useState, useEffect } from 'react';
-import { getReservations } from '../../../services/reservationService';
 import { listenToOrders } from '../../../services/orderService';
 import { getWaiters } from '../../../services/waiterService';
 import { getBranches, getTables } from '../../../services/branchService';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../../services/firebase';
 
+import { getEngagementStats } from '../../../services/analyticsService';
+
 export function useDashboardData(restaurantId, isBranchAllowed) {
   const [stats, setStats] = useState({
     customers: 0,
-    pendingReservations: 0,
-    totalReservations: 0,
     visits: 0,
+    visitsGrowth: 0,
     activeTables: 0
   });
-  const [recentReservations, setRecentReservations] = useState([]);
   const [waiterStats, setWaiterStats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [branches, setBranches] = useState([]);
@@ -32,24 +31,61 @@ export function useDashboardData(restaurantId, isBranchAllowed) {
 
         const allowedBranchesIds = allowed.map(b => b.id);
         const primaryBranch = !isBranchAllowed('all') && allowedBranchesIds.length > 0 ? allowedBranchesIds[0] : null;
-
-        // 1. Reservaciones
-        let reservations = await getReservations(restaurantId);
-        reservations = reservations.filter(r => isBranchAllowed(r.branchId || 'none'));
-        const pending = reservations.filter(r => r.status === 'pending');
         
-        // 2. Clientes (CRM)
+        // 1. Clientes (CRM)
         const crmSnap = await getDocs(collection(db, `restaurants/${restaurantId}/customers`));
         
+        // 2. Visitas reales al catálogo desde analytics_buckets
+        const now = new Date();
+        const endDateISO = now.toISOString();
+        const fourteenDaysAgo = new Date();
+        fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+        const startDateISO = fourteenDaysAgo.toISOString();
+
+        let realVisits = 0;
+        let growthPercent = 0;
+
+        try {
+          const engagementData = await getEngagementStats(restaurantId, 'ALL', startDateISO, endDateISO);
+          
+          const todayStr = now.toISOString().split('T')[0];
+          
+          // Calcular marcas de tiempo para los últimos 7 días y los 7 días anteriores
+          const sevenDaysAgo = new Date();
+          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+          const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
+
+          const fourteenDaysAgoStr = fourteenDaysAgo.toISOString().split('T')[0];
+
+          let currWeekViews = 0;
+          let prevWeekViews = 0;
+
+          engagementData.forEach(d => {
+            const dateVal = d.date;
+            const viewsVal = Number(d.views || 0);
+            if (dateVal >= sevenDaysAgoStr && dateVal <= todayStr) {
+              currWeekViews += viewsVal;
+            } else if (dateVal >= fourteenDaysAgoStr && dateVal < sevenDaysAgoStr) {
+              prevWeekViews += viewsVal;
+            }
+          });
+
+          realVisits = currWeekViews;
+          if (prevWeekViews > 0) {
+            growthPercent = Math.round(((currWeekViews - prevWeekViews) / prevWeekViews) * 100);
+          } else if (currWeekViews > 0) {
+            growthPercent = 100;
+          }
+        } catch (err) {
+          console.warn("Error calculating real visits for dashboard:", err);
+        }
+
         setStats(prev => ({
           ...prev,
           customers: crmSnap.size,
-          pendingReservations: pending.length,
-          totalReservations: reservations.length,
-          visits: Math.floor(crmSnap.size * 5.4) 
+          visits: realVisits,
+          visitsGrowth: growthPercent
         }));
-
-        setRecentReservations(reservations.slice(0, 5));
 
         // 3. Meseros
         const waiters = await getWaiters(restaurantId);
@@ -106,7 +142,6 @@ export function useDashboardData(restaurantId, isBranchAllowed) {
 
   return {
     stats,
-    recentReservations,
     waiterStats,
     loading,
     branches

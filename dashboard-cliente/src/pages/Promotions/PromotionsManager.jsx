@@ -15,7 +15,7 @@ export default function PromotionsManager() {
   // Hook para popups clásicos (Plan Gratis)
   const popupState = usePromotionsData(RESTAURANT_ID, showAlert);
 
-  // Hook para reglas comerciales avanzadas (Carta / Carta y Mesa)
+  // Hook para reglas comerciales avanzadas (Carta / Plan Pro)
   const ruleState = useAdvancedPromotions(RESTAURANT_ID, showAlert);
 
   const fmt = (val) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(val);
@@ -51,7 +51,7 @@ export default function PromotionsManager() {
             transition: 'all 0.2s'
           }}
         >
-          ✨ Popups de Bienvenida
+          Popups de Bienvenida
         </button>
         {/* 
         <button
@@ -68,7 +68,7 @@ export default function PromotionsManager() {
             transition: 'all 0.2s'
           }}
         >
-          ⚙️ Reglas Comerciales
+          Reglas Comerciales
         </button>
         */}
       </div>

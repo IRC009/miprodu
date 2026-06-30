@@ -49,6 +49,55 @@ export function SubscriptionProvider({ user, children }) {
   });
 
   const [subscription, setSubscription] = useState({ status: 'loading', planLevel: 0 });
+  const [trialDays, setTrialDays] = useState(7);
+  const [restaurantCreatedAt, setRestaurantCreatedAt] = useState(null);
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'platform_settings', 'pricing'), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (typeof data.trialDays === 'number' && data.trialDays >= 1) {
+          setTrialDays(data.trialDays);
+        }
+      }
+    });
+    return () => unsub();
+  }, []);
+
+  const isRegTrialActive = useMemo(() => {
+    if (!restaurantCreatedAt) return false;
+    const createdDate = new Date(restaurantCreatedAt);
+    if (isNaN(createdDate.getTime())) return false;
+    
+    const now = new Date();
+    const diffTime = now.getTime() - createdDate.getTime();
+    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+    return diffDays >= 0 && diffDays <= trialDays;
+  }, [restaurantCreatedAt, trialDays]);
+
+  const regTrialDaysRemaining = useMemo(() => {
+    if (!restaurantCreatedAt) return 0;
+    const createdDate = new Date(restaurantCreatedAt);
+    if (isNaN(createdDate.getTime())) return 0;
+    
+    const now = new Date();
+    const diffTime = now.getTime() - createdDate.getTime();
+    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+    return Math.max(0, Math.ceil(trialDays - diffDays));
+  }, [restaurantCreatedAt, trialDays]);
+
+  const effectiveSubscription = useMemo(() => {
+    if (isRegTrialActive) {
+      return {
+        ...subscription,
+        status: 'active',
+        planLevel: 2,
+        isRegTrial: true,
+        trialDaysRemaining: regTrialDaysRemaining
+      };
+    }
+    return subscription;
+  }, [isRegTrialActive, subscription, regTrialDaysRemaining]);
 
 
   const [selectedBranchId, setSelectedBranchId] = useState(localStorage.getItem('selectedBranchId') || 'ALL');
@@ -307,6 +356,11 @@ export function SubscriptionProvider({ user, children }) {
           const restRef = doc(db, 'restaurants', current.id);
           restaurantListenerUnsub.current = onSnapshot(restRef, (snap) => {
             if (!active) return;
+            if (snap.exists()) {
+              setRestaurantCreatedAt(snap.data().createdAt || null);
+            } else {
+              setRestaurantCreatedAt(null);
+            }
             const sub = snap.exists() ? (snap.data().subscription || { status: 'inactive', planLevel: 0 }) : { status: 'inactive', planLevel: 0 };
             
             const isOwnerOrAdmin = current.role === 'owner' || current.role === 'admin' || (current.roles && (current.roles.includes('owner') || current.roles.includes('admin')));
@@ -314,7 +368,7 @@ export function SubscriptionProvider({ user, children }) {
             // ── Verificación de expiración al cargar ──────────────────────────
             // Se ejecuta en cada snapshot (incluyendo el inicial al cargar la página)
             // Si tiene ID de suscripción, siempre validamos si ya expiró (incluso si el status es 'cancelled')
-            if (isOwnerOrAdmin && sub && sub.id && sub.status !== 'explore' && sub.status !== 'loading') {
+            if (isOwnerOrAdmin && sub && sub.id && sub.status !== 'loading') {
               const expDate = getSubscriptionExpirationDate(sub);
               const isExpired = expDate ? expDate < new Date() : false;
               
@@ -326,7 +380,7 @@ export function SubscriptionProvider({ user, children }) {
                     updateDoc(restRef, { 'subscription.status': 'cancelled' });
                   });
               }
-            } else if (isOwnerOrAdmin && sub && !sub.id && sub.status !== 'cancelled' && sub.status !== 'explore' && sub.status !== 'loading') {
+            } else if (isOwnerOrAdmin && sub && !sub.id && sub.status !== 'cancelled' && sub.status !== 'loading') {
               // Fallback para planes manuales sin ID
               const expDate = getSubscriptionExpirationDate(sub);
               if (expDate && expDate < new Date()) {
@@ -342,17 +396,12 @@ export function SubscriptionProvider({ user, children }) {
               const isExpired = expDate ? (expDate < new Date()) : false;
 
               if (!isExpired) {
-                let correctPlanLevel = parseInt(sub.planLevel) || 0;
-                if ((parseInt(sub.branchesPlan2) || 0) > 0) correctPlanLevel = 2;
-                else if ((parseInt(sub.branchesPlan1) || 0) > 0) correctPlanLevel = 1;
-                else if ((parseInt(sub.branchesPlan0) || 0) > 0) correctPlanLevel = 0;
+                let correctPlanLevel = 2;
 
                 // Solo se considera "explore stale" si hay slots de plan PAGADOS definidos.
                 // Si no existen branchesPlanX, el explore fue activado intencionalmente
                 // (suscripción cancelada) y NO debe revertirse automáticamente.
-                const hasPaidSlots = ((parseInt(sub.branchesPlan0) || 0) +
-                                      (parseInt(sub.branchesPlan1) || 0) +
-                                      (parseInt(sub.branchesPlan2) || 0)) > 0;
+                const hasPaidSlots = (parseInt(sub.branches) || parseInt(sub.branchesPlan2) || 0) > 0;
                 const isExploreStale = hasPaidSlots && (sub.status === 'explore' || sub.isExplore === true || sub.billing === 'explore');
                 const isPlanLevelIncorrect = hasPaidSlots && parseInt(sub.planLevel) !== correctPlanLevel;
 
@@ -430,6 +479,7 @@ export function SubscriptionProvider({ user, children }) {
             const profile = { uid: user.uid, email: user.email, restaurantId: null, role: null, roles: [], permissions: [], allowedBranches: [], loading: false };
             setUserProfile(profile);
             setSubscription({ status: 'inactive', planLevel: 0 });
+            setRestaurantCreatedAt(null);
             localStorage.setItem('cachedUserProfile', JSON.stringify(profile));
             localStorage.setItem('cachedSubscription', JSON.stringify({ status: 'inactive', planLevel: 0 }));
             localStorage.setItem('cachedAvailableRestaurants', JSON.stringify([]));
@@ -486,7 +536,7 @@ export function SubscriptionProvider({ user, children }) {
     const resId = activeRestaurantId; // Usar activeRestaurantId — siempre disponible
     if (!isOwner || !resId) return;
     if (!subscription || subscription.status === 'loading') return;
-    if (subscription.status === 'cancelled' || subscription.status === 'explore') return;
+    if (subscription.status === 'cancelled') return;
 
     const expDate = getSubscriptionExpirationDate(subscription);
     if (!expDate) return; // Sin fecha de fin → no hay nada que verificar
@@ -502,6 +552,7 @@ export function SubscriptionProvider({ user, children }) {
   }, [subscription, activeRestaurantId, userProfile.role, userProfile.roles]);
 
   const checkIsActive = useCallback(() => {
+    if (isRegTrialActive) return true;
     const expDate = getSubscriptionExpirationDate(subscription);
     if (expDate) {
       const now = new Date();
@@ -518,7 +569,7 @@ export function SubscriptionProvider({ user, children }) {
     if (subscription.status === 'cancelled') return false;
 
     // 1. Si existe ID de suscripción (Mercado Pago u otra), es un plan pagado real
-    const hasMPSubscription = !!subscription.id && subscription.status !== 'explore';
+    const hasMPSubscription = !!subscription.id;
     if (hasMPSubscription) {
       return true; // Activa y válida
     }
@@ -529,33 +580,16 @@ export function SubscriptionProvider({ user, children }) {
       return true;
     }
 
-    // 3. Exploración: NO es un plan pagado activo — isActive = false
-    // isExplore se maneja por separado como su propio estado
-    if (subscription.status === 'explore' || subscription.isExplore === true) {
-      return false;
-    }
-
     return false;
-  }, [subscription]);
+  }, [subscription, isRegTrialActive]);
 
   const isActive = checkIsActive();
 
-  // isExplore: es true si está en modo explore Y no hay una suscripción de pago activa
-  const isExplore = (subscription.isExplore === true || subscription.status === 'explore') && subscription.status !== 'active' && subscription.status !== 'authorized';
+  // Explore mode eliminado: acceso completo al dashboard siempre.
+  const isExplore = false;
 
-  // planLevel: el plan más alto contratado (desde branchesPlan)
-  // En explore mode: -1 (sin plan activo), así enforceBranchLimits no toca las sedes
-  const planLevel = (() => {
-    if (!isActive) return -1; // Incluye explore mode
-    
-    // Si hay slots contratados, el plan es el más alto que tenga al menos 1 slot
-    if ((parseInt(subscription.branchesPlan2) || 0) > 0) return 2;
-    if ((parseInt(subscription.branchesPlan1) || 0) > 0) return 1;
-    if ((parseInt(subscription.branchesPlan0) || 0) > 0) return 0;
-    
-    // Fallback al planLevel directo
-    return parseInt(subscription.planLevel) || 0;
-  })();
+  // planLevel: 2 si activo, 0 si sin plan (pero el dashboard es siempre accesible)
+  const planLevel = isActive ? 2 : 0;
 
   /**
    * hasRole helper
@@ -580,15 +614,11 @@ export function SubscriptionProvider({ user, children }) {
   }, [userProfile]);
 
   /**
-   * isLocked: Valida si el PLAN es insuficiente para una sección que el usuario TIENE permiso de ver
+   * isLocked: El dashboard es siempre accesible — el catálogo público es lo que se bloquea sin plan.
    */
-  const isLocked = useCallback((feature) => {
-    const access = FEATURE_ACCESS[feature];
-    if (!access) return false;
-    // Si no tiene plan activo (planLevel es -1), su nivel efectivo para bloquear características es 0 (Plan Tradicional)
-    const effectivePlanLevel = planLevel === -1 ? 0 : planLevel;
-    return effectivePlanLevel < access.minPlan;
-  }, [planLevel]);
+  const isLocked = useCallback((_feature) => {
+    return false; // Sin bloqueo en el dashboard
+  }, []);
 
   /**
    * isBranchAllowed
@@ -606,36 +636,14 @@ export function SubscriptionProvider({ user, children }) {
     if (!isActive) {
       return { subscribedBranches0: 0, subscribedBranches1: 0, subscribedBranches2: 0, isMixed: false };
     }
-    if (isExplore) {
-      return { subscribedBranches0: 0, subscribedBranches1: 0, subscribedBranches2: 0, isMixed: false };
-    }
-
-    const hasMixedFields = subscription.branchesPlan0 !== undefined ||
-                           subscription.branchesPlan1 !== undefined ||
-                           subscription.branchesPlan2 !== undefined;
-    const mixed = subscription.isMixed === true || hasMixedFields;
-
-    if (mixed) {
-      return {
-        subscribedBranches0: parseInt(subscription.branchesPlan0) || 0,
-        subscribedBranches1: parseInt(subscription.branchesPlan1) || 0,
-        subscribedBranches2: parseInt(subscription.branchesPlan2) || 0,
-        isMixed: true
-      };
-    } else {
-      // Plan simple (non-mixed): todos los slots pertenecen al mismo nivel
-      const level = parseInt(subscription.planLevel) || 0;
-      const count = parseInt(subscription.branches) || 1;
-      const slots = { 0: 0, 1: 0, 2: 0 };
-      slots[level] = count;
-      return {
-        subscribedBranches0: slots[0],
-        subscribedBranches1: slots[1],
-        subscribedBranches2: slots[2],
-        isMixed: false
-      };
-    }
-  }, [isActive, isExplore, subscription]);
+    const count = parseInt(subscription.branches) || 1;
+    return {
+      subscribedBranches0: 0,
+      subscribedBranches1: 0,
+      subscribedBranches2: count,
+      isMixed: false
+    };
+  }, [isActive, subscription]);
 
   const subscribedBranches = subscribedBranches0 + subscribedBranches1 + subscribedBranches2;
 
@@ -644,7 +652,7 @@ export function SubscriptionProvider({ user, children }) {
 
   const contextValue = useMemo(() => ({ 
     restaurantId: userProfile.restaurantId, 
-    subscription, 
+    subscription: effectiveSubscription, 
     isActive, 
     planLevel,
     isExplore,
@@ -664,7 +672,7 @@ export function SubscriptionProvider({ user, children }) {
     selectedBranchId,
     updateSelectedBranch
   }), [
-    userProfile, subscription, isActive, planLevel, isExplore, subscribedBranches, 
+    userProfile, effectiveSubscription, isActive, planLevel, isExplore, subscribedBranches, 
     isMixed, subscribedBranches0, subscribedBranches1, subscribedBranches2, isUnipersonal, 
     canAccess, isLocked, hasRole, isBranchAllowed, availableRestaurants, 
     switchRestaurant, 

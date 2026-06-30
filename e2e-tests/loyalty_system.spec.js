@@ -4,7 +4,7 @@ const { test, expect } = require('@playwright/test');
  * Test E2E: Sistema de Puntos de Lealtad (Loyalty)
  */
 
-const DASHBOARD_URL = 'https://app.cartaymesa.com';
+const DASHBOARD_URL = 'https://app.miprodu.com';
 const EMAIL = 'isaacrodas10@gmail.com';
 const PASS = '32613036';
 const PIN = '1234';

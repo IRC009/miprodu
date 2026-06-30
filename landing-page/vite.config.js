@@ -26,9 +26,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icons.svg', 'robots.txt', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Carta Y Mesa - Software para Restaurantes',
-        short_name: 'CartaYMesa',
-        description: 'Potencia tu restaurante con menús digitales y gestión inteligente',
+        name: 'MiProdu - Catálogos Digitales Inteligentes',
+        short_name: 'MiProdu',
+        description: 'Potencia tu negocio con catálogos digitales interactivos y gestión de pedidos',
         theme_color: '#ffffff',
         icons: [
           {

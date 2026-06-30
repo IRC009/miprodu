@@ -19,33 +19,33 @@ const IconLoyalty = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentCo
 const FEATURES = [
   {
     Icon: IconQr,
-    title: 'Menú Digital QR — Gratis',
-    desc: 'Tu carta en el celular del cliente desde un QR en la mesa. Sin app, sin impresiones. Disponible en todos los planes.',
-    detail: 'Genera un QR personalizado con tu logo y comparte el enlace o imprímelo en tus mesas. Tus clientes abren el menú directamente desde el navegador: sin instalaciones, sin fricción. Actualiza precios y platos en tiempo real sin reimprimir nada.'
+    title: 'Catálogo Digital QR — Gratis',
+    desc: 'Tu catálogo en el celular del cliente desde un QR. Sin app, sin impresiones. Disponible en todos los planes.',
+    detail: 'Genera un QR personalizado con tu logo y comparte el enlace o imprímelo. Tus clientes abren el catálogo directamente desde el navegador: sin instalaciones, sin fricción. Actualiza precios y productos en tiempo real sin reimprimir nada.'
   },
   {
     Icon: IconPos,
-    title: 'POS & Caja — Plan Carta',
+    title: 'POS & Caja — Plan Catálogo Pro',
     desc: 'Abre turno, cobra en efectivo/transferencia y cierra caja desde una sola pantalla.',
-    detail: 'Punto de venta integrado con gestión de turnos: el cajero abre su turno, registra los pagos de forma tradicional y realiza cierres automáticos de caja. Incluido en el Plan Carta.'
+    detail: 'Punto de venta integrado con gestión de turnos: el cajero abre su turno, registra los pagos de forma tradicional y realiza cierres automáticos de caja. Incluido en el Plan Catálogo Pro.'
   },
   {
     Icon: IconOrders,
-    title: 'Comandas en Tiempo Real — Plan Carta',
-    desc: 'Los pedidos van directo a cocina. Cero papel, cero errores, cero demoras.',
-    detail: 'Tus meseros toman el pedido desde su celular y en segundos aparece en la pantalla de cocina. Sin comandas en papel, sin voces cruzadas, sin errores de transcripción. Cada orden lleva el número de mesa, ítems y notas del cliente.'
+    title: 'Pedidos en Tiempo Real — Plan Catálogo Pro',
+    desc: 'Los pedidos van directo a tu panel. Cero papel, cero errores, cero demoras.',
+    detail: 'El staff o tus clientes ingresan el pedido y en segundos aparece en la pantalla de control. Sin comandas en papel, sin voces cruzadas, sin errores de transcripción.'
   },
   {
     Icon: IconAnalytics,
-    title: 'Pasarela Digital y Pedidos QR — Plan Carta y Mesa',
+    title: 'Pasarela Digital y Pedidos QR — Plan E-commerce Completo',
     desc: 'Tus clientes piden y pagan directamente con tarjeta/billetera digital desde su celular.',
-    detail: 'Habilita el autoservicio digital completo: los clientes escanean el QR de su mesa, seleccionan sus platos y pagan en línea de inmediato con tarjetas o transferencias electrónicas a través de la pasarela de pagos integrada. Exclusivo de Carta y Mesa.'
+    detail: 'Habilita el autoservicio digital completo: los clientes escanean el QR de su vitrina o stand, seleccionan sus productos y pagan en línea de inmediato con tarjetas o transferencias electrónicas a través de la pasarela de pagos integrada. Exclusivo de E-commerce Completo.'
   },
   {
     Icon: IconLoyalty,
-    title: 'Lealtad, CRM y Reservas — Plan Carta y Mesa',
-    desc: 'Reservas con email, historial de clientes y programa de puntos para fidelizar.',
-    detail: 'Permite a tus clientes reservar mesas en línea completando nombre, teléfono e email. Activa el programa de puntos para acumular y redimir beneficios desde el menú digital y realiza analíticas avanzadas de tus ventas.'
+    title: 'Lealtad, CRM y Reservas — Plan E-commerce Completo',
+    desc: 'Reservas de stock, historial de clientes y programa de puntos para fidelizar.',
+    detail: 'Permite a tus clientes reservar stock en línea. Activa el programa de puntos para acumular y redimir beneficios y realiza analíticas avanzadas de tus ventas.'
   },
 ];
 
@@ -207,17 +207,12 @@ export default function Login({ onLogin }) {
         <div className="auth-left-inner">
           {/* Logo */}
           <div className="auth-logo">
-            <img src={logoImg} alt="Carta y Mesa" className="auth-logo-img" />
-            <div className="auth-logo-wordmark">
-              <span className="auth-logo-brand">Carta</span>
-              <span className="auth-logo-sep">&</span>
-              <span className="auth-logo-brand">Mesa</span>
-            </div>
+            <img src={logoImg} alt="MiProdu" className="auth-logo-img" />
           </div>
 
           <div className="auth-left-headline">
-            <h1>Tu restaurante, <span>digitalizado</span><br />en 15 minutos.</h1>
-            <p>La plataforma todo-en-uno para restaurantes colombianos: menú QR, comandas, POS, CRM y analíticas. Sin papeles, sin caos.</p>
+            <h1>Tu negocio, <span>digitalizado</span><br />en 15 minutos.</h1>
+            <p>La plataforma todo-en-uno para catálogos y tiendas: códigos QR, pedidos por WhatsApp, POS, pasarelas de pago y CRM. Sin papeles, sin caos.</p>
           </div>
 
           {/* Feature list — expandable */}
@@ -254,7 +249,7 @@ export default function Login({ onLogin }) {
           {/* CTA — replace old social proof */}
           <div className="auth-left-cta">
             <p>¿Dudas sobre qué plan te conviene?</p>
-            <a href="https://wa.me/573026713501?text=Hola,%20quiero%20saber%20qu%C3%A9%20plan%20de%20Carta%20y%20Mesa%20me%20conviene" target="_blank" rel="noopener noreferrer" className="auth-left-cta-btn">
+            <a href="https://wa.me/573026713501?text=Hola,%20quiero%20saber%20qu%C3%A9%20plan%20de%20MiProdu%20me%20conviene" target="_blank" rel="noopener noreferrer" className="auth-left-cta-btn">
               <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15" style={{flexShrink:0}}><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
               Hablar con un asesor
             </a>
@@ -314,13 +309,13 @@ export default function Login({ onLogin }) {
                     : `Último paso, ${ownerName.split(' ')[0] || 'emprendedor'}`}
             </h2>
             {staffMode && (
-              <p>Ingresa con las credenciales asignadas por el administrador de tu restaurante.</p>
+              <p>Ingresa con las credenciales asignadas por el administrador de tu negocio.</p>
             )}
             {!staffMode && !isRegistering && (
-              <p>Ingresa a tu panel de administración para gestionar tu restaurante.</p>
+              <p>Ingresa a tu panel de administración para gestionar tu negocio.</p>
             )}
             {!staffMode && isRegistering && step === 1 && (
-              <p>{trialDays > 0 ? <>Accede a <strong>todo el plan Carta y Mesa</strong> durante {trialDays} días. Sin cobros hasta que decidas continuar.</> : <>Accede a <strong>todo el plan Carta y Mesa</strong>. Cancela cuando quieras.</>}</p>
+              <p>{trialDays > 0 ? <>Accede a <strong>todo el plan E-commerce Completo</strong> durante {trialDays} días. Sin cobros hasta que decidas continuar.</> : <>Accede a <strong>todo el plan E-commerce Completo</strong>. Cancela cuando quieras.</>}</p>
             )}
             {!staffMode && isRegistering && step === 2 && (
               <p>Cuéntanos un poco sobre tu negocio para personalizar tu experiencia desde el primer día.</p>
@@ -337,7 +332,7 @@ export default function Login({ onLogin }) {
                 </div>
               )}
               <AuthInput
-                label="Código del Restaurante"
+                label="Código del Negocio"
                 type="text"
                 value={staffForm.restaurantCode}
                 onChange={v => setStaffForm(f => ({...f, restaurantCode: v}))}
@@ -405,7 +400,7 @@ export default function Login({ onLogin }) {
             {(!isRegistering || step === 1) && (
 
               <div className="auth-fields">
-                <AuthInput label="Correo Electrónico" type="email" value={email} onChange={setEmail} placeholder="hola@mirestaurante.com" required />
+                <AuthInput label="Correo Electrónico" type="email" value={email} onChange={setEmail} placeholder="hola@minegocio.com" required />
                 <AuthInput label="Contraseña" type="password" value={password} onChange={setPassword} placeholder="Mínimo 6 caracteres" required />
                 {isRegistering && (
                   <AuthInput label="Confirmar Contraseña" type="password" value={confirmPassword} onChange={setConfirmPassword} placeholder="Repite tu contraseña" required />
@@ -422,7 +417,7 @@ export default function Login({ onLogin }) {
             {isRegistering && step === 2 && (
               <div className="auth-fields">
                 <div className="auth-fields-grid">
-                  <AuthInput label="Nombre del Negocio" value={restaurantName} onChange={setRestaurantName} placeholder="Ej: La Fogata Parrilla" required />
+                  <AuthInput label="Nombre del Negocio" value={restaurantName} onChange={setRestaurantName} placeholder="Ej: Moda Express, Minimarket..." required />
                   <AuthInput label="Tu Nombre Completo" value={ownerName} onChange={setOwnerName} placeholder="Ej: Carlos Rodríguez" required />
                 </div>
                 <div className="auth-fields-grid">
@@ -438,7 +433,7 @@ export default function Login({ onLogin }) {
                   <input type="checkbox" checked={acceptTerms} onChange={e => setAcceptTerms(e.target.checked)} />
                   <span>
                     Acepto los <a href="/terms.html" target="_blank" rel="noopener noreferrer" className="auth-link">Términos de Servicio</a> y la{' '}
-                    <a href="/privacy.html" target="_blank" rel="noopener noreferrer" className="auth-link">Política de Privacidad</a> de CartayMesa.
+                    <a href="/privacy.html" target="_blank" rel="noopener noreferrer" className="auth-link">Política de Privacidad</a> de MiProdu.
                   </span>
                 </label>
               </div>
@@ -470,7 +465,7 @@ export default function Login({ onLogin }) {
           {/* Mode switch link */}
           {!staffMode && (
             <p className="auth-switch">
-              {isRegistering ? '¿Ya tienes una cuenta?' : '¿Nuevo en CartayMesa?'}
+              {isRegistering ? '¿Ya tienes una cuenta?' : '¿Nuevo en MiProdu?'}
               <button type="button" onClick={toggleMode} className="auth-switch-btn">
                 {isRegistering ? 'Inicia Sesión' : 'Crea tu cuenta gratis'}
               </button>

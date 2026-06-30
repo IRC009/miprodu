@@ -64,7 +64,7 @@ export default function VisualDemo() {
       <div className="lp-container">
         <SectionTitle 
           badge="Experiencia Premium" 
-          title="El nivel que tu restaurante merece" 
+          title="El nivel que tu negocio merece" 
           subtitle="Diseñado meticulosamente para transmitir lujo y calidad. Nada de interfaces genéricas."
         />
         
@@ -84,7 +84,7 @@ export default function VisualDemo() {
               Experiencia 100% Personalizada
             </h3>
             <p style={{ color: '#cbd5e1', fontSize: '1.125rem' }}>
-              Desde restaurantes de alta cocina hasta fast-foods dinámicos. Tu menú digital se verá como una aplicación nativa costosa, sin el costo.
+              Desde tiendas de ropa y accesorios hasta joyerías y tecnología. Tu catálogo y tienda digital se verá como una aplicación nativa de lujo.
             </p>
             
             <ul className="demo-features-list">

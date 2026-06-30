@@ -4,11 +4,11 @@
 const admin = require('firebase-admin');
 const { HttpsError } = require('firebase-functions/v2/https');
 
-const STAFF_EMAIL_DOMAIN = 'staff.cartaymesa.com';
+const STAFF_EMAIL_DOMAIN = 'staff.miprodu.com';
 
 /**
  * Generates the synthetic Firebase Auth email for a staff member.
- * Example: carlos@abc123.staff.cartaymesa.com
+ * Example: carlos@abc123.staff.miprodu.com
  */
 function buildStaffEmail(username, restaurantId) {
   const sanitizedUsername = username.toLowerCase().trim().replace(/[^a-z0-9_.-]/g, '_');

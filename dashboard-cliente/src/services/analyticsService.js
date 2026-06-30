@@ -212,22 +212,46 @@ export const trackTableClose = async (restaurantId, branchId, tableNumber, order
  */
 export const getEngagementStats = async (restaurantId, branchId, startDateISO, endDateISO) => {
   try {
-    const start = startDateISO.split('T')[0];
+    const start = (startDateISO || new Date().toISOString()).split('T')[0];
     const end = endDateISO ? endDateISO.split('T')[0] : new Date().toISOString().split('T')[0];
-    const startYear = parseInt(start.split('-')[0]);
-    const endYear = parseInt(end.split('-')[0]);
+    const startYear = parseInt(start.split('-')[0]) || new Date().getFullYear();
+    const endYear = parseInt(end.split('-')[0]) || new Date().getFullYear();
 
     const results = [];
     
+    const parseDocData = (data, bId) => {
+      const dailyMap = {};
+      Object.entries(data).forEach(([key, value]) => {
+        if (key.startsWith('daily.')) {
+          const parts = key.split('.');
+          const date = parts[1];
+          if (!dailyMap[date]) {
+            dailyMap[date] = { date, branchId: bId };
+          }
+          if (parts.length === 3) {
+            const metric = parts[2];
+            dailyMap[date][metric] = value;
+          } else if (parts.length === 4 && parts[2] === 'sources') {
+            const source = parts[3];
+            if (!dailyMap[date].sources) {
+              dailyMap[date].sources = {};
+            }
+            dailyMap[date].sources[source] = value;
+          }
+        }
+      });
+      return Object.values(dailyMap);
+    };
+
     if (branchId && branchId !== 'ALL') {
       for (let year = startYear; year <= endYear; year++) {
         const docId = `${branchId}_${year}`;
         const snap = await getDoc(doc(db, `restaurants/${restaurantId}/analytics_buckets`, docId));
         if (!snap.exists()) continue;
-        const { daily = {} } = snap.data();
-        Object.entries(daily).forEach(([date, metrics]) => {
-          if (date >= start && date <= end) {
-            results.push({ date, branchId, ...metrics });
+        const dailyMetrics = parseDocData(snap.data(), branchId);
+        dailyMetrics.forEach(metric => {
+          if (metric.date >= start && metric.date <= end) {
+            results.push(metric);
           }
         });
       }
@@ -241,11 +265,11 @@ export const getEngagementStats = async (restaurantId, branchId, startDateISO, e
         if (isNaN(year) || year < startYear || year > endYear) return;
         
         const data = dDoc.data();
-        const { daily = {} } = data;
         const bId = data.branchId || parts.join('_');
-        Object.entries(daily).forEach(([date, metrics]) => {
-          if (date >= start && date <= end) {
-            results.push({ date, branchId: bId, ...metrics });
+        const dailyMetrics = parseDocData(data, bId);
+        dailyMetrics.forEach(metric => {
+          if (metric.date >= start && metric.date <= end) {
+            results.push(metric);
           }
         });
       });
@@ -262,8 +286,8 @@ export const getEngagementStats = async (restaurantId, branchId, startDateISO, e
  */
 export const getTopProductEngagement = async (restaurantId, branchId, startDateISO) => {
   try {
-    const start = startDateISO.split('T')[0];
-    const year = start.split('-')[0];
+    const start = (startDateISO || new Date().toISOString()).split('T')[0];
+    const year = start.split('-')[0] || new Date().getFullYear();
     const resultsMap = {};
 
     let docIds = [];
@@ -284,14 +308,23 @@ export const getTopProductEngagement = async (restaurantId, branchId, startDateI
         const snap = await getDocs(prodCol);
         snap.forEach(d => {
           const data = d.data();
-          const daily = data.daily || {};
           let views = 0, cartAdditions = 0;
-          Object.entries(daily).forEach(([date, metrics]) => {
-            if (date >= start) {
-              views += metrics.views || 0;
-              cartAdditions += metrics.cartAdditions || 0;
+          
+          Object.entries(data).forEach(([key, value]) => {
+            if (key.startsWith('daily.')) {
+              const parts = key.split('.');
+              const date = parts[1];
+              if (date >= start) {
+                const metric = parts[2];
+                if (metric === 'views') {
+                  views += value || 0;
+                } else if (metric === 'cartAdditions') {
+                  cartAdditions += value || 0;
+                }
+              }
             }
           });
+          
           const pId = data.productId || d.id;
           if (!resultsMap[pId]) {
             resultsMap[pId] = { productId: pId, name: data.productName || 'Producto', views: 0, cartAdditions: 0 };

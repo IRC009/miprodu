@@ -2,6 +2,7 @@ import React from 'react';
 import { useDashboard } from '../../context/DashboardContext';
 import { printTicket } from '../../../../utils/printTicket';
 import { updateOrder } from '../../../../services/orderService';
+import { RotateCcw } from 'lucide-react';
 
 export default function DashboardRefundModal() {
   const {
@@ -43,7 +44,7 @@ export default function DashboardRefundModal() {
         }}>
           <div className="rd-modal-content" style={{ maxWidth: '600px', width: '90%', padding: '2rem', borderRadius: '24px', background: 'white' }}>
             <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-               <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>🔄</div>
+               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.75rem', color: '#64748b' }}><RotateCcw size={48} strokeWidth={1.5} /></div>
                <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 900 }}>Devolución Parcial</h2>
                <p style={{ color: '#64748b', fontSize: '0.9rem', marginTop: '4px' }}>
                   Selecciona los productos y cantidades a devolver del pedido #{refundOrder.id.slice(-6).toUpperCase()}
@@ -54,8 +55,11 @@ export default function DashboardRefundModal() {
                {refundItems.map((item, idx) => (
                  <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 0', borderBottom: idx === refundItems.length - 1 ? 'none' : '1px solid #e2e8f0' }}>
                    <div style={{ flex: 1 }}>
-                     <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{item.name}</div>
-                     <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Disponible: {item.maxQty} uds · ${item.price.toLocaleString()}</div>
+                      <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{item.name}</div>
+                      {item.sku && (
+                        <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, margin: '2px 0' }}>SKU: {item.sku}</div>
+                      )}
+                      <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Disponible: {item.maxQty} uds · ${item.price.toLocaleString()}</div>
                    </div>
                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'white', padding: '4px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
                       <button 

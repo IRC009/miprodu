@@ -1,9 +1,9 @@
 import { db } from './firebase';
-import { doc, updateDoc, increment, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, increment, setDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 
 /**
  * Servicio de Analíticas de Engagement (Menú Público)
- * Diseñado para ser "Zero-Cost": Acumula eventos en memoria y los envía en batch.
+ * Diseñado para ser "Zero-Cost": Acumula eventos en memoria y los envía en batch cada 30 segundos o al salir.
  */
 
 class AnalyticsService {
@@ -11,6 +11,7 @@ class AnalyticsService {
     this.resetBuffer();
     this.initialized = false;
     this.sessionStarted = false;
+    this.pendingEvents = [];
   }
 
   resetBuffer() {
@@ -30,13 +31,18 @@ class AnalyticsService {
   init(restaurantId, branchId) {
     if (!restaurantId) return;
     
+    const normalizedBranch = branchId || 'general';
+    
     // Si ya estaba inicializado con los mismos datos, no hacer nada
-    if (this.initialized && this.restaurantId === restaurantId && this.branchId === branchId) return;
+    if (this.initialized && this.restaurantId === restaurantId && this.branchId === normalizedBranch) return;
 
+    // Estrategia definitiva: NO hacer flush inmediato al cambiar de sede para evitar escrituras en navegación
     this.restaurantId = restaurantId;
-    this.branchId = branchId || 'general';
+    this.branchId = normalizedBranch;
     this.initialized = true;
     this.sessionStarted = true; // Flag para contar la sesión una sola vez
+
+    console.log(`[AnalyticsService] Inicializado para restaurante: ${restaurantId}, sede: ${normalizedBranch}`);
 
     // Detectar fuente de tráfico inicial
     const urlParams = new URLSearchParams(window.location.search);
@@ -48,26 +54,54 @@ class AnalyticsService {
       this.buffer.directVisits++;
     }
 
+    // Procesar eventos pendientes acumulados antes de la inicialización
+    if (this.pendingEvents.length > 0) {
+      const eventsToProcess = [...this.pendingEvents];
+      this.pendingEvents = [];
+      eventsToProcess.forEach(({ type, data }) => {
+        this.trackEvent(type, data);
+      });
+    }
 
-    // Configurar guardado al cerrar/ocultar
+    // Configurar guardado periódico, al cambiar/cerrar pestaña y guardado inicial seguro
     if (typeof window !== 'undefined') {
-      const handleFlush = () => this.flush();
+      const handleFlush = () => {
+        console.log("[AnalyticsService] Page event trigger (visibilitychange/pagehide) - Guardando analíticas...");
+        this.flush();
+      };
 
+      // Guardar cuando el usuario cambia de pestaña o minimiza el navegador
       window.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'hidden') handleFlush();
       });
 
-      // pagehide es más confiable en móviles (iOS)
+      // Guardar cuando la página se va a descargar o cerrar (muy confiable en móviles)
       window.addEventListener('pagehide', handleFlush);
-      
-      // Fallback: Guardar periódicamente cada 3 minutos
+
+      // Guardar por primera vez a los 2 segundos para asegurar el registro de la visita/sesión inicial
+      setTimeout(() => {
+        if (this.initialized && this.sessionStarted) {
+          console.log("[AnalyticsService] Initial 2s trigger - Guardando visita/sesión inicial...");
+          this.flush();
+        }
+      }, 2000);
+
+      // Guardar periódicamente cada 30 segundos
       if (this.flushInterval) clearInterval(this.flushInterval);
-      this.flushInterval = setInterval(handleFlush, 3 * 60 * 1000);
+      this.flushInterval = setInterval(() => {
+        console.log("[AnalyticsService] Timer trigger - Guardando analíticas periódicas...");
+        this.flush();
+      }, 30 * 1000);
     }
   }
 
   trackEvent(type, data = {}) {
-    if (!this.initialized) return;
+    if (!this.initialized) {
+      this.pendingEvents.push({ type, data });
+      return;
+    }
+
+    console.log(`[AnalyticsService] Evento acumulado en memoria (${type}):`, data);
 
     switch (type) {
       case 'view_menu':
@@ -115,7 +149,10 @@ class AnalyticsService {
                     Object.keys(this.buffer.categories).length > 0 ||
                     Object.keys(this.buffer.products).length > 0;
 
-    if (!hasData && !this.sessionStarted) return;
+    if (!hasData && !this.sessionStarted) {
+      console.log("[AnalyticsService] Sin nuevos datos en el buffer, omitiendo guardado.");
+      return;
+    }
 
     const now = new Date();
     const dateId = now.toISOString().split('T')[0]; // YYYY-MM-DD
@@ -131,8 +168,17 @@ class AnalyticsService {
     this.resetBuffer();
     this.sessionStarted = false;
 
+    console.log(`[AnalyticsService] 💾 Guardando analíticas en Firestore para el bucket: ${bucketId}...`, {
+      views: currentBuffer.views,
+      cartAdditions: currentBuffer.cartAdditions,
+      sessions: wasSessionStarted ? 1 : 0,
+      categories: currentBuffer.categories,
+      products: Object.keys(currentBuffer.products)
+    });
+
     const updates = {
       updatedAt: serverTimestamp(),
+      branchId: this.branchId, // Guardar la sede a nivel de raíz del bucket para lecturas correctas
       [`daily.${dateId}.views`]: increment(currentBuffer.views),
       [`daily.${dateId}.cartAdditions`]: increment(currentBuffer.cartAdditions),
       [`daily.${dateId}.cartAbandonment`]: increment(currentBuffer.cartAbandonment),
@@ -150,9 +196,12 @@ class AnalyticsService {
     });
 
     try {
-      await setDoc(statsRef, updates, { merge: true });
+      const batch = writeBatch(db);
+      
+      // Añadir la actualización del documento principal al batch
+      batch.set(statsRef, updates, { merge: true });
 
-      // Registrar productos en la subolección del bucket anual
+      // Registrar productos en la subcolección del bucket anual usando el mismo batch
       for (const [id, stats] of Object.entries(currentBuffer.products)) {
         if (stats.views === 0 && stats.cartAdditions === 0) continue;
         const prodRef = doc(
@@ -160,7 +209,7 @@ class AnalyticsService {
           `restaurants/${this.restaurantId}/analytics_buckets/${bucketId}/products`,
           id
         );
-        await setDoc(prodRef, {
+        batch.set(prodRef, {
           productId: id,
           productName: stats.name || 'Producto',
           [`daily.${dateId}.views`]: increment(stats.views || 0),
@@ -168,9 +217,13 @@ class AnalyticsService {
           lastUpdated: serverTimestamp(),
         }, { merge: true });
       }
+
+      // Ejecutar el batch completo en una única petición atómica
+      await batch.commit();
       
+      console.log(`[AnalyticsService] 💾 Guardado exitoso (Batch) en Firestore para el bucket: ${bucketId}`);
     } catch (error) {
-      console.error("❌ Error flushing analytics:", error);
+      console.error("❌ Error flushing analytics batch:", error);
     }
   }
 }

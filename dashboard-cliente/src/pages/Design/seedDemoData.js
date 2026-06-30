@@ -172,6 +172,47 @@ const DEMO_DATA = {
         ]
       }
     ]
+  },
+  'minimalist-boutique': {
+    categories: [
+      {
+        name: 'COLECCIÓN OTOÑO / INVIERNO', order: 0,
+        subcategories: [{ id: 'sub_abrigos', name: 'Chaquetas y Abrigos' }, { id: 'sub_camisetas', name: 'Camisetas y Tops' }, { id: 'sub_pantalones', name: 'Pantalones' }],
+        products: [
+          { name: 'Abrigo de Lana Classic Camel', description: 'Abrigo sastre estructurado confeccionado con mezcla de lana premium. Fit relajado con solapa clásica y cinturón extraíble.', price: 289000, imageUrl: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=600&q=80', subcategory: 'sub_abrigos', recommended: true },
+          { name: 'Camiseta de Algodón Orgánico', description: 'Camiseta clásica de cuello redondo elaborada con algodón 100% orgánico certificado. Suave al tacto y de silueta recta.', price: 79000, imageUrl: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&q=80', subcategory: 'sub_camisetas' },
+          { name: 'Chaqueta Denim Oversized', description: 'Chaqueta de denim rígido de corte relajado, lavado medio stonewash. Botones metálicos frontales y bolsillos de parche.', price: 189000, imageUrl: 'https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=600&q=80', subcategory: 'sub_abrigos' },
+          { name: 'Jeans Rectos Tiro Alto', description: 'Jeans de silueta clásica y tiro alto, bota recta en mezclilla rígida. Ajuste perfecto en cintura y cadera.', price: 149000, imageUrl: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=600&q=80', subcategory: 'sub_pantalones' }
+        ]
+      }
+    ]
+  },
+  'luxury-jewels': {
+    categories: [
+      {
+        name: 'JOYERÍA & ACCESORIOS DE AUTOR', order: 0,
+        subcategories: [{ id: 'sub_collares', name: 'Collares y Gargantillas' }, { id: 'sub_anillos', name: 'Anillos y Pulseras' }, { id: 'sub_bolsos', name: 'Bolsos de Cuero' }],
+        products: [
+          { name: 'Collar Eslabones Oro 18k', description: 'Collar de cadena con eslabones martillados hechos a mano en plata esterlina con baño de oro amarillo de 18k.', price: 345000, imageUrl: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=600&q=80', subcategory: 'sub_collares', recommended: true },
+          { name: 'Anillo Eternity con Diamantes', description: 'Anillo Eternity con engaste de circonias cúbicas facetadas montadas en plata de ley 925. Un brillo eterno.', price: 165000, imageUrl: 'https://images.unsplash.com/photo-1576053139778-7e32f2ae3cf4?w=600&q=80', subcategory: 'sub_anillos' },
+          { name: 'Bolso Satchel de Cuero Saffiano', description: 'Elegante bolso de mano de cuero genuino texturizado. Compartimentos organizadores interiores y correa de hombro ajustable.', price: 420000, imageUrl: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&q=80', subcategory: 'sub_bolsos', recommended: true },
+          { name: 'Pulsera Minimalista de Plata', description: 'Pulsera de cadena rígida ultra delgada de plata esterlina con cierre de broche seguro.', price: 95000, imageUrl: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=600&q=80', subcategory: 'sub_anillos' }
+        ]
+      }
+    ]
+  },
+  'streetwear-sneakers': {
+    categories: [
+      {
+        name: 'CATÁLOGO DE CALZADO', order: 0,
+        subcategories: [{ id: 'sub_sneakers', name: 'Sneakers & Tenis' }, { id: 'sub_botas', name: 'Botas' }, { id: 'sub_sandalias', name: 'Casual' }],
+        products: [
+          { name: 'Sneakers Retro White & Orange', description: 'Tenis de corte bajo de inspiración ochentera. Capellada de cuero natural con detalles en contraste y suela tipo cupsole.', price: 389000, imageUrl: 'https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=600&q=80', subcategory: 'sub_sneakers', recommended: true },
+          { name: 'Botas de Cuero Combat', description: 'Botas militares de cuero negro premium resistentes al agua. Suela dentada track de alta tracción y cordones encerados.', price: 450000, imageUrl: 'https://images.unsplash.com/photo-1520639888713-7851133b1ed0?w=600&q=80', subcategory: 'sub_botas' },
+          { name: 'Sneakers Urban Joggers', description: 'Tenis ultra livianos con tejido transpirable, inserciones de ante sintético y suela amortiguada para máxima comodidad.', price: 299000, imageUrl: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&q=80', subcategory: 'sub_sneakers' }
+        ]
+      }
+    ]
   }
 };
 
@@ -182,6 +223,10 @@ export async function seedDemoData(restaurantId, themeId) {
   let data = DEMO_DATA[themeId];
   if (!data) {
     const mapping = {
+      'noir-luxe': 'luxury-jewels',
+      'urban-street': 'streetwear-sneakers',
+      'bloom-boutique': 'minimalist-boutique',
+      'classic-store': 'minimalist-boutique',
       'luxury-noir-gold': 'luxury-noir',
       'minimalist-japanese': 'zen-minimalist',
       'rustic-italian-trattoria': 'sunset-bistro',
@@ -199,7 +244,10 @@ export async function seedDemoData(restaurantId, themeId) {
       'royal-tea-room': 'luxury-noir',
       'futuristic-gastropub': 'cyber-neon',
       'fauget-classic': 'ocean-breeze',
-      'fauget-zigzag': 'sunset-bistro'
+      'fauget-zigzag': 'sunset-bistro',
+      'minimalist-boutique': 'minimalist-boutique',
+      'luxury-jewels': 'luxury-jewels',
+      'streetwear-sneakers': 'streetwear-sneakers'
     };
     const mappedId = mapping[themeId];
     data = DEMO_DATA[mappedId] || Object.values(DEMO_DATA)[0];
@@ -212,17 +260,11 @@ export async function seedDemoData(restaurantId, themeId) {
     const restSnap = await getDoc(restaurantRef);
     if (restSnap.exists()) {
       const restData = restSnap.data();
-      const subscription = restData.subscription || { status: 'inactive', planLevel: 0 };
+      const subscription = restData.subscription || { status: 'inactive', planLevel: 2 };
       const isStatusActive = subscription.status === 'authorized' || subscription.status === 'active';
-      const planLevel = isStatusActive ? (parseInt(subscription.planLevel) || 0) : 0;
-      
-      const isMixed = subscription.isMixed === true;
       const rawSubscribedBranches = parseInt(subscription.branches) || 1;
-      const subscribedBranches1 = isMixed ? (parseInt(subscription.branchesPlan1) || 0) : (planLevel === 1 ? rawSubscribedBranches : 0);
-      const subscribedBranches2 = isMixed ? (parseInt(subscription.branchesPlan2) || 0) : (planLevel === 2 ? rawSubscribedBranches : 0);
-      const subscribedBranches = isMixed ? (subscribedBranches1 + subscribedBranches2) : rawSubscribedBranches;
       
-      allowedBranches = Math.max(1, subscribedBranches);
+      allowedBranches = isStatusActive ? Math.max(1, rawSubscribedBranches) : 1;
     }
   } catch (err) {
     console.error("Error determining allowed branches during seeding:", err);

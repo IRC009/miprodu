@@ -77,8 +77,7 @@ export default function Welcome() {
   const customLinks = (designConfig?.customLinks || []).filter(link => link.active !== false);
 
   const sub = restaurantData?.subscription || {};
-  const isExplore = sub.isExplore === true || sub.status === 'explore';
-  const planLevel = isExplore ? 0 : (parseInt(sub.planLevel) || 0);
+  const planLevel = parseInt(sub.planLevel) || 0;
   const canReserveTable = planLevel >= 2;
 
   // Redes sociales

@@ -10,18 +10,9 @@ const isBranchPlanValid = (branch, sub) => {
   }
   
   const subStatus = sub?.status || 'inactive';
-  const isSubActive = subStatus === 'active' || subStatus === 'authorized' || subStatus === 'explore';
+  const isSubActive = subStatus === 'active' || subStatus === 'authorized';
   if (!isSubActive) {
     return false;
-  }
-  
-  if (subStatus === 'explore') {
-    const hasPaidSlots = (parseInt(sub.branchesPlan0) || 0) +
-                         (parseInt(sub.branchesPlan1) || 0) +
-                         (parseInt(sub.branchesPlan2) || 0) > 0;
-    if (!hasPaidSlots) {
-      return false;
-    }
   }
 
   const isMixed = sub.isMixed === true || 
@@ -44,6 +35,41 @@ const isBranchPlanValid = (branch, sub) => {
   }
 };
 
+const getEffectiveSubscription = async (restSnap) => {
+  const sub = restSnap.exists() ? restSnap.data().subscription : null;
+  const createdAt = restSnap.exists() ? restSnap.data().createdAt : null;
+  
+  if (!createdAt) return sub;
+  
+  let trialDays = 7;
+  try {
+    const pricingSnap = await getDoc(doc(db, 'platform_settings', 'pricing'));
+    if (pricingSnap.exists() && typeof pricingSnap.data().trialDays === 'number') {
+      trialDays = pricingSnap.data().trialDays;
+    }
+  } catch (e) {
+    console.warn("Error fetching trial days:", e);
+  }
+  
+  const createdDate = new Date(createdAt);
+  if (isNaN(createdDate.getTime())) return sub;
+  
+  const diffTime = new Date().getTime() - createdDate.getTime();
+  const diffDays = diffTime / (1000 * 60 * 60 * 24);
+  const isRegTrialActive = diffDays >= 0 && diffDays <= trialDays;
+  
+  if (isRegTrialActive) {
+    return {
+      ...(sub || {}),
+      status: 'active',
+      planLevel: 2,
+      isRegTrial: true
+    };
+  }
+  
+  return sub;
+};
+
 export const getBranches = async (restaurantId) => {
   try {
     const branchesRef = collection(db, `restaurants/${restaurantId}/branches`);
@@ -55,7 +81,7 @@ export const getBranches = async (restaurantId) => {
     ]);
     
     const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    const sub = restSnap.exists() ? restSnap.data().subscription : null;
+    const sub = await getEffectiveSubscription(restSnap);
     
     if (sub) {
       return list.filter(b => isBranchPlanValid(b, sub));

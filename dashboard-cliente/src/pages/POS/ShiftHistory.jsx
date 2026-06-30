@@ -3,6 +3,7 @@ import { getShifts, getCashMovements } from '../../services/posService';
 import { getBranches } from '../../services/branchService';
 import { useSubscription } from '../../context/SubscriptionContext';
 import { useAlert } from '../../context/AlertContext';
+import { MapPin, Monitor, CheckCircle2, AlertTriangle, DollarSign, Smartphone, CreditCard, RefreshCw, BarChart2, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
 export default function ShiftHistory() {
   const { restaurantId: RESTAURANT_ID, isBranchAllowed } = useSubscription();
@@ -104,7 +105,7 @@ export default function ShiftHistory() {
           alignItems: 'center'
        }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', minWidth: '220px', flex: 1 }}>
-             <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '4px' }}>📍 Filtrar por Sede:</span>
+             <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '4px' }}><MapPin size={14} /> Filtrar por Sede:</span>
              <select
                 value={filterBranchId}
                 onChange={(e) => {
@@ -133,7 +134,7 @@ export default function ShiftHistory() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', minWidth: '180px', flex: 1 }}>
-             <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '4px' }}>🖥️ Filtrar por Caja:</span>
+             <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '4px' }}><Monitor size={14} /> Filtrar por Caja:</span>
              <select
                 value={filterRegisterIndex}
                 onChange={(e) => setFilterRegisterIndex(e.target.value)}
@@ -151,7 +152,7 @@ export default function ShiftHistory() {
                    transition: 'border-color 0.2s'
                 }}
              >
-                <option value="ALL">🖥️ Todas las cajas</option>
+                <option value="ALL">Todas las cajas</option>
                 {Array.from({ length: filterBranchId !== 'ALL' ? (branches.find(b => b.id === filterBranchId)?.cashRegistersCount || 5) : 5 }, (_, i) => i + 1).map(num => (
                    <option key={num} value={num}>Caja {num}</option>
                 ))}
@@ -187,7 +188,7 @@ export default function ShiftHistory() {
                              <td style={{ fontWeight: 700 }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                      <span style={{ fontSize: '1.2rem' }}>📍</span>
+                                      <MapPin size={16} style={{ color: 'var(--primary)' }} />
                                       {b?.name || 'Sede Principal'}
                                    </div>
                                    <span style={{ 
@@ -200,7 +201,7 @@ export default function ShiftHistory() {
                                       borderRadius: '6px',
                                       border: '1px solid #cbd5e1'
                                    }}>
-                                      🖥️ Caja {s.cashRegister || 1}
+                                      Caja {s.cashRegister || 1}
                                    </span>
                                 </div>
                              </td>
@@ -239,7 +240,8 @@ export default function ShiftHistory() {
                                      gap: '4px',
                                      border: `1px solid ${diff === 0 ? '#a7f3d0' : '#fecaca'}`
                                    }}>
-                                      {diff === 0 ? '✅ Cuadrado' : `⚠️ Descuadre: $${Math.abs(diff).toLocaleString()}`}
+                                      {diff === 0 ? <CheckCircle2 size={12} /> : <AlertTriangle size={12} />}
+                                      {diff === 0 ? 'Cuadrado' : `Descuadre: $${Math.abs(diff).toLocaleString()}`}
                                    </span>
                                 ) : (
                                    <span style={{ color: '#94a3b8', fontSize: '0.8rem', fontStyle: 'italic' }}>En curso...</span>
@@ -251,7 +253,7 @@ export default function ShiftHistory() {
                                   style={{ padding: '6px 16px', borderRadius: '10px', fontSize: '0.8rem', fontWeight: 700 }}
                                   onClick={() => handleViewDetails(s)}
                                 >
-                                   🔍 Detalles
+                                   Detalles
                                 </button>
                              </td>
                           </tr>
@@ -281,7 +283,6 @@ export default function ShiftHistory() {
                    color: 'white', 
                    textAlign: 'center' 
                 }}>
-                   <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>📊</div>
                    <h2 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 900 }}>Resumen de Turno</h2>
                    <p style={{ opacity: 0.7, fontSize: '0.9rem', marginTop: '4px' }}>
                        {branches.find(x => x.id === selectedShift.branchId)?.name || 'Sede Principal'} • {new Date(selectedShift.openedAt).toLocaleDateString()}
@@ -291,15 +292,15 @@ export default function ShiftHistory() {
                 <div style={{ padding: '2.5rem', background: 'white' }}>
                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '2.5rem' }}>
                       <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '15px', border: '1px solid #e2e8f0' }}>
-                         <label style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>💵 Efec. Inicial</label>
+                         <label style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>Efec. Inicial</label>
                          <div style={{ fontSize: '1.2rem', fontWeight: 900 }}>${(selectedShift.initialCash || 0).toLocaleString()}</div>
                       </div>
                       <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '15px', border: '1px solid #e2e8f0' }}>
-                         <label style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>📲 Transf. Inicial</label>
+                         <label style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>Transf. Inicial</label>
                          <div style={{ fontSize: '1.2rem', fontWeight: 900 }}>${(selectedShift.initialTransfer || 0).toLocaleString()}</div>
                       </div>
                       <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '15px', border: '1px solid #e2e8f0' }}>
-                         <label style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>💳 Tarj. Inicial</label>
+                         <label style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>Tarj. Inicial</label>
                          <div style={{ fontSize: '1.2rem', fontWeight: 900 }}>${(selectedShift.initialCard || 0).toLocaleString()}</div>
                       </div>
                    </div>
@@ -322,7 +323,7 @@ export default function ShiftHistory() {
                          </thead>
                          <tbody>
                             <tr style={{ borderBottom: '1px solid #f8fafc' }}>
-                               <td style={{ padding: '0.75rem 0.5rem', fontWeight: 600 }}>💵 Efectivo</td>
+                               <td style={{ padding: '0.75rem 0.5rem', fontWeight: 600 }}>Efectivo</td>
                                <td>${(selectedShift.expected?.cash || selectedShift.expectedFinalCash || 0).toLocaleString()}</td>
                                <td>${(selectedShift.reportedFinalCash || 0).toLocaleString()}</td>
                                <td style={{ textAlign: 'right', fontWeight: 800, color: (selectedShift.differences?.cash || selectedShift.difference || 0) === 0 ? '#10b981' : '#ef4444' }}>
@@ -330,7 +331,7 @@ export default function ShiftHistory() {
                                </td>
                             </tr>
                             <tr style={{ borderBottom: '1px solid #f8fafc' }}>
-                               <td style={{ padding: '0.75rem 0.5rem', fontWeight: 600 }}>📲 Transferencia</td>
+                               <td style={{ padding: '0.75rem 0.5rem', fontWeight: 600 }}>Transferencia</td>
                                <td>${(selectedShift.expected?.transfer || 0).toLocaleString()}</td>
                                <td>${(selectedShift.reportedFinalTransfer || 0).toLocaleString()}</td>
                                <td style={{ textAlign: 'right', fontWeight: 800, color: (selectedShift.differences?.transfer || 0) === 0 ? '#10b981' : '#ef4444' }}>
@@ -338,7 +339,7 @@ export default function ShiftHistory() {
                                </td>
                             </tr>
                             <tr style={{ borderBottom: '1px solid #f8fafc' }}>
-                               <td style={{ padding: '0.75rem 0.5rem', fontWeight: 600 }}>💳 Tarjeta</td>
+                               <td style={{ padding: '0.75rem 0.5rem', fontWeight: 600 }}>Tarjeta</td>
                                <td>${(selectedShift.expected?.card || 0).toLocaleString()}</td>
                                <td>${(selectedShift.reportedFinalCard || 0).toLocaleString()}</td>
                                <td style={{ textAlign: 'right', fontWeight: 800, color: (selectedShift.differences?.card || 0) === 0 ? '#10b981' : '#ef4444' }}>
@@ -393,7 +394,7 @@ export default function ShiftHistory() {
                                   borderRadius: '12px'
                                }}>
                                   <div>
-                                     <div style={{ fontSize: '0.85rem', fontWeight: 700 }}>{m.type === 'out' ? '💸 Egreso' : '💰 Ingreso'}</div>
+                                     <div style={{ fontSize: '0.85rem', fontWeight: 700 }}>{m.type === 'out' ? 'Egreso' : 'Ingreso'}</div>
                                      <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{m.reason}</div>
                                   </div>
                                   <div style={{ fontWeight: 800, color: m.type === 'in' ? '#10b981' : '#ef4444' }}>
@@ -436,7 +437,7 @@ export default function ShiftHistory() {
                        </div>
                        {(selectedShift.difference || 0) !== 0 && (
                           <p style={{ fontSize: '0.75rem', color: '#f87171', marginTop: '0.75rem', textAlign: 'right', fontWeight: 600 }}>
-                             ⚠️ Se registró un descuadre en este cierre.
+                             Se registró un descuadre en este cierre.
                           </p>
                        )}
                    </div>

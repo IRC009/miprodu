@@ -1,7 +1,57 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const fmt = v => new Intl.NumberFormat('es-CO', { style:'currency', currency:'COP', minimumFractionDigits:0 }).format(v);
 const fmtN = v => new Intl.NumberFormat('es-CO').format(Math.round(v));
+
+// Formatters object
+const formatters = {
+  currency: (v) => fmt(v),
+  number: (v) => fmtN(v),
+  percent: (v) => `${Number(v).toFixed(1)}%`,
+  percentInt: (v) => `${Math.round(v)}%`,
+  duration: (v) => `${Math.round(v)} min`,
+};
+
+function useAnimatedNumber(targetValue, duration = 800) {
+  const [currentValue, setCurrentValue] = useState(targetValue || 0);
+  const prevValueRef = useRef(targetValue || 0);
+
+  useEffect(() => {
+    if (targetValue === undefined || targetValue === null) return;
+    
+    const startValue = prevValueRef.current;
+    const endValue = Number(targetValue);
+    
+    if (startValue === endValue) return;
+
+    let startTime = null;
+
+    const animate = (timestamp) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+      
+      // Easing function: easeOutQuad
+      const ease = progress * (2 - progress);
+      const current = startValue + (endValue - startValue) * ease;
+      
+      setCurrentValue(current);
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        prevValueRef.current = endValue;
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [targetValue, duration]);
+
+  useEffect(() => {
+    prevValueRef.current = targetValue || 0;
+  }, [targetValue]);
+
+  return currentValue;
+}
 
 export function SkeletonGrid() {
   return (
@@ -11,11 +61,30 @@ export function SkeletonGrid() {
   );
 }
 
-export function KPICard({ label, value, sub, icon, accent='#6366f1', trend, trendLabel }) {
+export function KPICard({ label, value, numericValue, formatter, sub, icon, accent='#6366f1', trend, trendLabel }) {
+  const animatedValue = useAnimatedNumber(numericValue !== undefined ? numericValue : 0, 800);
+  const [pulse, setPulse] = useState(false);
+  const prevVal = useRef(numericValue);
+
+  useEffect(() => {
+    if (numericValue !== undefined && prevVal.current !== undefined && numericValue > prevVal.current) {
+      setPulse(true);
+      const t = setTimeout(() => setPulse(false), 600);
+      return () => clearTimeout(t);
+    }
+    prevVal.current = numericValue;
+  }, [numericValue]);
+
+  let displayValue = value;
+  if (numericValue !== undefined && formatter) {
+    const formatFn = typeof formatter === 'function' ? formatter : formatters[formatter];
+    displayValue = formatFn ? formatFn(animatedValue) : animatedValue;
+  }
+
   return (
     <div className="ac-kpi-card" style={{ '--ac-kpi-accent': accent }}>
       <div className="ac-kpi-label">{label}</div>
-      <div className="ac-kpi-value">{value}</div>
+      <div className={`ac-kpi-value ${pulse ? 'ac-pulse-up' : ''}`}>{displayValue}</div>
       <div className="ac-kpi-sub">
         {trend !== undefined && (
           <span className={`ac-trend ${trend > 0 ? 'up' : trend < 0 ? 'down' : 'flat'}`}>

@@ -1,7 +1,20 @@
 import React from 'react';
 import { CrossInput } from './DesignShared';
+import ImageUploadField from '../../../components/ImageUploadField';
 
-export function DesignBasicTab({ config, setConfig, handleChange, handleFileUpload, uploading }) {
+export function DesignBasicTab({ 
+  config, 
+  setConfig, 
+  handleChange, 
+  handleFileUpload, 
+  uploading,
+  handleSlideImageUpload,
+  handleSlideImageDelete,
+  handleDeleteSlide,
+  handleAddSlide,
+  categories = [],
+  products = []
+}) {
   const isColorDark = (color) => {
 // ... (lógica de color omitida para brevedad en el replace, se mantiene igual)
     if (!color || !color.startsWith('#')) return true;
@@ -523,6 +536,819 @@ export function DesignBasicTab({ config, setConfig, handleChange, handleFileUplo
                   Mostrar Logotipo del Restaurante
                 </label>
               </div>
+            </div>
+          </div>
+        )}
+      </section>
+      <section className="design-section-card" style={{ marginTop: '1rem' }}>
+        <div className="section-title">📖 Paginación y Catálogo (E-commerce)</div>
+        <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '1rem' }}>
+          Define cómo se cargan los productos en el catálogo de tu tienda y el tamaño de página.
+        </p>
+
+        <div className="setting-group" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+          <div style={{ flex: 1, minWidth: '200px' }}>
+            <label className="group-label">Tipo de Paginación</label>
+            <select 
+              className="form-input" 
+              name="paginationType" 
+              value={config.paginationType || 'infinite'} 
+              onChange={handleChange}
+            >
+              <option value="infinite">Carga Infinita (Scroll continuo / Cargar más)</option>
+              <option value="numbered">Numeración (Botones 1, 2, 3...)</option>
+            </select>
+          </div>
+          
+          <div style={{ flex: 1, minWidth: '150px' }}>
+            <label className="group-label">Productos por Página</label>
+            <input 
+              type="number" 
+              className="form-input" 
+              name="pageSize" 
+              min="4" 
+              max="100" 
+              value={config.pageSize || 12} 
+              onChange={handleChange} 
+            />
+          </div>
+        </div>
+      </section>
+      
+      <section className="design-section-card" style={{ marginTop: '1rem' }}>
+        <div className="section-title">🛍️ Modo Catálogo E-commerce</div>
+        <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '1rem' }}>
+          Activa el diseño tipo tienda online para el menú público y personaliza la página de inicio.
+        </p>
+
+        {/* Toggle principal */}
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', marginBottom: '1.5rem', padding: '0.75rem 1rem', background: config.ecommerceMode ? '#f0fdf4' : '#f9fafb', borderRadius: '10px', border: `1px solid ${config.ecommerceMode ? '#bbf7d0' : '#e5e7eb'}`, transition: 'all 0.2s' }}>
+          <input type="checkbox" name="ecommerceMode" checked={!!config.ecommerceMode} onChange={(e) => setConfig(prev => ({ ...prev, ecommerceMode: e.target.checked }))} style={{ width: '18px', height: '18px', accentColor: '#16a34a', cursor: 'pointer', flexShrink: 0 }} />
+          <div>
+            <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#111827' }}>Activar Modo Ecommerce</div>
+            <div style={{ fontSize: '0.75rem', color: '#6B7280', marginTop: '2px' }}>
+              Cambia la interfaz pública a un catálogo digital con categorías en barra superior, páginas de "Nosotros" y "Contacto", y carrusel de banners.
+            </div>
+          </div>
+          {config.ecommerceMode && <span style={{ marginLeft: 'auto', background: '#16a34a', color: '#fff', fontSize: '0.7rem', fontWeight: 700, padding: '2px 8px', borderRadius: '999px' }}>ACTIVO</span>}
+        </label>
+
+        {/* Diseño de inicio */}
+        {config.ecommerceMode && (
+          <div className="setting-group" style={{ marginBottom: '1.5rem', background: '#f8fafc', padding: '1rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+            <label className="group-label">🎨 Plantilla de Tienda</label>
+            <p style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.75rem' }}>
+              Elige el estilo visual completo de tu tienda — afecta tanto la página de inicio como la página de detalle de cada producto.
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.75rem', marginBottom: '0.75rem' }}>
+              {[
+                { id: 'noir', emoji: '🖤', name: 'Noir Luxe', desc: 'Dark editorial. Ideal: ropa de lujo, calzado premium, accesorios exclusivos.', colors: ['#0a0a0a', '#c9a84c', '#1a1a1a'] },
+                { id: 'urban', emoji: '🔴', name: 'Urban Street', desc: 'Streetwear bold. Ideal: ropa urbana, sneakers, caps, accesorios sporty.', colors: ['#f2f0eb', '#e5131a', '#0d0d0d'] },
+                { id: 'bloom', emoji: '🌸', name: 'Bloom Boutique', desc: 'Femenino suave. Ideal: moda femenina, accesorios, joyería, calzado casual.', colors: ['#faf8f5', '#9a7060', '#e8ddd5'] },
+                { id: 'minimal', emoji: '⬜', name: 'Minimalista', desc: 'Catálogo limpio. Solo productos con filtros. Funciona para todo tipo de producto.', colors: ['#ffffff', '#1c1c1e', '#f5f5f5'] },
+                { id: 'classic', emoji: '🏠', name: 'Clásica', desc: 'Diseño completo con hero, banners, categorías y secciones configurables.', colors: ['#f8fafc', '#2563eb', '#e2e8f0'] },
+              ].map(opt => {
+                const isActive = (config.ecommerceSettings?.homeLayout || 'classic') === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, homeLayout: opt.id } }))}
+                    style={{
+                      border: isActive ? '2px solid #6366f1' : '1px solid #e2e8f0',
+                      borderRadius: '12px',
+                      padding: '0.75rem',
+                      background: isActive ? '#eef2ff' : '#fff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    <div style={{ display: 'flex', gap: '4px', marginBottom: '0.5rem' }}>
+                      {opt.colors.map((c, i) => (
+                        <span key={i} style={{ width: 16, height: 16, borderRadius: '50%', background: c, border: '1px solid #e2e8f0', display: 'inline-block' }} />
+                      ))}
+                    </div>
+                    <div style={{ fontWeight: 700, fontSize: '0.82rem', color: '#111827' }}>{opt.emoji} {opt.name}</div>
+                    <div style={{ fontSize: '0.7rem', color: '#6b7280', marginTop: '2px', lineHeight: '1.4' }}>{opt.desc}</div>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="field-hint" style={{ marginTop: '0.5rem' }}>
+              Las plantillas <strong>Noir Luxe</strong>, <strong>Urban Street</strong> y <strong>Bloom Boutique</strong> son diseños especializados para moda y accesorios con estilos únicos tanto en el catálogo como en la página de cada producto.
+            </p>
+          </div>
+        )}
+
+        {/* Campos de contenido para páginas estáticas (solo si ecommerce activo) */}
+        {config.ecommerceMode && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div style={{ borderTop: '1px dashed #E5E7EB', paddingTop: '1.25rem' }}>
+              <h4 style={{ margin: '0 0 1rem', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#6B7280' }}>
+                📖 Página "Nosotros"
+              </h4>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="form-group">
+                  <label className="form-label">Título de la página</label>
+                  <input type="text" className="form-input" placeholder="Ej: Sobre Nosotros" value={config.ecommerceSettings?.about?.title || ''} onChange={e => setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, about: { ...prev.ecommerceSettings?.about, title: e.target.value } } }))} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Subtítulo (Lead)</label>
+                  <input type="text" className="form-input" placeholder="Ej: Conoce nuestra historia..." value={config.ecommerceSettings?.about?.lead || ''} onChange={e => setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, about: { ...prev.ecommerceSettings?.about, lead: e.target.value } } }))} />
+                </div>
+                <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                  <label className="form-label">Nuestra Historia</label>
+                  <textarea className="form-input" rows={3} placeholder="Cuéntanos sobre los orígenes de tu negocio..." value={config.ecommerceSettings?.about?.story || ''} onChange={e => setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, about: { ...prev.ecommerceSettings?.about, story: e.target.value } } }))} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Misión</label>
+                  <textarea className="form-input" rows={2} placeholder="Nuestra misión es..." value={config.ecommerceSettings?.about?.mission || ''} onChange={e => setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, about: { ...prev.ecommerceSettings?.about, mission: e.target.value } } }))} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Visión</label>
+                  <textarea className="form-input" rows={2} placeholder="Nuestra visión es..." value={config.ecommerceSettings?.about?.vision || ''} onChange={e => setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, about: { ...prev.ecommerceSettings?.about, vision: e.target.value } } }))} />
+                </div>
+              </div>
+            </div>
+
+            <div style={{ borderTop: '1px dashed #E5E7EB', paddingTop: '1.25rem' }}>
+              <h4 style={{ margin: '0 0 1rem', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#6B7280' }}>
+                📞 Página "Contacto"
+              </h4>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="form-group">
+                  <label className="form-label">Título de la página</label>
+                  <input type="text" className="form-input" placeholder="Ej: Contáctanos" value={config.ecommerceSettings?.contact?.title || ''} onChange={e => setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, contact: { ...prev.ecommerceSettings?.contact, title: e.target.value } } }))} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Subtítulo (Lead)</label>
+                  <input type="text" className="form-input" placeholder="Ej: Estamos para ayudarte" value={config.ecommerceSettings?.contact?.lead || ''} onChange={e => setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, contact: { ...prev.ecommerceSettings?.contact, lead: e.target.value } } }))} />
+                </div>
+              </div>
+            </div>
+
+            {/* Carrusel de fotos del inicio */}
+            <div style={{ borderTop: '1px dashed #E5E7EB', paddingTop: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#6B7280' }}>
+                  🖼️ Carrusel de Inicio (Hero)
+                </h4>
+                <button type="button" className="btn-secondary" style={{ padding: '4px 10px', fontSize: '0.75rem' }}
+                  onClick={handleAddSlide}>
+                  + Diapositiva
+                </button>
+              </div>
+              {(config.ecommerceSettings?.homeConfig?.carouselSlides || []).map((slide, si) => (
+                <div key={si} style={{ background: '#f9fafb', border: '1px solid #E5E7EB', borderRadius: '10px', padding: '1rem', marginBottom: '0.75rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                    <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#6B7280' }}>Diapositiva {si + 1}</span>
+                    <button type="button" style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}
+                      onClick={() => handleDeleteSlide(si)}>✕ Eliminar</button>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <ImageUploadField
+                        label="Imagen de fondo de la diapositiva"
+                        currentUrl={slide.imageUrl || null}
+                        selectedFile={null}
+                        onFileChange={(file) => handleSlideImageUpload(file, si)}
+                        onClearFile={() => handleSlideImageDelete(si)}
+                        onDeleteSaved={() => handleSlideImageDelete(si)}
+                        hint="Sube una imagen horizontal para el banner del inicio."
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Título</label>
+                      <input type="text" className="form-input" placeholder="Bienvenido a nuestra tienda" value={slide.title || ''}
+                        onChange={e => {
+                          const slides = [...(config.ecommerceSettings?.homeConfig?.carouselSlides || [])];
+                          slides[si] = { ...slides[si], title: e.target.value };
+                          setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, homeConfig: { ...prev.ecommerceSettings?.homeConfig, carouselSlides: slides } } }));
+                        }} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Subtítulo</label>
+                      <input type="text" className="form-input" placeholder="Los mejores productos..." value={slide.subtitle || ''}
+                        onChange={e => {
+                          const slides = [...(config.ecommerceSettings?.homeConfig?.carouselSlides || [])];
+                          slides[si] = { ...slides[si], subtitle: e.target.value };
+                          setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, homeConfig: { ...prev.ecommerceSettings?.homeConfig, carouselSlides: slides } } }));
+                        }} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Texto del botón CTA</label>
+                      <input type="text" className="form-input" placeholder="Ver catálogo" value={slide.ctaText || ''}
+                        onChange={e => {
+                          const slides = [...(config.ecommerceSettings?.homeConfig?.carouselSlides || [])];
+                          slides[si] = { ...slides[si], ctaText: e.target.value };
+                          setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, homeConfig: { ...prev.ecommerceSettings?.homeConfig, carouselSlides: slides } } }));
+                        }} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Enlace del botón CTA</label>
+                      <input type="text" className="form-input" placeholder="/menu o https://..." value={slide.ctaLink || ''}
+                        onChange={e => {
+                          const slides = [...(config.ecommerceSettings?.homeConfig?.carouselSlides || [])];
+                          slides[si] = { ...slides[si], ctaLink: e.target.value };
+                          setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, homeConfig: { ...prev.ecommerceSettings?.homeConfig, carouselSlides: slides } } }));
+                        }} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {!(config.ecommerceSettings?.homeConfig?.carouselSlides?.length > 0) && (
+                <p style={{ fontSize: '0.78rem', color: '#9CA3AF', textAlign: 'center', padding: '0.75rem', border: '1px dashed #E5E7EB', borderRadius: '8px' }}>
+                  Sin slides configurados — se usará la imagen del banner principal del diseño de tu menú.
+                </p>
+              )}
+            </div>
+
+            {/* Banners Promocionales */}
+            <div style={{ borderTop: '1px dashed #E5E7EB', paddingTop: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#6B7280' }}>
+                  🗂️ Banners Promocionales (máx. 3)
+                </h4>
+                <button type="button" className="btn-secondary" style={{ padding: '4px 10px', fontSize: '0.75rem' }}
+                  onClick={() => {
+                    const current = config.ecommerceSettings?.homeConfig?.featureBanners || [];
+                    if (current.length >= 3) return;
+                    setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, homeConfig: { ...prev.ecommerceSettings?.homeConfig, featureBanners: [...current, { imageUrl: '', title: '', subtitle: '', link: '' }] } } }));
+                  }}>
+                  + Banner
+                </button>
+              </div>
+              {(config.ecommerceSettings?.homeConfig?.featureBanners || []).map((banner, bi) => (
+                <div key={bi} style={{ background: '#f9fafb', border: '1px solid #E5E7EB', borderRadius: '10px', padding: '1rem', marginBottom: '0.75rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                    <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#6B7280' }}>Banner {bi + 1}</span>
+                    <button type="button" style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}
+                      onClick={() => {
+                        const banners = [...(config.ecommerceSettings?.homeConfig?.featureBanners || [])];
+                        banners.splice(bi, 1);
+                        setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, homeConfig: { ...prev.ecommerceSettings?.homeConfig, featureBanners: banners } } }));
+                      }}>✕ Eliminar</button>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                    <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                      <label className="form-label">URL de imagen</label>
+                      <input type="url" className="form-input" placeholder="https://..." value={banner.imageUrl || ''}
+                        onChange={e => {
+                          const banners = [...(config.ecommerceSettings?.homeConfig?.featureBanners || [])];
+                          banners[bi] = { ...banners[bi], imageUrl: e.target.value };
+                          setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, homeConfig: { ...prev.ecommerceSettings?.homeConfig, featureBanners: banners } } }));
+                        }} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Título</label>
+                      <input type="text" className="form-input" value={banner.title || ''}
+                        onChange={e => {
+                          const banners = [...(config.ecommerceSettings?.homeConfig?.featureBanners || [])];
+                          banners[bi] = { ...banners[bi], title: e.target.value };
+                          setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, homeConfig: { ...prev.ecommerceSettings?.homeConfig, featureBanners: banners } } }));
+                        }} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Enlace</label>
+                      <input type="text" className="form-input" placeholder="/menu" value={banner.link || ''}
+                        onChange={e => {
+                          const banners = [...(config.ecommerceSettings?.homeConfig?.featureBanners || [])];
+                          banners[bi] = { ...banners[bi], link: e.target.value };
+                          setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, homeConfig: { ...prev.ecommerceSettings?.homeConfig, featureBanners: banners } } }));
+                        }} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Textos y Personalización de Plantillas */}
+            <div style={{ borderTop: '1px dashed #E5E7EB', paddingTop: '1.25rem' }}>
+              <h4 style={{ margin: '0 0 1rem', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#6B7280' }}>
+                ✨ Textos y Leyendas de la Plantilla
+              </h4>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="form-group">
+                  <label className="form-label">Nombre de la Tienda (Reemplaza el nombre de la sede)</label>
+                  <input type="text" className="form-input" placeholder="Ej: Mi Tienda Virtual" value={config.ecommerceSettings?.storeName || ''} onChange={e => setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, storeName: e.target.value } }))} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Eslogan del Footer</label>
+                  <input type="text" className="form-input" placeholder="Ej: Tu tienda digital de confianza" value={config.ecommerceSettings?.footerTagline || ''} onChange={e => setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, footerTagline: e.target.value } }))} />
+                </div>
+                <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                  <label className="form-label">Frase / Manifiesto (Plantilla Noir Luxe)</label>
+                  <textarea className="form-input" rows={2} placeholder='Ej: "La moda no es algo que existe solo en los vestidos..."' value={config.ecommerceSettings?.manifesto || ''} onChange={e => setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, manifesto: e.target.value } }))} />
+                </div>
+
+                {/* Tickers para Plantilla Urban */}
+                <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #F3F4F6', paddingTop: '1rem', marginTop: '0.5rem' }}>
+                  <h5 style={{ margin: '0 0 0.75rem', fontSize: '0.8rem', fontWeight: 700, color: '#374151' }}>🏷️ Ticker Desplazable (Plantilla Urban Street)</h5>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '0.75rem' }}>
+                    <div className="form-group">
+                      <label className="form-label">Texto 1 (Marca)</label>
+                      <input type="text" className="form-input" placeholder="Nombre Tienda (Defecto)" value={config.ecommerceSettings?.ticker1 || ''} onChange={e => setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, ticker1: e.target.value } }))} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Texto 2</label>
+                      <input type="text" className="form-input" placeholder="Nuevos Drops" value={config.ecommerceSettings?.ticker2 || ''} onChange={e => setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, ticker2: e.target.value } }))} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Texto 3</label>
+                      <input type="text" className="form-input" placeholder="Envío Nacional" value={config.ecommerceSettings?.ticker3 || ''} onChange={e => setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, ticker3: e.target.value } }))} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Texto 4</label>
+                      <input type="text" className="form-input" placeholder="Calidad Premium" value={config.ecommerceSettings?.ticker4 || ''} onChange={e => setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, ticker4: e.target.value } }))} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Textos Editorial Bloom */}
+                <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #F3F4F6', paddingTop: '1rem', marginTop: '0.5rem' }}>
+                  <h5 style={{ margin: '0 0 0.75rem', fontSize: '0.8rem', fontWeight: 700, color: '#374151' }}>🌸 Sección Editorial (Plantilla Bloom Boutique)</h5>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
+                    <div className="form-group">
+                      <label className="form-label">Etiqueta Editorial</label>
+                      <input type="text" className="form-input" placeholder="— Nueva Temporada —" value={config.ecommerceSettings?.editorialLabel || ''} onChange={e => setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, editorialLabel: e.target.value } }))} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Título</label>
+                      <input type="text" className="form-input" placeholder="Estilo que" value={config.ecommerceSettings?.editorialTitle || ''} onChange={e => setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, editorialTitle: e.target.value } }))} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Palabra Enfatizada</label>
+                      <input type="text" className="form-input" placeholder="inspira" value={config.ecommerceSettings?.editorialTitleEm || ''} onChange={e => setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, editorialTitleEm: e.target.value } }))} />
+                    </div>
+                    <div className="form-group" style={{ gridColumn: '1 / span 2' }}>
+                      <label className="form-label">Descripción</label>
+                      <input type="text" className="form-input" placeholder="Cada pieza de nuestra colección..." value={config.ecommerceSettings?.editorialDesc || ''} onChange={e => setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, editorialDesc: e.target.value } }))} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Texto del Botón</label>
+                      <input type="text" className="form-input" placeholder="Explorar →" value={config.ecommerceSettings?.editorialCta || ''} onChange={e => setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, editorialCta: e.target.value } }))} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Banner Drop Urban */}
+                <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #F3F4F6', paddingTop: '1rem', marginTop: '0.5rem' }}>
+                  <h5 style={{ margin: '0 0 0.75rem', fontSize: '0.8rem', fontWeight: 700, color: '#374151' }}>⚡ Banner de Lanzamiento / Drop (Plantilla Urban Street)</h5>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
+                    <div className="form-group">
+                      <label className="form-label">Etiqueta Drop</label>
+                      <input type="text" className="form-input" placeholder="Drop Disponible" value={config.ecommerceSettings?.dropLabel || ''} onChange={e => setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, dropLabel: e.target.value } }))} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Título Drop</label>
+                      <input type="text" className="form-input" placeholder="Viste la diferencia" value={config.ecommerceSettings?.dropTitle || ''} onChange={e => setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, dropTitle: e.target.value } }))} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Texto del Botón</label>
+                      <input type="text" className="form-input" placeholder="Ver Colección" value={config.ecommerceSettings?.dropCta || ''} onChange={e => setConfig(prev => ({ ...prev, ecommerceSettings: { ...prev.ecommerceSettings, dropCta: e.target.value } }))} />
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Secciones de Productos */}
+            <div style={{ borderTop: '1px dashed #E5E7EB', paddingTop: '1.25rem' }}>
+              <label style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1e293b', display: 'block', marginBottom: '0.5rem' }}>Estructura y Secciones de la Página de Inicio</label>
+              <p style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '1rem' }}>
+                Organiza tu página de inicio añadiendo, reordenando y configurando múltiples secciones personalizadas.
+              </p>
+              {(() => {
+                const sectionLabels = {
+                  featured_products: 'Productos Destacados',
+                  best_sellers: 'Más Vendidos',
+                  promo_products: 'Ofertas Especiales',
+                  category_showcase: 'Vitrina de Categorías (Tarjetas)',
+                  category_carousel: 'Carrusel de Categoría (Horizontal)',
+                  product_spotlight: 'Producto Destacado (Spotlight)',
+                  stats_bar: 'Barra de Estadísticas y Beneficios',
+                  testimonials: 'Sección de Testimonios',
+                  feature_banners: 'Banners Promocionales',
+                  store_locations: 'Ubicaciones y Mapa',
+                  hero_carousel: 'Carrusel de Banners Principal (Hero)'
+                };
+
+                const currentSections = config.ecommerceSettings?.homeConfig?.sections || [
+                  { type: 'hero_carousel', enabled: true },
+                  { type: 'category_showcase', enabled: true, title: 'Explorar Categorías' },
+                  { type: 'featured_products', enabled: true, title: 'Productos Destacados', limit: 8 },
+                  { type: 'promo_products', enabled: true, title: 'Ofertas Especiales', limit: 8 },
+                  { type: 'store_locations', enabled: true, title: 'Ubicación y Horarios' }
+                ];
+
+                const saveSections = (newSecs) => {
+                  setConfig(prev => ({
+                    ...prev,
+                    ecommerceSettings: {
+                      ...prev.ecommerceSettings,
+                      homeConfig: {
+                        ...prev.ecommerceSettings?.homeConfig,
+                        sections: newSecs
+                      }
+                    }
+                  }));
+                };
+
+                const handleMoveSection = (index, direction) => {
+                  const newIndex = index + direction;
+                  if (newIndex < 0 || newIndex >= currentSections.length) return;
+                  const newSecs = [...currentSections];
+                  const temp = newSecs[index];
+                  newSecs[index] = newSecs[newIndex];
+                  newSecs[index] = { ...newSecs[index], order: index };
+                  newSecs[newIndex] = temp;
+                  newSecs[newIndex] = { ...newSecs[newIndex], order: newIndex };
+                  saveSections(newSecs.map((s, idx) => ({ ...s, order: idx })));
+                };
+
+                const handleDeleteSection = (index) => {
+                  const newSecs = currentSections.filter((_, idx) => idx !== index);
+                  saveSections(newSecs.map((s, idx) => ({ ...s, order: idx })));
+                };
+
+                const handleAddSection = (e) => {
+                  const type = e.target.value;
+                  if (!type) return;
+                  const newSection = {
+                    type,
+                    enabled: true,
+                    title: '',
+                    subtitle: '',
+                    categoryId: '',
+                    subcategory: '',
+                    limit: 8,
+                    productIds: [],
+                    metrics: [
+                      { value: '100%', label: 'Calidad' },
+                      { value: '24/7', label: 'Soporte' },
+                      { value: 'Envío', label: 'Gratis' },
+                      { value: 'Garantía', label: 'Asegurada' }
+                    ],
+                    testimonials: [
+                      { name: 'Cliente Satisfecho', role: 'Comprador', text: 'Excelente servicio y productos de alta calidad.', rating: 5 }
+                    ],
+                    order: currentSections.length
+                  };
+                  saveSections([...currentSections, newSection].map((s, idx) => ({ ...s, order: idx })));
+                  e.target.value = '';
+                };
+
+                const handleUpdateSectionProperty = (index, key, value) => {
+                  const newSecs = currentSections.map((sec, idx) => {
+                    if (idx === index) {
+                      return { ...sec, [key]: value };
+                    }
+                    return sec;
+                  });
+                  saveSections(newSecs);
+                };
+
+                const handleUpdateSectionMultipleProperties = (index, propsObj) => {
+                  const newSecs = currentSections.map((sec, idx) => {
+                    if (idx === index) {
+                      return { ...sec, ...propsObj };
+                    }
+                    return sec;
+                  });
+                  saveSections(newSecs);
+                };
+
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {/* List of active sections */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      {currentSections.map((sec, index) => {
+                        const isEnabled = sec.enabled !== false;
+                        const labelName = sectionLabels[sec.type] || sec.type;
+
+                        return (
+                          <div key={index} style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            padding: '1rem',
+                            background: isEnabled ? '#f8fafc' : '#f1f5f9',
+                            borderRadius: '12px',
+                            border: `1px solid ${isEnabled ? '#cbd5e1' : '#e2e8f0'}`,
+                            opacity: isEnabled ? 1 : 0.7,
+                            transition: 'all 0.2s'
+                          }}>
+                            {/* Section Header Controls */}
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <input
+                                  type="checkbox"
+                                  checked={isEnabled}
+                                  onChange={e => handleUpdateSectionProperty(index, 'enabled', e.target.checked)}
+                                  style={{ width: '16px', height: '16px', accentColor: '#10b981', cursor: 'pointer' }}
+                                />
+                                <span style={{ fontWeight: 800, fontSize: '0.85rem', color: '#1e293b' }}>
+                                  {labelName}
+                                </span>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                <button
+                                  type="button"
+                                  disabled={index === 0}
+                                  onClick={() => handleMoveSection(index, -1)}
+                                  style={{ padding: '2px 6px', fontSize: '0.7rem', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '4px', cursor: index === 0 ? 'not-allowed' : 'pointer' }}
+                                >
+                                  ▲
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={index === currentSections.length - 1}
+                                  onClick={() => handleMoveSection(index, 1)}
+                                  style={{ padding: '2px 6px', fontSize: '0.7rem', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '4px', cursor: index === currentSections.length - 1 ? 'not-allowed' : 'pointer' }}
+                                >
+                                  ▼
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteSection(index)}
+                                  style={{ marginLeft: '0.5rem', padding: '2px 6px', fontSize: '0.7rem', background: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Section Editor Sub-fields */}
+                            {isEnabled && (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                {/* Title and Subtitle for everything except hero/feature banners */}
+                                {!['hero_carousel', 'feature_banners'].includes(sec.type) && (
+                                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                    <div className="form-group" style={{ margin: 0 }}>
+                                      <label className="form-label" style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>Título</label>
+                                      <input
+                                        type="text"
+                                        className="form-input"
+                                        placeholder="Ej: Destacados"
+                                        value={sec.title || ''}
+                                        style={{ fontSize: '0.8rem', padding: '6px 10px' }}
+                                        onChange={e => handleUpdateSectionProperty(index, 'title', e.target.value)}
+                                      />
+                                    </div>
+                                    <div className="form-group" style={{ margin: 0 }}>
+                                      <label className="form-label" style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>Subtítulo</label>
+                                      <input
+                                        type="text"
+                                        className="form-input"
+                                        placeholder="Ej: Lo mejor de la temporada"
+                                        value={sec.subtitle || ''}
+                                        style={{ fontSize: '0.8rem', padding: '6px 10px' }}
+                                        onChange={e => handleUpdateSectionProperty(index, 'subtitle', e.target.value)}
+                                      />
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Specific fields for product list / carousel sections */}
+                                {['featured_products', 'best_sellers', 'promo_products', 'category_carousel', 'category_showcase', 'product_spotlight'].includes(sec.type) && (
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', background: '#ffffff', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
+                                      {/* Category Dropdown */}
+                                      <div className="form-group" style={{ margin: 0 }}>
+                                        <label className="form-label" style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>Categoría específica</label>
+                                        <select
+                                          className="form-input"
+                                          value={sec.categoryId || ''}
+                                          style={{ fontSize: '0.8rem', padding: '6px 10px' }}
+                                          onChange={e => handleUpdateSectionMultipleProperties(index, { categoryId: e.target.value, subcategory: '', productIds: [] })}
+                                        >
+                                          <option value="">-- Todas --</option>
+                                          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                        </select>
+                                      </div>
+
+                                      {/* Subcategory Dropdown */}
+                                      <div className="form-group" style={{ margin: 0 }}>
+                                        <label className="form-label" style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>Subcategoría específica</label>
+                                        <select
+                                          className="form-input"
+                                          value={sec.subcategory || ''}
+                                          style={{ fontSize: '0.8rem', padding: '6px 10px' }}
+                                          disabled={!sec.categoryId}
+                                          onChange={e => handleUpdateSectionProperty(index, 'subcategory', e.target.value)}
+                                        >
+                                          <option value="">-- Todas --</option>
+                                          {(() => {
+                                            const cat = categories.find(c => c.id === sec.categoryId);
+                                            return (cat?.subcategories || []).filter(s => s.name || s.label).map(sub => (
+                                              <option key={sub.id || sub.name} value={sub.id || sub.name}>{sub.name || sub.label}</option>
+                                            ));
+                                          })()}
+                                        </select>
+                                      </div>
+
+                                      {/* Limit input */}
+                                      {sec.type !== 'product_spotlight' && (
+                                        <div className="form-group" style={{ margin: 0 }}>
+                                          <label className="form-label" style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>Límite de cantidad</label>
+                                          <input
+                                            type="number"
+                                            min="1"
+                                            max="50"
+                                            className="form-input"
+                                            placeholder="Ej: 8"
+                                            value={sec.limit || ''}
+                                            style={{ fontSize: '0.8rem', padding: '6px 10px' }}
+                                            onChange={e => handleUpdateSectionProperty(index, 'limit', e.target.value ? parseInt(e.target.value) : '')}
+                                          />
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Specific single product selection */}
+                                    <div className="form-group" style={{ margin: 0 }}>
+                                      <label className="form-label" style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
+                                        {sec.type === 'product_spotlight' ? 'Seleccionar Producto Destacado' : 'O elegir un Producto específico directamente'}
+                                      </label>
+                                      <select
+                                        className="form-input"
+                                        value={sec.productIds?.[0] || ''}
+                                        style={{ fontSize: '0.8rem', padding: '6px 10px' }}
+                                        onChange={e => handleUpdateSectionMultipleProperties(index, { productIds: e.target.value ? [e.target.value] : [], categoryId: '', subcategory: '' })}
+                                      >
+                                        <option value="">-- Seleccionar --</option>
+                                        {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                      </select>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Metrics for stats_bar */}
+                                {sec.type === 'stats_bar' && (
+                                  <div style={{ width: '100%', padding: '0.75rem', background: '#ffffff', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569' }}>Métricas (hasta 4 columnas)</div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '0.5rem' }}>
+                                      {[0, 1, 2, 3].map(i => {
+                                        const metricsList = sec.metrics || [];
+                                        const m = metricsList[i] || { value: '', label: '' };
+                                        return (
+                                          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '4px', background: '#f8fafc', padding: '6px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                                            <input
+                                              type="text"
+                                              placeholder="Valor (ej: 50+)"
+                                              className="form-input"
+                                              style={{ fontSize: '0.75rem', padding: '4px 6px', height: 'auto' }}
+                                              value={m.value || ''}
+                                              onChange={e => {
+                                                const newMetrics = [...metricsList];
+                                                newMetrics[i] = { ...m, value: e.target.value };
+                                                handleUpdateSectionProperty(index, 'metrics', newMetrics);
+                                              }}
+                                            />
+                                            <input
+                                              type="text"
+                                              placeholder="Etiqueta (ej: Clientes)"
+                                              className="form-input"
+                                              style={{ fontSize: '0.75rem', padding: '4px 6px', height: 'auto' }}
+                                              value={m.label || ''}
+                                              onChange={e => {
+                                                const newMetrics = [...metricsList];
+                                                newMetrics[i] = { ...m, label: e.target.value };
+                                                handleUpdateSectionProperty(index, 'metrics', newMetrics);
+                                              }}
+                                            />
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Testimonials configuration */}
+                                {sec.type === 'testimonials' && (
+                                  <div style={{ width: '100%', padding: '0.75rem', background: '#ffffff', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569' }}>Testimonios</div>
+                                      <button
+                                        type="button"
+                                        className="btn-secondary"
+                                        style={{ padding: '2px 8px', fontSize: '0.7rem' }}
+                                        onClick={() => {
+                                          const currentT = sec.testimonials || [];
+                                          handleUpdateSectionProperty(index, 'testimonials', [...currentT, { name: '', role: '', text: '', rating: 5 }]);
+                                        }}
+                                      >
+                                        + Añadir Testimonio
+                                      </button>
+                                    </div>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                      {(sec.testimonials || []).map((t, ti) => (
+                                        <div key={ti} style={{ background: '#f8fafc', padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b' }}>Testimonio #{ti + 1}</span>
+                                            <button
+                                              type="button"
+                                              style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}
+                                              onClick={() => {
+                                                const newT = [...(sec.testimonials || [])];
+                                                newT.splice(ti, 1);
+                                                handleUpdateSectionProperty(index, 'testimonials', newT);
+                                              }}
+                                            >
+                                              ✕ Eliminar
+                                            </button>
+                                          </div>
+                                          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 0.8fr', gap: '6px' }}>
+                                            <input
+                                              type="text"
+                                              placeholder="Nombre (ej: Juan Pérez)"
+                                              className="form-input"
+                                              style={{ fontSize: '0.75rem', padding: '4px 6px' }}
+                                              value={t.name || ''}
+                                              onChange={e => {
+                                                const newT = [...(sec.testimonials || [])];
+                                                newT[ti] = { ...t, name: e.target.value };
+                                                handleUpdateSectionProperty(index, 'testimonials', newT);
+                                              }}
+                                            />
+                                            <input
+                                              type="text"
+                                              placeholder="Rol (ej: Comprador)"
+                                              className="form-input"
+                                              style={{ fontSize: '0.75rem', padding: '4px 6px' }}
+                                              value={t.role || ''}
+                                              onChange={e => {
+                                                const newT = [...(sec.testimonials || [])];
+                                                newT[ti] = { ...t, role: e.target.value };
+                                                handleUpdateSectionProperty(index, 'testimonials', newT);
+                                              }}
+                                            />
+                                            <select
+                                              className="form-input"
+                                              style={{ fontSize: '0.75rem', padding: '4px 6px' }}
+                                              value={t.rating || 5}
+                                              onChange={e => {
+                                                const newT = [...(sec.testimonials || [])];
+                                                newT[ti] = { ...t, rating: parseInt(e.target.value) };
+                                                handleUpdateSectionProperty(index, 'testimonials', newT);
+                                              }}
+                                            >
+                                              <option value="5">5 estrellas</option>
+                                              <option value="4">4 estrellas</option>
+                                              <option value="3">3 estrellas</option>
+                                            </select>
+                                          </div>
+                                          <textarea
+                                            placeholder="Opinión del cliente..."
+                                            rows={2}
+                                            className="form-input"
+                                            style={{ fontSize: '0.75rem', padding: '4px 6px' }}
+                                            value={t.text || ''}
+                                            onChange={e => {
+                                              const newT = [...(sec.testimonials || [])];
+                                              newT[ti] = { ...t, text: e.target.value };
+                                              handleUpdateSectionProperty(index, 'testimonials', newT);
+                                            }}
+                                          />
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Add Section controls */}
+                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', background: '#f8fafc', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px dashed #cbd5e1', marginTop: '0.5rem' }}>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569' }}>Nueva sección:</span>
+                      <select
+                        className="form-input"
+                        style={{ flex: 1, fontSize: '0.8rem', padding: '4px 8px', height: 'auto' }}
+                        onChange={handleAddSection}
+                        defaultValue=""
+                      >
+                        <option value="" disabled>-- Elige una sección para añadir --</option>
+                        <option value="featured_products">Productos Destacados</option>
+                        <option value="best_sellers">Más Vendidos</option>
+                        <option value="promo_products">Ofertas Especiales</option>
+                        <option value="category_showcase">Vitrina de Categorías (Tarjetas)</option>
+                        <option value="category_carousel">Carrusel de Categoría (Horizontal)</option>
+                        <option value="product_spotlight">Producto Destacado (Spotlight)</option>
+                        <option value="stats_bar">Barra de Estadísticas y Beneficios</option>
+                        <option value="testimonials">Sección de Testimonios</option>
+                        <option value="feature_banners">Banners Promocionales</option>
+                        <option value="store_locations">Ubicaciones y Mapa</option>
+                      </select>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         )}

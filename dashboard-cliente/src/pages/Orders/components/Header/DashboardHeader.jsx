@@ -2,6 +2,7 @@ import React from 'react';
 import { useDashboard } from '../../context/DashboardContext';
 import { printTicket } from '../../../../utils/printTicket';
 import { updateOrder } from '../../../../services/orderService';
+import { Printer, Bell } from 'lucide-react';
 
 export default function DashboardHeader() {
   const {
@@ -39,17 +40,19 @@ export default function DashboardHeader() {
   }, []);
 
   
-  
+
 
   return (
     <header className="rd-header">
         <div className="rd-title-group">
-          <h1>🏢 El Restaurante</h1>
+          <h1>Mi Tienda</h1>
           <p>Gestión operativa de mesas, barra, domicilios y facturación.</p>
         </div>
         <div className="rd-actions">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: showCallClient ? '#fef3c7' : '#f8fafc', padding: '0.4rem 0.85rem', borderRadius: '10px', border: showCallClient ? '1.5px solid #f59e0b' : '1px solid #e2e8f0', transition: 'all 0.3s ease' }}>
-            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: showCallClient ? '#b45309' : '#64748b', whiteSpace: 'nowrap' }}>🔔 Llamar Clientes</span>
+            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: showCallClient ? '#b45309' : '#64748b', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <Bell size={14} /> Llamar Clientes
+            </span>
             <label style={{ position: 'relative', display: 'inline-block', width: 42, height: 24, flexShrink: 0 }}>
               <input
                 type="checkbox"
@@ -90,7 +93,9 @@ export default function DashboardHeader() {
                 boxSizing: 'border-box'
               }}
             >
-              <span>🖨️ Auto-Impresión</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <Printer size={14} /> Auto-Impresión
+              </span>
               <span style={{ fontSize: '0.6rem', opacity: 0.7 }}>{showPrintSettings ? '▲' : '▼'}</span>
             </button>
             
@@ -164,7 +169,7 @@ export default function DashboardHeader() {
           </div>
           <select className="branch-select" value={selectedBranch} onChange={(e) => setSelectedBranch(e.target.value)}>{branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select>
           <input type="date" className="branch-select" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={{ width: 'auto' }} />
-          <button className="btn-primary" onClick={() => handleNewOrder()}>➕ Nuevo Pedido</button>
+          <button className="btn-primary" onClick={() => handleNewOrder()}>+ Nuevo Pedido</button>
         </div>
       </header>
   );

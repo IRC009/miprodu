@@ -6,7 +6,7 @@ import './Stats.css';
 gsap.registerPlugin(ScrollTrigger);
 
 const STATS = [
-  { value: 50,  suffix: '+',   label: 'Restaurantes activos' },
+  { value: 50,  suffix: '+',   label: 'Negocios activos' },
   { value: 98,  suffix: '%',   label: 'Satisfacción clientes' },
   { value: 3,   suffix: 'x',   label: 'Aumento en pedidos' },
   { value: 15,  suffix: ' min',label: 'Tiempo configuración' },

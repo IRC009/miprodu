@@ -598,3 +598,13 @@
 @media (max-width: 600px) {
   .ac-digital-dist { grid-template-columns: 1fr; }
 }
+
+/* ── Pulse Micro-Animation ─────────────────────────────────── */
+.ac-kpi-value {
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.25s ease, text-shadow 0.25s ease;
+}
+.ac-pulse-up {
+  transform: scale(1.08);
+  color: #10b981 !important; /* Pulse green on increment */
+  text-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+}

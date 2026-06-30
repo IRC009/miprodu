@@ -13,8 +13,8 @@ export default function RestaurantHome() {
   const customLinks = designConfig.customLinks || [];
 
   const sub = restaurant?.subscription || {};
-  const isExplore = sub.isExplore === true || sub.status === 'explore';
-  const planLevel = isExplore ? 0 : (parseInt(sub.planLevel) || 0);
+  const isExplore = false;
+  const planLevel = parseInt(sub.planLevel) || 0;
   const canReserveTable = planLevel >= 2;
 
   useEffect(() => {

@@ -65,7 +65,7 @@ export function useInventoryStock(restaurantId, loadIngredients) {
         }
       }
       
-      await adjustStock(restaurantId, adjustModal.ingredient.id, quantityChange, adjustModal.type, adjustModal.reason, costAtTime, staffData, newCostPerUnit);
+      await adjustStock(restaurantId, adjustModal.ingredient.id, quantityChange, adjustModal.type, adjustModal.reason, costAtTime, staffData, newCostPerUnit, adjustModal.ingredient.branchId || 'ALL');
       
       setAdjustModal({ isOpen: false, ingredient: null, type: 'entry', quantity: '', reason: '', staffId: '', staffPin: '', totalPurchaseCost: '' });
       loadIngredients();
@@ -75,12 +75,12 @@ export function useInventoryStock(restaurantId, loadIngredients) {
     }
   };
 
-  const handleQuickAdd = async (ingredientId, qty, costPerUnit) => {
+  const handleQuickAdd = async (ingredientId, qty, costPerUnit, branchId = 'ALL') => {
     const parsedQty = parseFloat(qty);
     if (!parsedQty || parsedQty <= 0) return;
     setQuickLoading(true);
     try {
-      await adjustStock(restaurantId, ingredientId, parsedQty, 'entry', 'Entrada rápida', costPerUnit || 0, null, null);
+      await adjustStock(restaurantId, ingredientId, parsedQty, 'entry', 'Entrada rápida', costPerUnit || 0, null, null, branchId);
       setQuickAdd(null);
       loadIngredients();
     } catch(err) { 

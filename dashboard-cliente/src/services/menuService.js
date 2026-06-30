@@ -406,14 +406,12 @@ export const bulkUpdateProducts = async (restaurantId, allProducts) => {
 
 export const uploadProductImage = async (restaurantId, file, oldUrl = null) => {
   if (oldUrl) await Storage.deleteFile(oldUrl);
-  const storageRef = ref(storage, `restaurants/${restaurantId}/products/${Date.now()}_${file.name}`);
-  const snapshot = await uploadBytes(storageRef, file);
-  return await getDownloadURL(snapshot.ref);
+  const path = `restaurants/${restaurantId}/products/${Date.now()}_${file.name}`;
+  return await Storage.uploadFile(path, file);
 };
 
 export const uploadCategoryBanner = async (restaurantId, file, oldUrl = null) => {
   if (oldUrl) await Storage.deleteFile(oldUrl);
-  const storageRef = ref(storage, `restaurants/${restaurantId}/categories/${Date.now()}_${file.name}`);
-  const snapshot = await uploadBytes(storageRef, file);
-  return await getDownloadURL(snapshot.ref);
+  const path = `restaurants/${restaurantId}/categories/${Date.now()}_${file.name}`;
+  return await Storage.uploadFile(path, file);
 };

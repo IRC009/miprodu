@@ -5,8 +5,8 @@ const { test, expect } = require('@playwright/test');
  * Verifica que los clientes se guarden en la base de datos tras realizar acciones clave.
  */
 
-const DASHBOARD_URL = 'https://app.cartaymesa.com';
-const MENU_URL = 'https://menu.cartaymesa.com/r/isaacrodas10/menu';
+const DASHBOARD_URL = 'https://app.miprodu.com';
+const MENU_URL = 'https://menu.miprodu.com/r/isaacrodas10/menu';
 const EMAIL = 'isaacrodas10@gmail.com';
 const PASS = '32613036';
 

@@ -97,11 +97,11 @@ export function useDashboardBilling(restaurantId, selectedBranch, activeShift, o
   };
 
   const PAYMENT_METHODS = [
-    { id: 'cash', label: '💵 Efectivo', icon: '💵' },
-    { id: 'card', label: '💳 Tarjeta', icon: '💳' },
-    { id: 'transfer', label: '📲 Transferencia', icon: '📲' },
-    { id: 'mixed', label: '🔀 Mixto', icon: '🔀' },
-    { id: 'cod', label: '⏳ Contra Entrega', icon: '⏳' }
+    { id: 'cash', label: 'Efectivo', icon: 'cash' },
+    { id: 'card', label: 'Tarjeta', icon: 'card' },
+    { id: 'transfer', label: 'Transferencia', icon: 'transfer' },
+    { id: 'mixed', label: 'Mixto', icon: 'mixed' },
+    { id: 'cod', label: 'Contra Entrega', icon: 'cod' }
   ];
 
   const handleConsolidateAndBill = async (ordersToBill, tableNum) => {
@@ -239,7 +239,8 @@ export function useDashboardBilling(restaurantId, selectedBranch, activeShift, o
             price: item.price || 0,
             quantity: 0,
             bucketId: item.bucketId || null,
-            orderId: order.id
+            orderId: order.id,
+            sku: item.sku || ''
           };
         }
         netQuantities[key].quantity += Number(item.quantity || 0);
@@ -257,7 +258,8 @@ export function useDashboardBilling(restaurantId, selectedBranch, activeShift, o
             price: netItem.price,
             bucketId: netItem.bucketId,
             orderId: netItem.orderId,
-            assignedTo: 'p1'
+            assignedTo: 'p1',
+            sku: netItem.sku || ''
           });
         }
       }
@@ -287,7 +289,7 @@ export function useDashboardBilling(restaurantId, selectedBranch, activeShift, o
           if (personItems.length === 0) continue;
           const consolidated = {};
           personItems.forEach(fi => {
-            if (!consolidated[fi.name]) consolidated[fi.name] = { name: fi.name, price: fi.price, quantity: 0, bucketId: fi.bucketId };
+            if (!consolidated[fi.name]) consolidated[fi.name] = { name: fi.name, price: fi.price, quantity: 0, bucketId: fi.bucketId, sku: fi.sku || '' };
             consolidated[fi.name].quantity += 1;
           });
           const items = Object.values(consolidated);
@@ -332,7 +334,7 @@ export function useDashboardBilling(restaurantId, selectedBranch, activeShift, o
         }
         setSplitModal(null); setManagingTable(null);
         fetchArchived();
-        showAlert(`✅ ${persons.filter(p => flatItems.some(fi => fi.assignedTo === p.id)).length} facturas generadas.`, 'División Exitosa', 'success');
+        showAlert(`${persons.filter(p => flatItems.some(fi => fi.assignedTo === p.id)).length} facturas generadas.`, 'División Exitosa', 'success');
       } catch (e) { 
         console.error(e); 
         showAlert('Error al dividir la cuenta.', 'Error', 'error'); 
@@ -445,6 +447,17 @@ export function useDashboardBilling(restaurantId, selectedBranch, activeShift, o
     } catch (err) {
       console.error(err);
       showAlert('Error al actualizar pedido', 'Error', 'error');
+    }
+  };
+
+  const handleConfirmDelivery = async (orderId) => {
+    try {
+      await updateOrderStatus(restaurantId, orderId, 'completed');
+      showAlert('Entrega confirmada y pedido completado', 'Éxito', 'success');
+      fetchArchived();
+    } catch (err) {
+      console.error(err);
+      showAlert('Error al confirmar la entrega del pedido', 'Error', 'error');
     }
   };
 
@@ -886,6 +899,7 @@ export function useDashboardBilling(restaurantId, selectedBranch, activeShift, o
     handleProcessSplitBill,
     handleMarkCollected,
     handleMarkReady,
+    handleConfirmDelivery,
     handleDispatchOrder,
     handlePrintComanda,
     handleReprintInvoice,

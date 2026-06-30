@@ -128,7 +128,6 @@ export default function SubscriptionForm({ restaurantId, payerEmail, planLevel, 
   if (success) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: '#f0fdf4', borderRadius: '12px', border: '1px solid #bbf7d0' }}>
-        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎉</div>
         <h3 style={{ color: '#16a34a', margin: '0 0 0.5rem' }}>¡Suscripción Activada!</h3>
         <p style={{ color: '#475569' }}>Tu suscripción ha sido procesada correctamente.{trialDays > 0 ? ` Tienes ${trialDays} días de prueba gratis.` : ''}</p>
       </div>
@@ -144,7 +143,7 @@ export default function SubscriptionForm({ restaurantId, payerEmail, planLevel, 
 
       {errorMsg && (
         <div style={{ backgroundColor: '#fee2e2', color: '#dc2626', padding: '12px 16px', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.9rem' }}>
-          ⚠️ {errorMsg}
+          {errorMsg}
         </div>
       )}
 
@@ -268,11 +267,11 @@ export default function SubscriptionForm({ restaurantId, payerEmail, planLevel, 
             transition: 'background-color 0.2s',
           }}
         >
-          {loading ? '⏳ Procesando...' : (trialDays > 0 ? `🔒 Activar Suscripción con ${trialDays} días gratis` : '🔒 Activar Suscripción')}
+          {loading ? 'Procesando...' : (trialDays > 0 ? `Activar Suscripción con ${trialDays} días gratis` : 'Activar Suscripción')}
         </button>
 
         <p style={{ textAlign: 'center', fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.75rem' }}>
-          🔐 Tus datos son cifrados y procesados de forma segura por Mercado Pago
+          Tus datos son cifrados y procesados de forma segura por Mercado Pago
         </p>
       </form>
     </div>

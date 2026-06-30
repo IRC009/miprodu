@@ -1,1 +1,1 @@
-Coloca tu archivo "cartaymesa.apk" compilado aquí para que los usuarios puedan descargarlo desde la Landing Page.
+Coloca tu archivo "miprodu.apk" compilado aquí para que los usuarios puedan descargarlo desde la Landing Page.

@@ -2,6 +2,7 @@ import { db, storage } from './firebase';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { registerAction } from './auditService';
+import { Storage } from '../infrastructure/adapters/StorageAdapter';
 
 const getConfigRef = (restaurantId) => doc(db, `restaurants/${restaurantId}/config/design`);
 
@@ -93,10 +94,8 @@ export const updateDesignConfig = async (restaurantId, newConfig) => {
 export const uploadLogo = async (restaurantId, file, oldUrl = null) => {
   try {
     if (oldUrl) await deleteStorageFile(oldUrl);
-    const storageRef = ref(storage, `restaurants/${restaurantId}/logo/${file.name}`);
-    const snapshot = await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    return downloadURL;
+    const path = `restaurants/${restaurantId}/logo/${file.name}`;
+    return await Storage.uploadFile(path, file);
   } catch (error) {
     console.error("Error uploading logo:", error);
     throw error;
@@ -109,10 +108,8 @@ export const uploadLogo = async (restaurantId, file, oldUrl = null) => {
 export const uploadBackgroundImage = async (restaurantId, file, oldUrl = null) => {
   try {
     if (oldUrl) await deleteStorageFile(oldUrl);
-    const storageRef = ref(storage, `restaurants/${restaurantId}/background/${file.name}`);
-    const snapshot = await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    return downloadURL;
+    const path = `restaurants/${restaurantId}/background/${file.name}`;
+    return await Storage.uploadFile(path, file);
   } catch (error) {
     console.error("Error uploading background image:", error);
     throw error;
@@ -125,10 +122,8 @@ export const uploadBackgroundImage = async (restaurantId, file, oldUrl = null) =
 export const uploadHeaderImage = async (restaurantId, file, oldUrl = null) => {
   try {
     if (oldUrl) await deleteStorageFile(oldUrl);
-    const storageRef = ref(storage, `restaurants/${restaurantId}/header/${file.name}`);
-    const snapshot = await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    return downloadURL;
+    const path = `restaurants/${restaurantId}/header/${file.name}`;
+    return await Storage.uploadFile(path, file);
   } catch (error) {
     console.error("Error uploading header image:", error);
     throw error;
@@ -141,10 +136,8 @@ export const uploadHeaderImage = async (restaurantId, file, oldUrl = null) => {
 export const uploadPaywallImage = async (restaurantId, file, oldUrl = null) => {
   try {
     if (oldUrl) await deleteStorageFile(oldUrl);
-    const storageRef = ref(storage, `restaurants/${restaurantId}/paywall/${file.name}`);
-    const snapshot = await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    return downloadURL;
+    const path = `restaurants/${restaurantId}/paywall/${file.name}`;
+    return await Storage.uploadFile(path, file);
   } catch (error) {
     console.error("Error uploading paywall image:", error);
     throw error;
@@ -157,12 +150,24 @@ export const uploadPaywallImage = async (restaurantId, file, oldUrl = null) => {
 export const uploadBranchImage = async (restaurantId, branchId, file, type = 'photo', oldUrl = null) => {
   try {
     if (oldUrl) await deleteStorageFile(oldUrl);
-    const storageRef = ref(storage, `restaurants/${restaurantId}/branches/${branchId}/${type}/${file.name}`);
-    const snapshot = await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    return downloadURL;
+    const path = `restaurants/${restaurantId}/branches/${branchId}/${type}/${file.name}`;
+    return await Storage.uploadFile(path, file);
   } catch (error) {
     console.error("Error uploading branch image:", error);
+    throw error;
+  }
+};
+
+/**
+ * Uploads a slide image for the carousel and returns its URL
+ */
+export const uploadSlideImage = async (restaurantId, file, oldUrl = null) => {
+  try {
+    if (oldUrl) await deleteStorageFile(oldUrl);
+    const path = `restaurants/${restaurantId}/slides/${Date.now()}_${file.name}`;
+    return await Storage.uploadFile(path, file);
+  } catch (error) {
+    console.error("Error uploading slide image:", error);
     throw error;
   }
 };

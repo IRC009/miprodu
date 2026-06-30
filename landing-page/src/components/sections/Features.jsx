@@ -53,12 +53,12 @@ const DesignIcon = () => (
 );
 
 const FEATURES = [
-  { Icon: QrIcon,       title: 'Menú Digital QR',           desc: 'Menú interactivo con fotos, precios y categorías actualizable en tiempo real. Sin imprimir, sin app.',          tags: ['QR Personalizado', 'Sin app'],      accent: 'wine' },
-  { Icon: CommandIcon,  title: 'Comandas en Tiempo Real',    desc: 'Tus meseros toman pedidos desde el celular. La cocina los recibe al instante en su pantalla KDS.',            tags: ['Cocina digital', 'Sin papel'],      accent: 'black' },
-  { Icon: CrmIcon,      title: 'CRM & Remarketing',          desc: 'Captura datos de clientes al visitar el menú. Envía ofertas por WhatsApp y email para que regresen.',          tags: ['WhatsApp masivo', 'Campañas'],      accent: 'wine' },
-  { Icon: AnalyticsIcon,title: 'Analytics Avanzado',         desc: 'Ventas por hora, platos más pedidos, ingresos por sede. Toma decisiones con datos reales.',                    tags: ['Reportes PDF', 'Tiempo real'],      accent: 'black' },
-  { Icon: BranchIcon,   title: 'Multi-Sede Centralizado',    desc: 'Maneja todas tus sucursales desde una cuenta. Menús independientes, reportes comparativos.',                  tags: ['N sedes ilimitadas', 'Panel único'],accent: 'wine' },
-  { Icon: DesignIcon,   title: 'Personalización Total',      desc: 'Diseña tu menú con colores, fuentes y fondo personalizado. Editor CSS para diseñadores.',                      tags: ['Editor visual', 'CSS editor'],      accent: 'black' },
+  { Icon: QrIcon,       title: 'Catálogo y Tienda Digital', desc: 'Catálogo interactivo con fotos, precios, variaciones y categorías actualizable en tiempo real. Sin imprimir, sin app.', tags: ['Link o QR', 'Sin app'],      accent: 'wine' },
+  { Icon: CommandIcon,  title: 'Pedidos en Tiempo Real',    desc: 'Recibe pedidos directo a WhatsApp o a tu panel de control. Gestiona despachos sin perder clientes.',        tags: ['WhatsApp / Web', 'Control total'],  accent: 'black' },
+  { Icon: CrmIcon,      title: 'CRM & Remarketing',          desc: 'Captura datos de clientes al comprar en tu catálogo. Envía ofertas por WhatsApp y email para que regresen.',     tags: ['WhatsApp masivo', 'Campañas'],      accent: 'wine' },
+  { Icon: AnalyticsIcon,title: 'Analytics Avanzado',         desc: 'Ventas por hora, productos más vendidos, ingresos por tienda. Toma decisiones con datos reales.',              tags: ['Reportes PDF', 'Tiempo real'],      accent: 'black' },
+  { Icon: BranchIcon,   title: 'Multi-Tienda Centralizado',  desc: 'Maneja todas tus tiendas o sucursales desde una cuenta. Catálogos independientes, reportes comparativos.',      tags: ['N tiendas ilimitadas', 'Panel único'],accent: 'wine' },
+  { Icon: DesignIcon,   title: 'Personalización Total',      desc: 'Diseña tu catálogo con colores, fuentes y fondos personalizados. Editor visual intuitivo.',                 tags: ['Editor visual', 'Fácil de usar'],   accent: 'black' },
 ];
 
 export default function Features() {
@@ -121,10 +121,10 @@ export default function Features() {
         <div ref={titleRef} className="features-header">
           <div className="section-badge">Funcionalidades</div>
           <h2 className="section-title">
-            Todo lo que necesita <span className="wine-text">tu restaurante</span>
+            Todo lo que necesita <span className="wine-text">tu negocio</span>
           </h2>
           <p className="section-subtitle">
-            Una plataforma que reemplaza el menú físico, el sistema de comandas, el CRM y las analíticas. Todo integrado, todo en uno.
+            Una plataforma que reemplaza los catálogos tradicionales, el desorden de pedidos en WhatsApp, el CRM y las analíticas. Todo en uno.
           </p>
         </div>
 

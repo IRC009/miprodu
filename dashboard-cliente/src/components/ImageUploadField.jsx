@@ -28,7 +28,7 @@ export default function ImageUploadField({
 }) {
   const inputRef = useRef(null);
 
-  const previewSrc = selectedFile
+  const previewSrc = (selectedFile && (selectedFile instanceof Blob || selectedFile instanceof File))
     ? URL.createObjectURL(selectedFile)
     : currentUrl || null;
 

@@ -1,9 +1,32 @@
 import { useState, useEffect, useRef } from 'react';
-import { getDesignConfig, updateDesignConfig, uploadLogo, uploadBackgroundImage, uploadHeaderImage, uploadPaywallImage } from '../../../services/designService';
+import { getDesignConfig, updateDesignConfig, uploadLogo, uploadBackgroundImage, uploadHeaderImage, uploadPaywallImage, uploadSlideImage } from '../../../services/designService';
 import { uploadCategoryBanner, getCategories, updateCategory, getProducts, updateProduct } from '../../../services/menuService';
 
 export function useDesignData(restaurantId, globalDesign, globalLoading, showAlert) {
   const [config, setConfig] = useState({
+    ecommerceMode: false,
+    ecommerceSettings: {
+      about: {
+        title: '',
+        lead: '',
+        storyTitle: '',
+        story: '',
+        storyImage: '',
+        mission: '',
+        vision: '',
+        values: '',
+        teamMembers: []
+      },
+      contact: {
+        title: '',
+        lead: ''
+      },
+      homeConfig: {
+        carouselSlides: [],
+        featureBanners: [],
+        sections: []
+      }
+    },
     primaryColor: '#2563eb',
     backgroundColor: '#ffffff',
     cardBackgroundColor: 'transparent',
@@ -84,6 +107,7 @@ export function useDesignData(restaurantId, globalDesign, globalLoading, showAle
   const [viewMode, setViewMode] = useState('themes');
   const [iframeKey, setIframeKey] = useState(0);
   const [pendingUploads, setPendingUploads] = useState({});
+  const [pendingSlideUploads, setPendingSlideUploads] = useState({});
 
   const initialConfigRef = useRef(null);
 
@@ -132,6 +156,20 @@ export function useDesignData(restaurantId, globalDesign, globalLoading, showAle
         }
       }
 
+      // Upload pending slide images
+      const slides = [...(updatedConfig.ecommerceSettings?.homeConfig?.carouselSlides || [])];
+      for (let i = 0; i < slides.length; i++) {
+        const pendingFile = pendingSlideUploads[i];
+        if (pendingFile) {
+          const oldUrl = slides[i].imageUrl && !slides[i].imageUrl.startsWith('data:') ? slides[i].imageUrl : null;
+          const uploadedUrl = await uploadSlideImage(restaurantId, pendingFile, oldUrl);
+          slides[i].imageUrl = uploadedUrl;
+        }
+      }
+      if (updatedConfig.ecommerceSettings?.homeConfig) {
+        updatedConfig.ecommerceSettings.homeConfig.carouselSlides = slides;
+      }
+
       const configToSave = { 
         ...updatedConfig,
         customCss: globalDesign?.customCss || '' 
@@ -140,6 +178,7 @@ export function useDesignData(restaurantId, globalDesign, globalLoading, showAle
       setConfig(updatedConfig);
       initialConfigRef.current = updatedConfig;
       setPendingUploads({});
+      setPendingSlideUploads({});
       showAlert('Diseño guardado correctamente ✨', 'Éxito', 'success');
     } catch (error) {
       console.error(error);
@@ -265,6 +304,29 @@ export function useDesignData(restaurantId, globalDesign, globalLoading, showAle
     welcomeReserveBtnHoverTextColor: '',
     welcomeMenuBtnText: 'Menú',
     customCss: '',
+    ecommerceMode: false,
+    ecommerceSettings: {
+      about: {
+        title: '',
+        lead: '',
+        storyTitle: '',
+        story: '',
+        storyImage: '',
+        mission: '',
+        vision: '',
+        values: '',
+        teamMembers: []
+      },
+      contact: {
+        title: '',
+        lead: ''
+      },
+      homeConfig: {
+        carouselSlides: [],
+        featureBanners: [],
+        sections: []
+      }
+    },
   };
 
   const handleApplyTheme = async (themeConfig) => {
@@ -308,8 +370,15 @@ export function useDesignData(restaurantId, globalDesign, globalLoading, showAle
       // This ensures that values NOT in the template take the system's "factory defaults"
       const cleanConfig = {
         ...DEFAULT_DESIGN_CONFIG,
-        logoUrl: config.logoUrl || '', // Preserve the restaurant's logo
+        logoUrl: config.logoUrl || '',
+        backgroundUrl: config.backgroundUrl || '',
+        headerBackgroundUrl: config.headerBackgroundUrl || '',
         ...finalThemeConfig,
+        ecommerceSettings: {
+          ...DEFAULT_DESIGN_CONFIG.ecommerceSettings,
+          ...config.ecommerceSettings,
+          ...finalThemeConfig.ecommerceSettings
+        },
         customCss: '' // Always clear custom CSS on template change
       };
       
@@ -417,6 +486,101 @@ export function useDesignData(restaurantId, globalDesign, globalLoading, showAle
     reader.readAsDataURL(file);
   };
 
+  const handleSlideImageUpload = (file, index) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64Url = event.target.result;
+      setConfig(prev => {
+        const slides = [...(prev.ecommerceSettings?.homeConfig?.carouselSlides || [])];
+        if (slides[index]) {
+          slides[index] = { ...slides[index], imageUrl: base64Url };
+        }
+        return {
+          ...prev,
+          ecommerceSettings: {
+            ...prev.ecommerceSettings,
+            homeConfig: {
+              ...prev.ecommerceSettings?.homeConfig,
+              carouselSlides: slides
+            }
+          }
+        };
+      });
+      setPendingSlideUploads(prev => ({ ...prev, [index]: file }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSlideImageDelete = (index) => {
+    setConfig(prev => {
+      const slides = [...(prev.ecommerceSettings?.homeConfig?.carouselSlides || [])];
+      if (slides[index]) {
+        slides[index] = { ...slides[index], imageUrl: '' };
+      }
+      return {
+        ...prev,
+        ecommerceSettings: {
+          ...prev.ecommerceSettings,
+          homeConfig: {
+            ...prev.ecommerceSettings?.homeConfig,
+            carouselSlides: slides
+          }
+        }
+      };
+    });
+    setPendingSlideUploads(prev => {
+      const copy = { ...prev };
+      delete copy[index];
+      return copy;
+    });
+  };
+
+  const handleDeleteSlide = (index) => {
+    setConfig(prev => {
+      const slides = [...(prev.ecommerceSettings?.homeConfig?.carouselSlides || [])];
+      slides.splice(index, 1);
+      return {
+        ...prev,
+        ecommerceSettings: {
+          ...prev.ecommerceSettings,
+          homeConfig: {
+            ...prev.ecommerceSettings?.homeConfig,
+            carouselSlides: slides
+          }
+        }
+      };
+    });
+    setPendingSlideUploads(prev => {
+      const newPending = {};
+      Object.keys(prev).forEach(key => {
+        const k = parseInt(key);
+        if (k < index) {
+          newPending[k] = prev[k];
+        } else if (k > index) {
+          newPending[k - 1] = prev[k];
+        }
+      });
+      return newPending;
+    });
+  };
+
+  const handleAddSlide = () => {
+    setConfig(prev => {
+      const current = prev.ecommerceSettings?.homeConfig?.carouselSlides || [];
+      return {
+        ...prev,
+        ecommerceSettings: {
+          ...prev.ecommerceSettings,
+          homeConfig: {
+            ...prev.ecommerceSettings?.homeConfig,
+            carouselSlides: [...current, { imageUrl: '', title: '', subtitle: '', ctaText: '', ctaLink: '' }]
+          }
+        }
+      };
+    });
+  };
+
   useEffect(() => {
     if (loading || globalLoading || !initialConfigRef.current) return;
     
@@ -426,19 +590,24 @@ export function useDesignData(restaurantId, globalDesign, globalLoading, showAle
       if (['logoUrl', 'backgroundUrl', 'headerBackgroundUrl', 'homeBgUrl', 'cardSeparatorImage', 'branchesBgUrl', 'categoriesBgUrl', 'paywallBgUrl'].includes(key)) {
         return false;
       }
-      const val1 = config[key] !== undefined ? config[key] : '';
-      const val2 = initialConfigRef.current[key] !== undefined ? initialConfigRef.current[key] : '';
-      return String(val1) !== String(val2);
+      const val1 = config[key];
+      const val2 = initialConfigRef.current[key];
+      if (typeof val1 === 'object' || typeof val2 === 'object') {
+        return JSON.stringify(val1) !== JSON.stringify(val2);
+      }
+      const s1 = val1 !== undefined ? String(val1) : '';
+      const s2 = val2 !== undefined ? String(val2) : '';
+      return s1 !== s2;
     });
 
-    const hasUploads = Object.keys(pendingUploads).length > 0;
+    const hasUploads = Object.keys(pendingUploads).length > 0 || Object.keys(pendingSlideUploads).length > 0;
     
     window.hasUnsavedDesignChanges = isConfigChanged || hasUploads;
     
     return () => {
       window.hasUnsavedDesignChanges = false;
     };
-  }, [config, pendingUploads, loading, globalLoading]);
+  }, [config, pendingUploads, pendingSlideUploads, loading, globalLoading]);
 
   useEffect(() => {
     window.saveDesignChanges = handleSave;
@@ -466,6 +635,7 @@ export function useDesignData(restaurantId, globalDesign, globalLoading, showAle
     loading, saving, uploading,
     viewMode, setViewMode,
     iframeKey, setIframeKey,
-    handleChange, handleSave, handleExport, handleImport, handleApplyTheme, handleFileUpload
+    handleChange, handleSave, handleExport, handleImport, handleApplyTheme, handleFileUpload,
+    handleSlideImageUpload, handleSlideImageDelete, handleDeleteSlide, handleAddSlide
   };
 }

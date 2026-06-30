@@ -5,6 +5,7 @@ import { CartProvider } from './context/CartContext';
 import { AlertProvider } from './context/AlertContext';
 import { MenuSkeleton } from './components/Skeleton';
 import { safeStorage, safeSessionStorage } from './utils/safeStorage';
+import { ShopDeciderLayout, ShopDeciderPage } from './components/ShopDecider';
 
 // Lazy loaded pages
 const Welcome = lazy(() => import('./pages/Home/Welcome'));
@@ -29,7 +30,7 @@ function App() {
   // Debug log to help identify where the user is landing
 
   // Detectar si el acceso viene de un dominio personalizado de cliente
-  const PLATFORM_DOMAINS = ['cartaymesa.com', 'web.app', 'firebaseapp.com', 'localhost'];
+  const PLATFORM_DOMAINS = ['miprodu.com', 'web.app', 'firebaseapp.com', 'localhost'];
   const isCustomDomain = !PLATFORM_DOMAINS.some(d =>
     window.location.hostname === d || window.location.hostname.endsWith('.' + d)
   );
@@ -78,9 +79,12 @@ function App() {
               
               {/* Dynamic Restaurant Route */}
               <Route path="/r/:slug" element={<PaywallRouteWrapper />}>
-                <Route index element={<Welcome />} />
-                <Route element={<PublicMenuLayout />}>
-                  <Route path="menu" element={<Menu />} />
+                <Route element={<ShopDeciderLayout />}>
+                  <Route index element={<ShopDeciderPage page="home" />} />
+                  <Route path="menu" element={<ShopDeciderPage page="menu" />} />
+                  <Route path="nosotros" element={<ShopDeciderPage page="about" />} />
+                  <Route path="contacto" element={<ShopDeciderPage page="contact" />} />
+                  <Route path="producto/:productId" element={<ShopDeciderPage page="product" />} />
                   <Route path="reservations" element={<Reservations />} />
                   <Route path="promotions" element={<Promotions />} />
                   <Route path="branches" element={<Branches />} />
@@ -92,12 +96,15 @@ function App() {
               {/* Rutas para acceso por dominio personalizado de cliente */}
               {isCustomDomain && (
                 <Route path="/" element={<PaywallRouteWrapperByDomain />}>
-                  <Route index element={<Welcome />} />
-                  <Route element={<PublicMenuLayout />}>
-                    <Route path="menu"         element={<Menu />} />
+                  <Route element={<ShopDeciderLayout />}>
+                    <Route index element={<ShopDeciderPage page="home" />} />
+                    <Route path="menu" element={<ShopDeciderPage page="menu" />} />
+                    <Route path="nosotros" element={<ShopDeciderPage page="about" />} />
+                    <Route path="contacto" element={<ShopDeciderPage page="contact" />} />
+                    <Route path="producto/:productId" element={<ShopDeciderPage page="product" />} />
                     <Route path="reservations" element={<Reservations />} />
-                    <Route path="promotions"   element={<Promotions />} />
-                    <Route path="branches"     element={<Branches />} />
+                    <Route path="promotions" element={<Promotions />} />
+                    <Route path="branches" element={<Branches />} />
                   </Route>
                 </Route>
               )}

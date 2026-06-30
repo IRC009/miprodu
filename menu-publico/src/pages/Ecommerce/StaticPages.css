@@ -1,0 +1,332 @@
+/* ── StaticPages.css ────────────────────────────────────────────────────── */
+
+.static-page {
+  width: 100%;
+  color: var(--text-dark, #1e293b);
+  background-color: var(--bg-color, #ffffff);
+}
+
+/* ── Hero ── */
+.static-hero {
+  padding: 4rem 1.5rem;
+  text-align: center;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.static-hero-inner {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.static-logo {
+  max-height: 80px;
+  object-fit: contain;
+  margin-bottom: 0.5rem;
+}
+
+.static-hero-title {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--primary-color, #1e3a8a);
+}
+
+.static-hero-lead {
+  font-size: clamp(1rem, 2.5vw, 1.2rem);
+  color: var(--text-light, #64748b);
+  line-height: 1.5;
+  max-width: 600px;
+}
+
+/* ── Sections ── */
+.static-section {
+  padding: 4rem 1.5rem;
+}
+
+.static-section--alt {
+  background-color: #f8fafc;
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.static-section-inner {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: center;
+}
+
+.static-section-inner--centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.static-section-inner h2 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+}
+
+.static-text-block p {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #475569;
+}
+
+.static-image-frame {
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+.static-image-frame img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ── Mission / Vision / Values ── */
+.static-mvv {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+.static-mvv-card {
+  background: #fff;
+  padding: 2.25rem 1.5rem;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  text-align: center;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.static-mvv-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.static-mvv-card h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.static-mvv-card p {
+  font-size: 0.875rem;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+/* ── Team Grid ── */
+.static-lead-text {
+  font-size: 1rem;
+  color: #64748b;
+  margin-bottom: 3rem;
+}
+
+.static-team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 2rem;
+  width: 100%;
+  max-width: 800px;
+}
+
+.static-team-card {
+  text-align: center;
+}
+
+.static-team-photo {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.static-team-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: var(--primary-color, #1e3a8a);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin: 0 auto 1rem;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.static-team-card h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.static-team-role {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+/* ── Contact Layout ── */
+.static-contact-grid {
+  align-items: start;
+}
+
+.static-contact-info h2 {
+  margin-bottom: 0.5rem;
+}
+
+.static-contact-desc {
+  color: #64748b;
+  margin-bottom: 2rem;
+  font-size: 0.95rem;
+}
+
+.contact-details-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.contact-detail-item {
+  display: flex;
+  gap: 1rem;
+  align-items: start;
+}
+
+.contact-icon {
+  font-size: 1.5rem;
+  background: #f1f5f9;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.contact-detail-item h4 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 0.15rem;
+}
+
+.contact-detail-item p {
+  font-size: 0.85rem;
+  color: #475569;
+  margin: 0;
+}
+
+/* Form */
+.static-contact-form-wrap {
+  background: #f8fafc;
+  padding: 2.5rem;
+  border-radius: 24px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.static-contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+  text-align: left;
+}
+
+.static-contact-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.static-contact-form label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.static-contact-form input,
+.static-contact-form textarea {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+
+.static-contact-form input:focus,
+.static-contact-form textarea:focus {
+  border-color: var(--primary-color, #1e3a8a);
+}
+
+.static-submit-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 0.85rem;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.static-submit-btn:hover {
+  opacity: 0.9;
+}
+
+.static-success-msg {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.static-success-msg span {
+  font-size: 3rem;
+  color: #22c55e;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.static-success-msg p {
+  font-size: 1rem;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .static-section-inner {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+
+  .static-mvv {
+    grid-template-columns: 1fr;
+  }
+
+  .static-section {
+    padding: 3rem 1rem;
+  }
+
+  .static-contact-form-wrap {
+    padding: 1.5rem;
+  }
+}

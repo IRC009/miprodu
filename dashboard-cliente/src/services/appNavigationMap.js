@@ -10,9 +10,9 @@ export const APP_SECTIONS_MAP = {
     capabilities: ["Agregar productos al carrito", "Dividir cuentas", "Registrar egresos/gastos", "Cerrar turno", "Aplicar descuentos y propinas", "Búsqueda de clientes leales"]
   },
   "/restaurante": {
-    name: "Gestión de Mesas (Dashboard de Salón)",
-    description: "Mapa visual de las mesas del restaurante y su estado (libre, ocupada, pidiendo cuenta).",
-    capabilities: ["Ver qué mesas están activas", "Mover pedidos entre mesas", "Llamar clientes", "Ver pedidos de la bandeja de entrada (QR/Online)"]
+    name: "Panel de Pedidos",
+    description: "Central de gestión de pedidos en tiempo real: entrantes, en preparación, listos y completados.",
+    capabilities: ["Ver pedidos online entrantes", "Mover pedidos entre etapas (En prep → Listo)", "Cobrar y generar facturas", "Reembolsar pedidos parcialmente"]
   },
   "/menu-editor": {
     name: "Editor de Menú y Diseño",
@@ -46,11 +46,7 @@ export const APP_SECTIONS_MAP = {
     description: "Configuración de las diferentes sucursales del restaurante.",
     capabilities: ["Crear nuevas sedes", "Configurar horarios por sede", "Asignar planes de suscripción a sedes"]
   },
-  "/waiters": {
-    name: "Personal y Meseros",
-    description: "Administración del equipo de trabajo y sus permisos.",
-    capabilities: ["Crear meseros", "Asignar PIN de seguridad", "Verificar asistencia", "Configurar roles (Cajero, Mesero, Admin)"]
-  },
+
   "/orders": {
     name: "Historial de Pedidos",
     description: "Registro de todas las ventas pasadas y estados de cuenta.",
@@ -58,7 +54,7 @@ export const APP_SECTIONS_MAP = {
   },
   "/subscription": {
     name: "Planes y Facturación SaaS",
-    description: "Gestión del pago de la plataforma Carta y Mesa.",
+    description: "Gestión del pago de la plataforma MiProdu.",
     capabilities: ["Mejorar plan", "Ver facturas de suscripción", "Vincular tarjetas de crédito"]
   }
 };

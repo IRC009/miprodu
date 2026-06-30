@@ -4,7 +4,7 @@ import './Footer.css';
 
 const LINKS = {
   Producto:   ['Funcionalidades', 'Precios', 'Cómo funciona'],
-  Plataforma: ['Dashboard cliente', 'Panel admin', 'Menú público'],
+  Plataforma: ['Dashboard cliente', 'Panel admin', 'Catálogo público'],
   Legal:      ['Términos de uso', 'Privacidad', 'Cookies'],
 };
 
@@ -15,7 +15,7 @@ export default function Footer() {
         <div className="lp-container footer-inner">
           <div className="footer-brand">
             <div className="footer-logo">
-              <img src={logo} alt="Tienda y QR" loading="lazy" style={{ height: '40px', width: 'auto', filter: 'brightness(1.1)' }} />
+              <img src={logo} alt="MiProdu" loading="lazy" style={{ height: '40px', width: 'auto', filter: 'brightness(1.1)' }} />
             </div>
             <p className="footer-tagline">
               La plataforma SaaS que digitaliza y escala tus ventas online.
@@ -64,7 +64,7 @@ export default function Footer() {
       <div className="footer-bottom">
         <div className="lp-container footer-bottom-inner">
           <p className="footer-copy">
-            © {new Date().getFullYear()} Tienda y QR · Todos los derechos reservados
+            © {new Date().getFullYear()} MiProdu · Todos los derechos reservados
           </p>
           <p className="footer-made">
             Hecho para catálogos y tiendas online

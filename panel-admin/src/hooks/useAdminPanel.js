@@ -141,8 +141,8 @@ export function useAdminPanel(skipFetch = false) {
     try {
       const prevLevel = previousSubscription?.planLevel ?? null;
       const newLevel  = subscription?.planLevel ?? null;
-      const isNowActive = ['active', 'authorized', 'explore'].includes(subscription?.status);
-      const wasActive   = ['active', 'authorized', 'explore'].includes(previousSubscription?.status);
+      const isNowActive = ['active', 'authorized'].includes(subscription?.status);
+      const wasActive   = ['active', 'authorized'].includes(previousSubscription?.status);
 
       // Extract branch counts
       const getBranches = (sub) => {
@@ -271,7 +271,7 @@ export function useAdminPanel(skipFetch = false) {
     if (dashboardUrl.includes('localhost')) {
       dashboardUrl = 'http://localhost:5173';
     } else {
-      dashboardUrl = 'https://app.cartaymesa.com';
+      dashboardUrl = 'https://app.miprodu.com';
     }
     window.open(`${dashboardUrl}?admin_mode=true&admin_target=${res.id}`, '_blank');
   };

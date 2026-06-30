@@ -5,8 +5,8 @@ const { test, expect } = require('@playwright/test');
  * Cubre: Mesa (con Inbox), Barra y Domicilio.
  */
 
-const DASHBOARD_URL = 'https://app.cartaymesa.com';
-const MENU_URL = 'https://menu.cartaymesa.com/r/isaacrodas10/menu';
+const DASHBOARD_URL = 'https://app.miprodu.com';
+const MENU_URL = 'https://menu.miprodu.com/r/isaacrodas10/menu';
 const EMAIL = 'isaacrodas10@gmail.com';
 const PASS = '32613036';
 const PIN = '1234';

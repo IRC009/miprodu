@@ -1,5 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
+import { ReceiptText, CheckCircle2, AlertTriangle, Coins, CreditCard, Landmark } from 'lucide-react';
 import s from '../POS.module.css';
 
 /**
@@ -15,7 +16,9 @@ export default function POSCloseReportModal({ closeSummary, onCancel, onConfirm 
       <div className={s.reportModal}>
 
         <header className={s.reportHeader}>
-          <div className={s.reportHeaderIcon}>🧾</div>
+          <div className={s.reportHeaderIcon} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <ReceiptText size={28} style={{ color: '#475569' }} />
+          </div>
           <h2 className={s.reportHeaderTitle}>Arqueo de Caja</h2>
           <p className={s.reportHeaderSubtitle}>
             Resumen de cierre de turno • {closeSummary.waiterName}
@@ -58,13 +61,13 @@ export default function POSCloseReportModal({ closeSummary, onCancel, onConfirm 
 
           <div className={s.methodsList}>
             {[
-              { icon: '💵', label: 'Efectivo',      value: closeSummary.salesByMethod.cash },
-              { icon: '💳', label: 'Tarjeta',       value: closeSummary.salesByMethod.card },
-              { icon: '📲', label: 'Transferencia', value: closeSummary.salesByMethod.transfer },
+              { icon: <Coins size={16} />, label: 'Efectivo',      value: closeSummary.salesByMethod.cash },
+              { icon: <CreditCard size={16} />, label: 'Tarjeta',       value: closeSummary.salesByMethod.card },
+              { icon: <Landmark size={16} />, label: 'Transferencia', value: closeSummary.salesByMethod.transfer },
             ].map(({ icon, label, value }) => (
               <div key={label} className={s.methodRow}>
-                <div className={s.methodRowLeft}>
-                  <span className={s.methodIcon}>{icon}</span>
+                <div className={s.methodRowLeft} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className={s.methodIcon} style={{ display: 'inline-flex', alignItems: 'center' }}>{icon}</span>
                   <span className={s.methodLabel}>{label}</span>
                 </div>
                 <span className={s.methodAmount}>${value.toLocaleString()}</span>
@@ -104,8 +107,8 @@ export default function POSCloseReportModal({ closeSummary, onCancel, onConfirm 
                   ${(closeSummary.differences?.cash || 0).toLocaleString()}
                 </div>
               </div>
-              <div className={s.differenceIcon}>
-                {isBalanced ? '✅' : '⚠️'}
+              <div className={s.differenceIcon} style={{ display: 'flex', alignItems: 'center' }}>
+                {isBalanced ? <CheckCircle2 size={24} style={{ color: '#22c55e' }} /> : <AlertTriangle size={24} style={{ color: '#ef4444' }} />}
               </div>
             </div>
 

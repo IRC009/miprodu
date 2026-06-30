@@ -1,15 +1,13 @@
-import { db } from './firebase';
+import { db, functions } from './firebase';
 import { doc, updateDoc, collection, addDoc, getDoc, getDocs } from 'firebase/firestore';
-
-const API_KEY = "sk-8b5863d731b7442b960e02d2140c1989";
-const BASE_URL = "https://api.deepseek.com/chat/completions";
+import { httpsCallable } from 'firebase/functions';
 
 const SYSTEM_PROMPT = `
-Eres "Karol", la GUÍA ESTRATÉGICA de **Carta y Mesa**. Tu única misión es INFORMAR, EXPLICAR y ORIENTAR al usuario sobre cómo usar la plataforma para que su restaurante sea exitoso.
+Eres "Karol", la GUÍA ESTRATÉGICA de **MiProdu**. Tu única misión es INFORMAR, EXPLICAR y ORIENTAR al usuario sobre cómo usar la plataforma para que su restaurante sea exitoso.
 
 REGLAS DE SEGURIDAD Y PRIVACIDAD (CRÍTICO):
 1. **BLOQUEO TÉCNICO TOTAL**: Tienes terminantemente PROHIBIDO hablar sobre el código fuente, la arquitectura del software, nombres de archivos (ej: index.js, aiService.js), estructura de colecciones de Firebase, claves de API o cualquier detalle de implementación interna.
-2. **DESVÍO DE CONSULTAS HACKER**: Si un usuario pregunta sobre la base de datos, el backend, o pide ver código, responde profesionalmente: "Mi especialidad es la gestión estratégica y operativa de tu restaurante en Carta y Mesa. Para temas de soporte técnico avanzado, por favor contacta al equipo de desarrollo."
+2. **DESVÍO DE CONSULTAS HACKER**: Si un usuario pregunta sobre la base de datos, el backend, o pide ver código, responde profesionalmente: "Mi especialidad es la gestión estratégica y operativa de tu restaurante en MiProdu. Para temas de soporte técnico avanzado, por favor contacta al equipo de desarrollo."
 3. **MODO SÓLO INFORMACIÓN**: No realices acciones directas en la cuenta del usuario. Tu labor es decirle al usuario CÓMO hacerlo él mismo. Guíalo paso a paso por la interfaz que tiene frente a él.
 
 REGLAS DE ASISTENCIA:
@@ -121,7 +119,6 @@ export async function chatWithDeepSeek(messages, options = {}) {
   ];
 
   const body = {
-    model: "deepseek-chat",
     messages: finalMessages,
   };
 
@@ -131,21 +128,19 @@ export async function chatWithDeepSeek(messages, options = {}) {
     body.tool_choice = "auto";
   }
 
-  const response = await fetch(BASE_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${API_KEY}`
-    },
-    body: JSON.stringify(body)
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error?.message || "Error en DeepSeek");
+  try {
+    const chatWithAiFn = httpsCallable(functions, 'chatWithAi');
+    const result = await chatWithAiFn(body);
+    
+    if (!result.data || !result.data.success) {
+      throw new Error(result.data?.error || "Error al comunicarse con el asistente de IA.");
+    }
+    
+    return result.data.data;
+  } catch (error) {
+    console.error("Error in chatWithDeepSeek:", error);
+    throw new Error(error.message || "Error al comunicarse con el asistente de IA.");
   }
-
-  return await response.json();
 }
 
 export async function handleFunctionCall(restaurantId, toolCall, localContext = null, updateLocalState = null) {
@@ -309,8 +304,8 @@ CATEGORÍAS: ${categoriesList}
 PRODUCTOS: ${productsList}
 INSUMOS (Materia Prima): ${ingredientsList}
 
-=== CAPACIDADES ACTUALES DE LA PLATAFORMA (CARTA Y MESA SaaS) ===
-La app soporta: Menú Digital multi-sede, Códigos QR por Mesa, Pedidos a Domicilio, CRM de clientes, Suscripciones a planes (Free, Plus, Pro, Business), Personalización avanzada con CSS, Gestión de Roles/Meseros, Control de Inventario Inteligente (Recetas, Mermas, Descuento automático al despachar órdenes) y Analíticas de Rentabilidad Financiera. Úsalo como referencia si el usuario te pregunta qué se puede hacer en la plataforma.
+=== CAPACIDADES ACTUALES DE LA PLATAFORMA (MIPRODU SaaS) ===
+La app soporta: Menú Digital multi-sede, Catálogo QR, Pedidos Online y a Domicilio, CRM de clientes, Suscripciones (Plan Pro), Personalización avanzada con CSS, Caja POS integrada, Barra/Mostrador, Servicio Rápido, Control de Inventario Inteligente (Recetas, Mermas, Descuento automático al despachar órdenes) y Analíticas de Rentabilidad Financiera. Úsalo como referencia si el usuario te pregunta qué se puede hacer en la plataforma.
 ==========================================================
 `.trim();
 }
@@ -364,8 +359,8 @@ CATEGORÍAS: ${categories.join(', ') || 'Ninguna'}
 PRODUCTOS: ${products.join(', ') || 'Ninguno'}
 INSUMOS (Materia Prima): ${ingredients.join(', ') || 'Ninguno'}
 
-=== CAPACIDADES ACTUALES DE LA PLATAFORMA (CARTA Y MESA SaaS) ===
-La app soporta: Menú Digital multi-sede, Códigos QR por Mesa, Pedidos a Domicilio, CRM de clientes, Suscripciones a planes (Free, Plus, Pro, Business), Personalización avanzada con CSS, Gestión de Roles/Meseros, Control de Inventario Inteligente (Recetas, Mermas, Descuento automático al despachar órdenes) y Analíticas de Rentabilidad Financiera. Úsalo como referencia si el usuario te pregunta qué se puede hacer en la plataforma.
+=== CAPACIDADES ACTUALES DE LA PLATAFORMA (MIPRODU SaaS) ===
+La app soporta: Menú Digital multi-sede, Catálogo QR, Pedidos Online y a Domicilio, CRM de clientes, Suscripciones (Plan Pro), Personalización avanzada con CSS, Caja POS integrada, Barra/Mostrador, Servicio Rápido, Control de Inventario Inteligente (Recetas, Mermas, Descuento automático al despachar órdenes) y Analíticas de Rentabilidad Financiera. Úsalo como referencia si el usuario te pregunta qué se puede hacer en la plataforma.
 ========================================
 `.trim();
   } catch (error) {
@@ -380,7 +375,7 @@ export async function generateAiCss(prompt, contextDoc) {
   const messages = [
     {
       role: "system",
-      content: `Eres Karol, experta en CSS para el editor de diseño de Carta y Mesa.
+      content: `Eres Karol, experta en CSS para el editor de diseño de MiProdu.
 
 TU ÚNICA TAREA: generar código CSS puro basado en la petición del usuario.
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../services/firebase';
 
 const hexToRgba = (hex, opacity) => {
@@ -26,11 +26,36 @@ const get4Sides = (prefix, config, defaults) => {
 };
 
 // Module-level in-memory cache to prevent duplicate Firestore requests and loading flickers
+// Each entry: { data, timestamp }
 const designCache = {};
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
-export function useRestaurantDesign(restaurantId) {
-  const [loadingDesign, setLoadingDesign] = useState(true);
-  const [designConfig, setDesignConfig] = useState(null);
+export const seedDesignCache = (restaurantId, data) => {
+  if (data) {
+    designCache[restaurantId] = { data, timestamp: Date.now() };
+  }
+};
+
+/**
+ * Returns cached design data only if it's still fresh (within TTL).
+ */
+const getCachedDesign = (restaurantId) => {
+  const entry = designCache[restaurantId];
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > CACHE_TTL_MS) {
+    delete designCache[restaurantId]; // expired — evict
+    return null;
+  }
+  return entry.data;
+};
+
+const setCachedDesign = (restaurantId, data) => {
+  designCache[restaurantId] = { data, timestamp: Date.now() };
+};
+
+export function useRestaurantDesign(restaurantId, initialDesign = null) {
+  const [loadingDesign, setLoadingDesign] = useState(!initialDesign);
+  const [designConfig, setDesignConfig] = useState(initialDesign);
 
   const applyDesignToDom = useCallback((config) => {
     if (!config) return;
@@ -133,8 +158,11 @@ export function useRestaurantDesign(restaurantId) {
     // Text colors (title, description, price)
     if (config.titleColor) {
       root.style.setProperty('--text-color', config.titleColor);
+      root.style.setProperty('--text-dark', config.titleColor);
     } else {
-      root.style.setProperty('--text-color', config.theme === 'dark' ? '#ffffff' : '#1e293b');
+      const defaultTextColor = config.theme === 'dark' ? '#ffffff' : '#1e293b';
+      root.style.setProperty('--text-color', defaultTextColor);
+      root.style.setProperty('--text-dark', defaultTextColor);
     }
     if (config.descColor) {
       root.style.setProperty('--desc-color', config.descColor);
@@ -144,7 +172,7 @@ export function useRestaurantDesign(restaurantId) {
     if (config.priceColor) {
       root.style.setProperty('--price-color', config.priceColor);
     } else {
-      root.style.setProperty('--price-color', config.primaryColor || '#fbbf24');
+      root.style.setProperty('--price-color', 'inherit');
     }
 
     // Font sizes
@@ -274,71 +302,78 @@ export function useRestaurantDesign(restaurantId) {
   useEffect(() => {
     if (!restaurantId) return;
 
-    const fetchDesign = async () => {
-      // 1. Verificar cache en memoria primero para evitar flash de carga
-      if (designCache[restaurantId]) {
-        setDesignConfig(designCache[restaurantId]);
-        applyDesignToDom(designCache[restaurantId]);
-        setLoadingDesign(false);
-      } else {
-        setLoadingDesign(true);
-      }
+    const urlParams = new URLSearchParams(window.location.search);
+    const previewSession = urlParams.get('previewSession');
+    const isPreviewMode = urlParams.get('preview') === 'true' || (window.self !== window.top);
 
+    // If initialDesign is provided and not in preview mode, avoid any Firestore read/snapshot
+    if (initialDesign && !isPreviewMode) {
+      setDesignConfig(initialDesign);
+      applyDesignToDom(initialDesign);
+      setLoadingDesign(false);
+      return;
+    }
+
+    // 1. Verificar cache en memoria primero para evitar flash de carga
+    const cached = getCachedDesign(restaurantId);
+    if (cached) {
+      setDesignConfig(cached);
+      applyDesignToDom(cached);
+      setLoadingDesign(false);
+    } else if (!initialDesign) {
+      setLoadingDesign(true);
+    }
+
+    if (isPreviewMode && previewSession) {
       try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const previewSession = urlParams.get('previewSession');
-        const isPreviewMode = urlParams.get('preview') === 'true' || (window.self !== window.top);
-
-        if (isPreviewMode && previewSession) {
-          try {
-            const storedSession = sessionStorage.getItem('preview_design_session');
-            if (storedSession !== previewSession) {
-              sessionStorage.removeItem('preview_design_config');
-              sessionStorage.setItem('preview_design_session', previewSession);
-            }
-          } catch (e) {
-            console.error("Error managing preview session:", e);
-          }
+        const storedSession = sessionStorage.getItem('preview_design_session');
+        if (storedSession !== previewSession) {
+          sessionStorage.removeItem('preview_design_config');
+          sessionStorage.setItem('preview_design_session', previewSession);
         }
-
-        if (isPreviewMode) {
-          try {
-            const cachedPreview = sessionStorage.getItem('preview_design_config');
-            if (cachedPreview) {
-              const parsed = JSON.parse(cachedPreview);
-              setDesignConfig(parsed);
-              applyDesignToDom(parsed);
-              setLoadingDesign(false);
-              designCache[restaurantId] = parsed;
-            }
-          } catch (e) {
-            console.error("Error reading cached preview design:", e);
-          }
-        }
-
-        const docSnap = await getDoc(doc(db, `restaurants/${restaurantId}/config/design`));
-        if (docSnap.exists()) {
-          const config = docSnap.data();
-          let finalConfig = config;
-          if (isPreviewMode) {
-            const cachedPreview = sessionStorage.getItem('preview_design_config');
-            if (cachedPreview) {
-              finalConfig = { ...config, ...JSON.parse(cachedPreview) };
-            }
-          }
-          designCache[restaurantId] = finalConfig;
-          setDesignConfig(finalConfig);
-          applyDesignToDom(finalConfig);
-        }
-      } catch (error) {
-        console.error("Error loading design:", error);
-      } finally {
-        setLoadingDesign(false);
+      } catch (e) {
+        console.error("Error managing preview session:", e);
       }
-    };
+    }
 
-    fetchDesign();
-  }, [restaurantId, applyDesignToDom]);
+    if (isPreviewMode) {
+      try {
+        const cachedPreview = sessionStorage.getItem('preview_design_config');
+        if (cachedPreview) {
+          const parsed = JSON.parse(cachedPreview);
+          setDesignConfig(parsed);
+          applyDesignToDom(parsed);
+          setLoadingDesign(false);
+          designCache[restaurantId] = parsed;
+        }
+      } catch (e) {
+        console.error("Error reading cached preview design:", e);
+      }
+    }
+
+    const designDocRef = doc(db, `restaurants/${restaurantId}/config/design`);
+    const unsubscribe = onSnapshot(designDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const config = docSnap.data();
+        let finalConfig = config;
+        if (isPreviewMode) {
+          const cachedPreview = sessionStorage.getItem('preview_design_config');
+          if (cachedPreview) {
+            finalConfig = { ...config, ...JSON.parse(cachedPreview) };
+          }
+        }
+        setCachedDesign(restaurantId, finalConfig);
+        setDesignConfig(finalConfig);
+        applyDesignToDom(finalConfig);
+      }
+      setLoadingDesign(false);
+    }, (error) => {
+      console.error("Error loading design:", error);
+      setLoadingDesign(false);
+    });
+
+    return () => unsubscribe();
+  }, [restaurantId, initialDesign, applyDesignToDom]);
 
   // Listen for real-time messages from the dashboard
   useEffect(() => {
@@ -350,7 +385,7 @@ export function useRestaurantDesign(restaurantId) {
         setDesignConfig(prev => {
           const merged = { ...prev, ...newConfig };
           applyDesignToDom(merged);
-          designCache[restaurantId] = merged;
+          setCachedDesign(restaurantId, merged);
           try {
             sessionStorage.setItem('preview_design_config', JSON.stringify(merged));
           } catch (e) {

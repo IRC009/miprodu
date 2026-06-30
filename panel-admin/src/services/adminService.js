@@ -136,7 +136,7 @@ export const getGlobalStats = async (forceRecalculate = false) => {
     snap.forEach(docSnap => {
       const data = docSnap.data();
       const sub = data.subscription || {};
-      const isActive = ['active', 'authorized', 'explore'].includes(sub.status);
+      const isActive = ['active', 'authorized'].includes(sub.status);
       
       if (!isActive || sub.planLevel === undefined || sub.planLevel === null) {
         noPlan++;

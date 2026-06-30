@@ -26,7 +26,7 @@ async function handleCreateOrderPreference(request) {
 
     const baseDomain = (restaurant?.customDomain && restaurant?.customDomainStatus === "active")
       ? `https://${restaurant.customDomain}`
-      : "https://menu.cartaymesa.com";
+      : "https://miprodu.com";
 
     const { creds: mpCreds, restaurantName } = await getMPCredentials(restaurantId, orderData?.branchId);
     const accessToken = mpCreds?.accessToken?.trim();
@@ -64,12 +64,12 @@ async function handleCreateOrderPreference(request) {
       currency_id: "COP",
     }));
 
-    const sanitizedName = (restaurantName || "Restaurante")
+    const sanitizedName = (restaurantName || "Tienda")
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/[^a-zA-Z0-9 ]/g, "")
       .trim()
-      .substring(0, 22) || "Restaurante";
+      .substring(0, 22) || "Tienda";
 
     if (items.length === 0) {
       throw new HttpsError("invalid-argument", "La orden debe tener al menos un item.");
@@ -81,11 +81,11 @@ async function handleCreateOrderPreference(request) {
           items,
           payer: {
             name: (orderData.customerName || "Cliente").substring(0, 50),
-            email: orderData.customerEmail || "cliente@cartaymesa.com",
+            email: orderData.customerEmail || "cliente@miprodu.com",
           },
           external_reference: `${restaurantId}|${orderId}`,
           statement_descriptor: sanitizedName,
-          notification_url: `https://webhookorderpayment-zq66x56soq-uc.a.run.app?restaurantId=${restaurantId}`,
+          notification_url: `https://webhookorderpayment-pq3tokpi6q-uc.a.run.app?restaurantId=${restaurantId}`,
           back_urls: {
             success: `${baseDomain}/order-status?orderId=${orderId}&restaurantId=${restaurantId}&status=success`,
             failure: `${baseDomain}/order-status?orderId=${orderId}&restaurantId=${restaurantId}&status=failure`,
@@ -136,7 +136,7 @@ async function handleProcessMPBrickPayment(request) {
     const paymentBody = { 
       ...formData, 
       external_reference: `${restaurantId}|${orderId}`,
-      notification_url: `https://webhookorderpayment-zq66x56soq-uc.a.run.app?restaurantId=${restaurantId}`
+      notification_url: `https://webhookorderpayment-pq3tokpi6q-uc.a.run.app?restaurantId=${restaurantId}`
     };
     const paymentResponse = await payment.create({ body: paymentBody });
 

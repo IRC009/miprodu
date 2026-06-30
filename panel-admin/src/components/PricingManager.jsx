@@ -40,6 +40,7 @@ export default function PricingManager() {
   const [msg, setMsg] = useState(null);
   const [appVersion, setAppVersion] = useState('1.0.0');
   const [trialDays, setTrialDays] = useState(7);
+  const [subTrialDays, setSubTrialDays] = useState(0);
   const [savingTrial, setSavingTrial] = useState(false);
 
   // Local editable state
@@ -79,6 +80,7 @@ export default function PricingManager() {
       const b = data.base || FALLBACK_BASE;
       setBase(b);
       if (data.trialDays !== undefined) setTrialDays(data.trialDays);
+      if (data.subTrialDays !== undefined) setSubTrialDays(data.subTrialDays);
       const promo = data.promotion || {};
       setPromoEnabled(promo.enabled || false);
       setPromoLabel(promo.label || '');
@@ -176,17 +178,23 @@ export default function PricingManager() {
   };
 
   const handleSaveTrial = async () => {
-    const days = parseInt(trialDays) || 7;
-    if (days < 1 || days > 365) {
-      setMsg({ type: 'error', text: '❌ Los días de prueba deben estar entre 1 y 365.' });
+    const days = parseInt(trialDays) ?? 0;
+    const sDays = parseInt(subTrialDays) ?? 0;
+    if (days < 0 || days > 365 || sDays < 0 || sDays > 365) {
+      setMsg({ type: 'error', text: '❌ Los días de prueba deben estar entre 0 y 365.' });
       return;
     }
     setSavingTrial(true);
     setMsg(null);
     try {
-      await setDoc(PRICING_DOC, { trialDays: days, updatedAt: new Date().toISOString() }, { merge: true });
+      await setDoc(PRICING_DOC, { 
+        trialDays: days, 
+        subTrialDays: sDays, 
+        updatedAt: new Date().toISOString() 
+      }, { merge: true });
       setTrialDays(days);
-      setMsg({ type: 'success', text: `✅ Días de prueba actualizados a ${days} días. Se sincronizará en landing, dashboard y backend.` });
+      setSubTrialDays(sDays);
+      setMsg({ type: 'success', text: `✅ Días de prueba actualizados (Registro: ${days} días, Mercado Pago: ${sDays} días).` });
     } catch (err) {
       setMsg({ type: 'error', text: `❌ Error al guardar días de prueba: ${err.message}` });
     } finally {
@@ -200,7 +208,8 @@ export default function PricingManager() {
     try {
       const payload = {
         base,
-        trialDays: parseInt(trialDays) || 7,
+        trialDays: parseInt(trialDays) ?? 0,
+        subTrialDays: parseInt(subTrialDays) ?? 0,
         promotion: {
           enabled: promoEnabled,
           label: promoLabel.trim(),
@@ -224,7 +233,7 @@ export default function PricingManager() {
     } finally {
       setSaving(false);
     }
-  }, [base, trialDays, promoEnabled, promoLabel, promoDescription, promoEndsAt, promoNoLimit, promoPlans, enableScarcityQty, scarcityQtyLimit, scarcityQtyMin, scarcityMinSeconds, scarcityMaxSeconds]);
+  }, [base, trialDays, subTrialDays, promoEnabled, promoLabel, promoDescription, promoEndsAt, promoNoLimit, promoPlans, enableScarcityQty, scarcityQtyLimit, scarcityQtyMin, scarcityMinSeconds, scarcityMaxSeconds]);
 
   const s = {
     card: { background: 'rgba(15,23,42,0.6)', border: '1px solid rgba(139,92,246,0.15)', borderRadius: '12px', padding: '1.5rem', marginBottom: '1.5rem' },
@@ -248,71 +257,77 @@ export default function PricingManager() {
       <div style={{ ...s.card, border: '1px solid rgba(16,185,129,0.3)', background: 'rgba(16,185,129,0.05)', marginBottom: '1.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
           <div style={s.title}>🎁 Días de Prueba Gratuita</div>
-          <div style={{ fontSize: '0.72rem', color: '#94a3b8', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '99px', padding: '2px 10px', fontWeight: '700' }}>
-            Actual: {trialDays} días
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ fontSize: '0.72rem', color: '#34d399', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '99px', padding: '2px 10px', fontWeight: '700' }}>
+              Registro: {trialDays} d
+            </div>
+            <div style={{ fontSize: '0.72rem', color: '#60a5fa', background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: '99px', padding: '2px 10px', fontWeight: '700' }}>
+              Mercado Pago: {subTrialDays} d
+            </div>
           </div>
         </div>
-        <p style={{ fontSize: '0.77rem', color: '#64748b', marginBottom: '1rem', lineHeight: 1.5 }}>
-          Configura cuántos días gratis reciben los nuevos restaurantes al suscribirse por primera vez. Se actualiza en tiempo real en la landing page, el backend de Mercado Pago y el dashboard del cliente.
+        <p style={{ fontSize: '0.77rem', color: '#64748b', marginBottom: '1.25rem', lineHeight: 1.5 }}>
+          Configura de forma independiente los días gratis de cortesía. El periodo de registro se otorga automáticamente al crear la cuenta, mientras que el periodo de Mercado Pago se aplica al suscribirse a un plan de pago.
         </p>
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end' }}>
-          <div style={{ flex: 1 }}>
-            <label style={s.label}>Días de Prueba (1–365)</label>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
+          <div>
+            <label style={s.label}>Días gratis al registrarse (0-365)</label>
             <input
               type="number"
-              min="1"
+              min="0"
               max="365"
               style={{ ...s.input, border: '1px solid rgba(16,185,129,0.35)', background: 'rgba(16,185,129,0.08)' }}
               value={trialDays}
-              onChange={(e) => setTrialDays(parseInt(e.target.value) || 1)}
+              onChange={(e) => setTrialDays(parseInt(e.target.value) ?? 0)}
               placeholder="7"
             />
           </div>
+          <div>
+            <label style={s.label}>Días gratis al suscribirse (0-365)</label>
+            <input
+              type="number"
+              min="0"
+              max="365"
+              style={{ ...s.input, border: '1px solid rgba(59,130,246,0.35)', background: 'rgba(59,130,246,0.08)' }}
+              value={subTrialDays}
+              onChange={(e) => setSubTrialDays(parseInt(e.target.value) ?? 0)}
+              placeholder="0"
+            />
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <button
             onClick={handleSaveTrial}
             disabled={savingTrial}
-            style={{ background: savingTrial ? '#334155' : 'linear-gradient(135deg, #059669, #10b981)', color: '#fff', border: 'none', borderRadius: '10px', padding: '0.6rem 1.25rem', fontWeight: '800', fontSize: '0.85rem', cursor: savingTrial ? 'not-allowed' : 'pointer', transition: 'all 0.2s', whiteSpace: 'nowrap', marginBottom: '0' }}
+            style={{ background: savingTrial ? '#334155' : 'linear-gradient(135deg, #059669, #10b981)', color: '#fff', border: 'none', borderRadius: '10px', padding: '0.65rem 1.5rem', fontWeight: '800', fontSize: '0.85rem', cursor: savingTrial ? 'not-allowed' : 'pointer', transition: 'all 0.2s' }}
           >
             {savingTrial ? '⏳ Guardando...' : '💾 Guardar Días de Prueba'}
           </button>
-        </div>
-        <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          {[1, 3, 7, 14, 30].map((d) => (
-            <button
-              key={d}
-              onClick={() => setTrialDays(d)}
-              style={{ background: trialDays === d ? 'rgba(16,185,129,0.25)' : 'rgba(15,23,42,0.4)', border: `1px solid ${trialDays === d ? 'rgba(16,185,129,0.5)' : 'rgba(139,92,246,0.15)'}`, borderRadius: '6px', padding: '3px 12px', fontSize: '0.75rem', fontWeight: '700', color: trialDays === d ? '#34d399' : '#94a3b8', cursor: 'pointer' }}
-            >
-              {d}d
-            </button>
-          ))}
         </div>
       </div>
 
       {/* ── Base Prices ─────────────────────────────────────────────────────── */}
       <div style={s.card}>
-        <div style={s.title}>📋 Precios Base</div>
+        <div style={s.title}>📋 Precio Base (Plan Pro)</div>
         <p style={{ fontSize: '0.77rem', color: '#64748b', marginBottom: '1.25rem' }}>
           El precio anual se calcula automáticamente como mensual × 10.
         </p>
-        <div style={s.grid}>
-          {[0, 1, 2].map((id) => (
-            <div key={id} style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(139,92,246,0.1)', borderRadius: '10px', padding: '1.25rem' }}>
-              <div style={{ fontSize: '0.85rem', fontWeight: '700', color: id === 0 ? '#10b981' : (id === 1 ? '#a78bfa' : '#e8748a'), marginBottom: '0.75rem' }}>
-                Plan {id === 0 ? 'Tradicional' : (id === 1 ? 'Carta' : 'Carta y Mesa')}
-              </div>
-              <label style={s.label}>Precio Mensual (COP)</label>
-              <input
-                style={s.input}
-                value={base[id]?.monthly || ''}
-                onChange={(e) => handleBaseChange(id, 'monthly', e.target.value)}
-                placeholder="Ej: 29900"
-              />
-              <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '5px' }}>
-                Anual: {fmt((base[id]?.monthly || 0) * 10)} · /mes: {fmt(Math.round((base[id]?.monthly || 0) * 10 / 12))}
-              </div>
-            </div>
-          ))}
+        <div style={{ maxWidth: '400px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(139,92,246,0.15)', borderRadius: '10px', padding: '1.25rem' }}>
+          <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#e8748a', marginBottom: '0.75rem' }}>
+            Plan Pro
+          </div>
+          <label style={s.label}>Precio Mensual (COP)</label>
+          <input
+            style={s.input}
+            value={base[2]?.monthly || ''}
+            onChange={(e) => handleBaseChange(2, 'monthly', e.target.value)}
+            placeholder="Ej: 99900"
+          />
+          <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '5px' }}>
+            Anual: {fmt((base[2]?.monthly || 0) * 10)} · /mes: {fmt(Math.round((base[2]?.monthly || 0) * 10 / 12))}
+          </div>
         </div>
       </div>
 
@@ -378,7 +393,7 @@ export default function PricingManager() {
           <div style={{ marginTop: '0.5rem', padding: '1rem', border: '1px dashed rgba(139,26,46,0.3)', borderRadius: '8px', backgroundColor: 'rgba(139,26,46,0.05)' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginBottom: '0.5rem' }}>
               <input type="checkbox" checked={enableScarcityQty} onChange={e => setEnableScarcityQty(e.target.checked)} />
-              <span style={{ fontSize: '0.8rem', color: '#e2e8f0', fontWeight: 'bold' }}>🔥 Simular Escasez por Cupos (Quedan pocos)</span>
+              <span style={{ fontSize: '0.8rem', color: '#e2e8f0', fontWeight: 'bold' }}>Simular Escasez por Cupos (Quedan pocos)</span>
             </label>
             {enableScarcityQty && (
               <>
@@ -433,31 +448,27 @@ export default function PricingManager() {
             </p>
           </div>
 
-          <div style={s.grid}>
-            {[0, 1, 2].map((id) => (
-              <div key={id} style={{ background: 'rgba(139,26,46,0.1)', border: '1px solid rgba(139,26,46,0.25)', borderRadius: '10px', padding: '1.25rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                  <div style={{ fontSize: '0.85rem', fontWeight: '700', color: id === 0 ? '#10b981' : (id === 1 ? '#a78bfa' : '#e8748a') }}>
-                    Plan {id === 0 ? 'Tradicional' : (id === 1 ? 'Carta' : 'Carta y Mesa')}
-                  </div>
-                  {discountPct(id) > 0 && (
-                    <div style={{ background: '#8B1A2E', color: '#fff', fontSize: '0.65rem', fontWeight: '800', padding: '2px 8px', borderRadius: '99px' }}>
-                      -{discountPct(id)}%
-                    </div>
-                  )}
-                </div>
-                <label style={s.label}>Precio Promo Mensual (COP)</label>
-                <input
-                  style={s.promoInput}
-                  value={promoPlans[id]?.monthly || ''}
-                  onChange={e => handlePromoChange(id, e.target.value)}
-                  placeholder="Ej: 19900"
-                />
-                <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '5px' }}>
-                  Antes: {fmt(base[id]?.monthly || 0)} → Ahora: {fmt(promoPlans[id]?.monthly || 0)}
-                </div>
+          <div style={{ maxWidth: '400px', background: 'rgba(139,26,46,0.1)', border: '1px solid rgba(139,26,46,0.25)', borderRadius: '10px', padding: '1.25rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+              <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#e8748a' }}>
+                Plan Pro
               </div>
-            ))}
+              {discountPct(2) > 0 && (
+                <div style={{ background: '#8B1A2E', color: '#fff', fontSize: '0.65rem', fontWeight: '800', padding: '2px 8px', borderRadius: '99px' }}>
+                  -{discountPct(2)}%
+                </div>
+              )}
+            </div>
+            <label style={s.label}>Precio Promo Mensual (COP)</label>
+            <input
+              style={s.promoInput}
+              value={promoPlans[2]?.monthly || ''}
+              onChange={e => handlePromoChange(2, e.target.value)}
+              placeholder="Ej: 69900"
+            />
+            <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '5px' }}>
+              Antes: {fmt(base[2]?.monthly || 0)} → Ahora: {fmt(promoPlans[2]?.monthly || 0)}
+            </div>
           </div>
         </div>
       </div>

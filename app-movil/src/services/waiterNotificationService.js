@@ -14,12 +14,12 @@ const CALLS_ONLY_MODE_KEY = 'calls_only_mode';
 
 // Configure default high-importance notification channel for Android background/foreground push routing
 if (Platform.OS === 'android') {
-  Notifications.setNotificationChannelAsync('waiter-calls-custom-sound', {
+  Notifications.setNotificationChannelAsync('miprodu-waiter-calls-v5', {
     name: 'Llamados de Mesero',
     importance: Notifications.AndroidImportance.MAX,
     vibrationPattern: [0, 250, 250, 250],
     lightColor: '#FF231F7C',
-    sound: 'waiter_bell', // Use custom waiter_bell.mp3 from res/raw
+    sound: 'waiter_bell.mp3', // Use custom waiter_bell.mp3 from res/raw (explicit extension required by expo-notifications)
   });
 }
 

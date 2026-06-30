@@ -215,6 +215,7 @@ export default function CartModal({ restaurantId, onClose }) {
     customerName, setCustomerName,
     customerAddress, setCustomerAddress,
     customerPhone, setCustomerPhone,
+    customerEmail, setCustomerEmail,
     tableNumber, setTableNumber,
     globalObservations, setGlobalObservations,
     paymentMethod, setPaymentMethod,
@@ -245,6 +246,7 @@ export default function CartModal({ restaurantId, onClose }) {
     requestDeliveryGPS,
     handleSelectOrderType,
     branchPlan,
+    isEcommerce,
   } = useCartModal(restaurantId, onClose);
 
   if (mpBrickData) {
@@ -263,7 +265,7 @@ export default function CartModal({ restaurantId, onClose }) {
         <div className="cart-header">
           <h2>
             <span className="cart-icon"><IconCart /></span>
-            Tu Pedido
+            {isEcommerce ? 'Tu Bolsa de Compra' : 'Tu Pedido'}
           </h2>
           <button className="cart-close" onClick={onClose} aria-label="Cerrar">✕</button>
         </div>
@@ -276,7 +278,7 @@ export default function CartModal({ restaurantId, onClose }) {
         ) : cartItems.length === 0 ? (
           <div className="cart-empty">
             <div className="cart-empty-icon"><IconEmptyCart /></div>
-            <p>Tu pedido está vacío</p>
+            <p>{isEcommerce ? 'Tu bolsa de compra está vacía' : 'Tu pedido está vacío'}</p>
           </div>
         ) : (
           <div className="cart-body">
@@ -333,16 +335,14 @@ export default function CartModal({ restaurantId, onClose }) {
 
             {/* Observaciones */}
             <div className="cart-section">
-              <div className="cart-section-title">Observaciones</div>
-              <textarea className="cart-input" rows="2" value={globalObservations} onChange={e => setGlobalObservations(e.target.value)} placeholder="Sin cebolla, salsa aparte..." />
+              <div className="cart-section-title">{isEcommerce ? 'Notas del Pedido' : 'Observaciones'}</div>
+              <textarea className="cart-input" rows="2" value={globalObservations} onChange={e => setGlobalObservations(e.target.value)} placeholder="Ej: Talla M, color azul, empaque de regalo, o indicaciones de entrega..." />
             </div>
 
             {/* Tipo de pedido */}
             {(() => {
               const showDeliveryOption = ((settings?.enableWhatsAppOrders !== false) && branchPlan >= 1) || (settings?.enableWhatsAppDirectDelivery === true);
-              const showTableOption = ((settings?.enableTableOrders !== false) && 
-                (isCounterMode ? (settings?.enableBarService !== false) : (settings?.enableTableService !== false)) &&
-                branchPlan >= 2) || (settings?.enableWhatsAppTableOrders === true && branchPlan >= 0);
+              const showTableOption = false;
               const showPickupOption = (settings?.enablePickupOrders !== false) && branchPlan >= 1;
               const isTableLocked = false;
               
@@ -350,13 +350,13 @@ export default function CartModal({ restaurantId, onClose }) {
 
               return (
                 <div className="cart-section">
-                  <div className="cart-section-title">¿Cómo quieres tu pedido?</div>
+                  <div className="cart-section-title">{isEcommerce ? '¿Cómo deseas recibir tu compra?' : '¿Cómo quieres tu pedido?'}</div>
                   <div className="cart-type-selector">
                     {showDeliveryOption && (
                       <label className="cart-radio">
                         <input type="radio" name="orderType" value="delivery" checked={orderType === 'delivery'} onChange={() => handleSelectOrderType('delivery')} />
                         <span className="cart-radio-icon"><IconDelivery /></span>
-                        Domicilio
+                        {isEcommerce ? 'Envío a Domicilio' : 'Domicilio'}
                       </label>
                     )}
                     {showTableOption && (
@@ -388,7 +388,7 @@ export default function CartModal({ restaurantId, onClose }) {
                       <label className="cart-radio">
                         <input type="radio" name="orderType" value="pickup" checked={orderType === 'pickup'} onChange={() => handleSelectOrderType('pickup')} />
                         <span className="cart-radio-icon"><IconPickup /></span>
-                        Para Recoger
+                        {isEcommerce ? 'Retirar en Tienda' : 'Para Recoger'}
                       </label>
                     )}
                   </div>
@@ -398,18 +398,34 @@ export default function CartModal({ restaurantId, onClose }) {
 
             {/* Datos del cliente */}
             <div className="cart-section">
-              <div className="cart-section-title">Tus Datos</div>
+              <div className="cart-section-title">{isEcommerce ? 'Datos de Contacto y Entrega' : 'Tus Datos'}</div>
               <div className="cart-fields">
                 <div>
-                  <label className="cart-label">Nombre</label>
+                  <label className="cart-label">Nombre Completo</label>
                   <input type="text" className="cart-input" value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Ej: Juan Pérez" />
                 </div>
+                {settings?.requireCustomerEmail && (
+                  <div>
+                    <label className="cart-label">Correo Electrónico <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 400 }}>(opcional)</span></label>
+                    <input
+                      type="email"
+                      className="cart-input"
+                      value={customerEmail}
+                      onChange={e => setCustomerEmail(e.target.value)}
+                      placeholder="Ej: juan@gmail.com"
+                      autoComplete="email"
+                    />
+                    <p style={{ fontSize: '0.72rem', color: '#94a3b8', margin: '3px 0 0', lineHeight: '1.4' }}>
+                      📊 Usado para mejorar tus anuncios y enviarte confirmaciones.
+                    </p>
+                  </div>
+                )}
                 {orderType === 'delivery' && (
                   <>
                     <div>
                       <label className="cart-label">Dirección de entrega</label>
-                      <input type="text" className="cart-input" value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} placeholder="Ej: Calle 123 #45-67" />
-                      {settings?.enableDeliveryGPSRequest && (
+                      <input type="text" className="cart-input" value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} placeholder="Ej: Calle 123 #45-67, Apto 101" />
+                      {!isEcommerce && settings?.enableDeliveryGPSRequest && (
                         <div style={{ marginTop: '0.5rem' }}>
                           {deliveryGpsCoords ? (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: '#15803d', fontWeight: 600 }}>
@@ -446,15 +462,15 @@ export default function CartModal({ restaurantId, onClose }) {
                       )}
                     </div>
                     <div>
-                      <label className="cart-label">Teléfono</label>
-                      <input type="text" className="cart-input" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} placeholder="300 123 4567" />
+                      <label className="cart-label">Teléfono de contacto</label>
+                      <input type="text" className="cart-input" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} placeholder="Ej: 3001234567" />
                     </div>
                   </>
                 )}
                 {orderType === 'pickup' && (
                   <div>
                     <label className="cart-label">Teléfono de contacto</label>
-                    <input type="text" className="cart-input" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} placeholder="300 123 4567" />
+                    <input type="text" className="cart-input" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} placeholder="Ej: 3001234567" />
                   </div>
                 )}
                 {orderType === 'table' && !isCounterMode && (
@@ -579,7 +595,7 @@ export default function CartModal({ restaurantId, onClose }) {
                 {isOnlinePayment && (
                   <div className="cart-secure-badge">
                     <IconLock />
-                    <span>Serás redirigido a una pasarela segura. Tu pedido queda reservado y se confirma al completar el pago.</span>
+                    <span>Serás redirigido a una pasarela segura. Tu compra queda reservada y se confirma al completar el pago.</span>
                   </div>
                 )}
               </div>
@@ -600,7 +616,7 @@ export default function CartModal({ restaurantId, onClose }) {
                   </div>
                 )}
 
-                {settings?.suggestedTipPercentage > 0 && (
+                {!isEcommerce && settings?.suggestedTipPercentage > 0 && (
                   <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', fontSize: '0.84rem', padding: '0.35rem 0', borderTop: '1px dashed #e2e8f0', marginTop: 4 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                       <input type="checkbox" checked={addTip} onChange={e => setAddTip(e.target.checked)} style={{ width: 14, height: 14 }} />
@@ -612,13 +628,13 @@ export default function CartModal({ restaurantId, onClose }) {
 
                 {orderType === 'delivery' && settings?.deliveryFeeType === 'fixed' && (
                   <div className="cart-summary-line">
-                    <span>Domicilio</span>
+                    <span>{isEcommerce ? 'Envío' : 'Domicilio'}</span>
                     <span>{fmt(settings.deliveryFee)}</span>
                   </div>
                 )}
                 {orderType === 'delivery' && settings?.deliveryFeeType === 'quote' && (
                   <div className="cart-summary-line" style={{ color: '#d97706' }}>
-                    <span>Domicilio</span>
+                    <span>{isEcommerce ? 'Envío' : 'Domicilio'}</span>
                     <span>Por cotizar</span>
                   </div>
                 )}

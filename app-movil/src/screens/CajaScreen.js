@@ -43,10 +43,9 @@ export default function CajaScreen({
   products, 
   branches, 
   selectedBranch,
-  planLevel = 2
+  planLevel = 2,
+  t = LIGHT,
 }) {
-  const scheme = useColorScheme();
-  const t = scheme === 'dark' ? DARK : LIGHT;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
@@ -237,7 +236,8 @@ export default function CajaScreen({
           name: item.name,
           price: item.price,
           quantity: item.quantity,
-          categoryId: item.categoryId || ''
+          categoryId: item.categoryId || '',
+          sku: item.sku || ''
         })),
         subtotal: cartTotal,
         tip: Number(tip) || 0,
@@ -335,10 +335,13 @@ export default function CajaScreen({
         )}
         <View style={styles.productInfo}>
           <Text style={[styles.productName, { color: t.text }]} numberOfLines={2}>{item.name}</Text>
+          {!!item.sku && (
+            <Text style={{ fontSize: 10, color: t.sub, fontWeight: '700', marginBottom: 2 }}>SKU: {item.sku}</Text>
+          )}
           {!!item.description && (
             <Text style={[styles.productDesc, { color: t.sub }]} numberOfLines={1}>{item.description}</Text>
           )}
-          <Text style={[styles.productPrice, { color: t.primary }]}>${item.price?.toLocaleString() || '0'}</Text>
+          <Text style={[styles.productPrice, { color: t.text, fontWeight: '700' }]}>${item.price?.toLocaleString() || '0'}</Text>
         </View>
 
         {qty > 0 ? (
@@ -412,7 +415,7 @@ export default function CajaScreen({
           <View style={styles.cartHeaderInfo}>
             <ShoppingCart size={20} color={t.primary} />
             <Text style={[styles.cartItemsCount, { color: t.text }]}>{cart.length} {cart.length === 1 ? 'item' : 'items'}</Text>
-            <Text style={[styles.cartTotalText, { color: t.primary }]}>Total: ${cartTotal.toLocaleString()}</Text>
+            <Text style={[styles.cartTotalText, { color: t.text }]}>Total: <Text style={{ fontWeight: '900' }}>${cartTotal.toLocaleString()}</Text></Text>
           </View>
           
           <View style={styles.cartActions}>
@@ -543,7 +546,7 @@ export default function CajaScreen({
 
                     {isNewLoyaltyCustomer && (
                       <View style={{ gap: 8, marginTop: 8 }}>
-                        <Text style={{ color: t.primary, fontWeight: '700', fontSize: 13 }}>Registrar nuevo cliente en Club:</Text>
+                        <Text style={{ color: t.text, fontWeight: '700', fontSize: 13 }}>Registrar nuevo cliente en Club:</Text>
                         <TextInput
                           style={[styles.inputField, { backgroundColor: t.inputBg, color: t.text, borderColor: t.border }]}
                           placeholder="Nombre Completo del Cliente"
@@ -570,8 +573,13 @@ export default function CajaScreen({
                 {cart.map(item => (
                   <View key={item.id} style={styles.summaryItem}>
                     <View style={styles.summaryItemDetails}>
-                      <Text style={[styles.summaryItemQty, { color: t.primary }]}>{item.quantity}x</Text>
-                      <Text style={[styles.summaryItemName, { color: t.text }]} numberOfLines={1}>{item.name}</Text>
+                      <Text style={[styles.summaryItemQty, { color: t.text, fontWeight: '800' }]}>{item.quantity}x</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.summaryItemName, { color: t.text }]} numberOfLines={1}>{item.name}</Text>
+                        {!!item.sku && (
+                          <Text style={{ fontSize: 9, color: t.sub, fontWeight: '700' }}>SKU: {item.sku}</Text>
+                        )}
+                      </View>
                     </View>
                     <View style={styles.summaryItemPriceRow}>
                       <TouchableOpacity style={[styles.qtyControlBtn, { backgroundColor: t.badge }]} onPress={() => updateQuantity(item.id, -1)}>
@@ -592,7 +600,7 @@ export default function CajaScreen({
                   </View>
                   <View style={styles.summaryTotalRow}>
                     <Text style={[styles.summaryTotalLabel, { color: t.text }]}>Total a Pagar:</Text>
-                    <Text style={[styles.summaryTotalVal, { color: t.primary }]}>${finalTotal.toLocaleString()}</Text>
+                    <Text style={[styles.summaryTotalVal, { color: t.text, fontWeight: '900' }]}>${finalTotal.toLocaleString()}</Text>
                   </View>
                 </View>
               </View>

@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { addBranch, updateBranch } from '../../../services/branchService';
 import { uploadBranchImage } from '../../../services/designService';
 import { useSubscription } from '../../../context/SubscriptionContext';
+import { useRestaurantData } from '../../../context/RestaurantDataContext';
 
 export function useBranchForm(restaurantId, branches, fetchBranches, planLevel, isMixed, canAdd, canAddP1, canAddP2, canAddFree, showAlert) {
   const { subscription, subscribedBranches } = useSubscription();
+  const { restaurant } = useRestaurantData();
   const [showModal, setShowModal] = useState(false);
   const [editingBranchId, setEditingBranchId] = useState(null);
   const [newBranch, setNewBranch] = useState({ name: '', city: '', address: '', phone: '', schedule: '', lat: '', lng: '', mapsUrl: '', planLevel: -1, customClass: '', photoUrl: '', bgImageUrl: '', cashRegistersCount: 1 });
@@ -77,27 +79,44 @@ export function useBranchForm(restaurantId, branches, fetchBranches, planLevel, 
               }
             }
 
+            // Bypass restriction if the restaurant was created less than 10 days ago (initial setup)
+            let isRestaurantNew = false;
+            if (restaurant && restaurant.createdAt) {
+              const createdDate = new Date(restaurant.createdAt);
+              if (!isNaN(createdDate.getTime())) {
+                const restaurantAgeDays = (new Date() - createdDate) / (1000 * 60 * 60 * 24);
+                if (restaurantAgeDays < 10) {
+                  isRestaurantNew = true;
+                }
+              }
+            }
+
+            // Bypass restriction if the subscription was created or updated less than 10 days ago (upgrade setup period)
+            let isSubscriptionNew = false;
+            const subDateStr = subscription?.startDate || subscription?.updatedAt || subscription?.createdAt;
+            if (subDateStr) {
+              const subDate = new Date(subDateStr);
+              if (!isNaN(subDate.getTime())) {
+                const subAgeDays = (new Date() - subDate) / (1000 * 60 * 60 * 24);
+                if (subAgeDays < 10) {
+                  isSubscriptionNew = true;
+                }
+              }
+            }
+
             // Si el total de sedes creadas es menor o igual al número total de sedes pagadas en su suscripción global,
             // significa que el usuario compró suficientes licencias/slots para todas sus sedes (plan coherente), 
             // por lo que no hay riesgo de fraude por rotación de slots y podemos omitir el bloqueo de los 10 días.
             const isCoherent = branches.length <= (subscribedBranches || 1);
 
-            if (diffDays < 10 && !wasDeactivated && !isSubscriptionNewer && !isCoherent) {
+            if (diffDays < 10 && !wasDeactivated && !isSubscriptionNewer && !isCoherent && !isRestaurantNew && !isSubscriptionNew) {
               showAlert(`No puedes cambiar el plan de esta sede hasta dentro de ${10 - diffDays} días (Restricción de seguridad para evitar fraudes).`, 'Cambio bloqueado', 'warning');
               return;
             }
           }
 
-          if (selectedPlan === 0 && !canAddFree) {
-            showAlert('No tienes cupo para más sedes en el Plan Tradicional.', 'Límite alcanzado', 'warning');
-            return;
-          }
-          if (selectedPlan === 1 && !canAddP1) {
-            showAlert('No tienes cupo para más sedes en el Plan Carta.', 'Límite alcanzado', 'warning');
-            return;
-          }
           if (selectedPlan === 2 && !canAddP2) {
-            showAlert('No tienes cupo para más sedes en el Plan Carta y Mesa.', 'Límite alcanzado', 'warning');
+            showAlert('No tienes cupo para más sedes en el Plan Pro.', 'Límite alcanzado', 'warning');
             return;
           }
           branchData.lastPlanChange = new Date();
@@ -108,16 +127,8 @@ export function useBranchForm(restaurantId, branches, fetchBranches, planLevel, 
           showAlert(`Tu plan incluye el máximo de sedes permitidas. Adquiere sedes adicionales desde la sección Suscripción.`, 'Límite alcanzado', 'warning');
           return;
         }
-        if (selectedPlan === 0 && !canAddFree) {
-          showAlert('No tienes cupo para más sedes en el Plan Tradicional.', 'Límite alcanzado', 'warning');
-          return;
-        }
-        if (selectedPlan === 1 && !canAddP1) {
-          showAlert('No tienes cupo para más sedes en el Plan Carta.', 'Límite alcanzado', 'warning');
-          return;
-        }
         if (selectedPlan === 2 && !canAddP2) {
-          showAlert('No tienes cupo para más sedes en el Plan Carta y Mesa.', 'Límite alcanzado', 'warning');
+          showAlert('No tienes cupo para más sedes en el Plan Pro.', 'Límite alcanzado', 'warning');
           return;
         }
         await addBranch(restaurantId, { ...branchData, password: '1234', lastPlanChange: new Date() });

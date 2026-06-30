@@ -3,19 +3,21 @@ import LoadingScreen from './LoadingScreen';
 
 /**
  * PaywallCheck
- * Verifica si el restaurante tiene una suscripción activa.
- * Si está en modo exploración (explore), muestra pantalla de menú no publicado.
+ * Verifica si el negocio tiene una suscripción activa.
+ * Sin plan activo → catálogo bloqueado públicamente.
+ * El modo exploración ha sido eliminado — acceso completo al dashboard siempre.
  */
 const PaywallCheck = ({ restaurantData, designConfig, children }) => {
-  const [status, setStatus] = useState('loading'); // 'loading' | 'allowed' | 'blocked' | 'explore'
+  const [status, setStatus] = useState('loading'); // 'loading' | 'allowed' | 'blocked'
 
   useEffect(() => {
-    const checkSubscription = () => {
+    const checkSubscription = async () => {
       if (!restaurantData) {
         setStatus('blocked');
         return;
       }
 
+      // Siempre permitido dentro del iframe de preview del dashboard
       let isPreview = false;
       try {
         isPreview = typeof window !== 'undefined' && window.self !== window.top;
@@ -31,26 +33,42 @@ const PaywallCheck = ({ restaurantData, designConfig, children }) => {
       const accessUntil = restaurantData.accessUntil;
       const sub = restaurantData.subscription || {};
       const subStatus = sub.status;
-      const isExplore = (sub.isExplore === true || subStatus === 'explore') &&
-                        subStatus !== 'authorized' &&
-                        subStatus !== 'active';
 
-      // Explore mode: menu not published on internet
-      if (isExplore && !isPreview) {
-        setStatus('explore');
-        return;
+      let isRegTrialActive = false;
+      if (restaurantData.createdAt) {
+        let trialDays = 7;
+        try {
+          const { doc, getDoc } = await import('firebase/firestore');
+          const { db } = await import('../services/firebase');
+          const pricingSnap = await getDoc(doc(db, 'platform_settings', 'pricing'));
+          if (pricingSnap.exists() && typeof pricingSnap.data().trialDays === 'number') {
+            trialDays = pricingSnap.data().trialDays;
+          }
+        } catch (e) {
+          console.warn("Error fetching trial days in PaywallCheck:", e);
+        }
+
+        const createdDate = new Date(restaurantData.createdAt);
+        if (!isNaN(createdDate.getTime())) {
+          const diffTime = new Date().getTime() - createdDate.getTime();
+          const diffDays = diffTime / (1000 * 60 * 60 * 24);
+          isRegTrialActive = diffDays >= 0 && diffDays <= trialDays;
+        }
       }
 
       if (accessUntil) {
-        const expirationDate = accessUntil.toDate ? accessUntil.toDate() : new Date(accessUntil.seconds * 1000);
+        const expirationDate = accessUntil.toDate
+          ? accessUntil.toDate()
+          : new Date(accessUntil.seconds * 1000);
         if (new Date() > expirationDate) {
           setStatus('blocked');
         } else {
           setStatus('allowed');
         }
-      } else if (subStatus === 'authorized' || subStatus === 'active') {
+      } else if (subStatus === 'authorized' || subStatus === 'active' || isRegTrialActive) {
         setStatus('allowed');
       } else {
+        // Sin plan activo o cancelado → catálogo bloqueado
         setStatus('blocked');
       }
     };
@@ -62,10 +80,10 @@ const PaywallCheck = ({ restaurantData, designConfig, children }) => {
     return <LoadingScreen message="Verificando acceso..." />;
   }
 
-  if (status === 'explore') {
-    const name = designConfig?.restaurantName || restaurantData?.name || 'Este restaurante';
+  if (status === 'blocked') {
+    const name = designConfig?.restaurantName || restaurantData?.name || 'Este negocio';
     const logoUrl = designConfig?.logoUrl;
-    const primaryColor = designConfig?.primaryColor || '#8B1A2E';
+    const primaryColor = designConfig?.primaryColor || '#C9A227';
 
     return (
       <div style={{
@@ -81,7 +99,7 @@ const PaywallCheck = ({ restaurantData, designConfig, children }) => {
         position: 'relative',
         overflow: 'hidden',
       }}>
-        {/* Glow decorations */}
+        {/* Glow decoration */}
         <div style={{
           position: 'absolute', top: '-120px', left: '50%', transform: 'translateX(-50%)',
           width: '600px', height: '600px', borderRadius: '50%',
@@ -90,19 +108,18 @@ const PaywallCheck = ({ restaurantData, designConfig, children }) => {
         }} />
         <div style={{
           position: 'absolute', bottom: '-80px', right: '-80px',
-          width: '300px', height: '300px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(167,139,250,0.06) 0%, transparent 70%)',
+          width: '280px', height: '280px', borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(201,162,39,0.05) 0%, transparent 70%)',
           pointerEvents: 'none'
         }} />
 
-        {/* Card */}
         <div style={{
           position: 'relative', zIndex: 2,
           background: 'rgba(255,255,255,0.03)',
           border: '1px solid rgba(255,255,255,0.07)',
           borderRadius: '24px',
           padding: '3rem 2.5rem',
-          maxWidth: '480px',
+          maxWidth: '460px',
           width: '100%',
           backdropFilter: 'blur(20px)',
           boxShadow: '0 40px 80px rgba(0,0,0,0.5)',
@@ -111,7 +128,7 @@ const PaywallCheck = ({ restaurantData, designConfig, children }) => {
           {logoUrl ? (
             <img src={logoUrl} alt={name} style={{
               height: '64px', objectFit: 'contain',
-              marginBottom: '1.5rem', borderRadius: '12px'
+              marginBottom: '1.5rem', borderRadius: '12px', opacity: 0.85
             }} />
           ) : (
             <div style={{
@@ -120,21 +137,21 @@ const PaywallCheck = ({ restaurantData, designConfig, children }) => {
               border: `1px solid ${primaryColor}40`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               margin: '0 auto 1.5rem',
-              fontSize: '2rem'
-            }}>🍽️</div>
+              fontSize: '2.5rem'
+            }}>🔒</div>
           )}
 
           {/* Badge */}
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: '6px',
-            background: 'rgba(167,139,250,0.12)',
-            border: '1px solid rgba(167,139,250,0.25)',
+            background: 'rgba(239,68,68,0.1)',
+            border: '1px solid rgba(239,68,68,0.2)',
             borderRadius: '99px', padding: '4px 14px',
             fontSize: '0.7rem', fontWeight: '700',
-            color: '#a78bfa', letterSpacing: '0.06em',
+            color: '#f87171', letterSpacing: '0.06em',
             textTransform: 'uppercase', marginBottom: '1.5rem'
           }}>
-            🔒 Menú en Configuración
+            Catálogo No Disponible
           </div>
 
           <h1 style={{
@@ -149,115 +166,16 @@ const PaywallCheck = ({ restaurantData, designConfig, children }) => {
             color: '#64748b', fontSize: '0.95rem',
             lineHeight: '1.7', margin: '0 0 2rem'
           }}>
-            Este menú aún <strong style={{ color: '#94a3b8' }}>no está publicado en internet</strong>.
-            El establecimiento está configurando su experiencia digital.
+            El catálogo de este negocio{' '}
+            <strong style={{ color: '#94a3b8' }}>no está disponible en este momento</strong>.
+            Por favor, intenta más tarde o contacta al establecimiento directamente.
           </p>
-
-          <div style={{
-            background: 'rgba(232,116,138,0.06)',
-            border: '1px solid rgba(232,116,138,0.15)',
-            borderRadius: '14px',
-            padding: '1.25rem',
-            marginBottom: '2rem',
-            textAlign: 'left'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-              <span style={{ fontSize: '1.3rem', flexShrink: 0 }}>⏳</span>
-              <div>
-                <div style={{ fontSize: '0.85rem', fontWeight: '700', color: '#e8748a', marginBottom: '0.25rem' }}>
-                  Menú en desarrollo
-                </div>
-                <div style={{ fontSize: '0.78rem', color: '#64748b', lineHeight: 1.6 }}>
-                  El establecimiento está configurando su carta digital. Vuelve pronto para ver nuestros platos y realizar tus pedidos.
-                </div>
-              </div>
-            </div>
-          </div>
 
           <p style={{ fontSize: '0.75rem', color: '#334155', margin: 0 }}>
-            Tecnología de menús digitales por{' '}
-            <a href="https://cartaymesa.com" target="_blank" rel="noopener noreferrer"
-               style={{ color: '#a78bfa', textDecoration: 'none', fontWeight: '600' }}>
-              Carta y Mesa
-            </a>
-          </p>
-        </div>
-
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
-  }
-
-  if (status === 'blocked') {
-    const name = designConfig?.restaurantName || restaurantData?.name || 'Este restaurante';
-    const logoUrl = designConfig?.logoUrl;
-
-    return (
-      <div style={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(135deg, #0a0a0a 0%, #111827 50%, #0d0d0d 100%)',
-        fontFamily: "'Inter', 'Segoe UI', sans-serif",
-        padding: '2rem',
-        textAlign: 'center',
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
-        <div style={{
-          position: 'absolute', top: '-120px', left: '50%', transform: 'translateX(-50%)',
-          width: '500px', height: '500px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(239,68,68,0.07) 0%, transparent 70%)',
-          pointerEvents: 'none'
-        }} />
-
-        <div style={{
-          position: 'relative', zIndex: 2,
-          background: 'rgba(255,255,255,0.03)',
-          border: '1px solid rgba(255,255,255,0.07)',
-          borderRadius: '24px',
-          padding: '3rem 2.5rem',
-          maxWidth: '440px',
-          width: '100%',
-          backdropFilter: 'blur(20px)',
-          boxShadow: '0 40px 80px rgba(0,0,0,0.5)',
-        }}>
-          {logoUrl ? (
-            <img src={logoUrl} alt={name} style={{
-              height: '56px', objectFit: 'contain',
-              marginBottom: '1.5rem', borderRadius: '10px', opacity: 0.7
-            }} />
-          ) : (
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚠️</div>
-          )}
-
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: '6px',
-            background: 'rgba(239,68,68,0.1)',
-            border: '1px solid rgba(239,68,68,0.2)',
-            borderRadius: '99px', padding: '4px 14px',
-            fontSize: '0.7rem', fontWeight: '700',
-            color: '#f87171', letterSpacing: '0.06em',
-            textTransform: 'uppercase', marginBottom: '1.25rem'
-          }}>
-            Menú Pausado
-          </div>
-
-          <h2 style={{ fontSize: '1.4rem', fontWeight: '800', color: '#f8fafc', margin: '0 0 0.75rem' }}>
-            {name}
-          </h2>
-
-          <p style={{ color: '#64748b', fontSize: '0.9rem', lineHeight: '1.7', margin: '0 0 1.5rem' }}>
-            El menú de este restaurante no está disponible temporalmente. Por favor, intenta más tarde o contacta al establecimiento directamente.
-          </p>
-
-          <p style={{ fontSize: '0.72rem', color: '#334155', margin: 0 }}>
-            Tecnología por{' '}
-            <a href="https://cartaymesa.com" target="_blank" rel="noopener noreferrer"
-               style={{ color: '#a78bfa', textDecoration: 'none', fontWeight: '600' }}>
-              Carta y Mesa
+            Tecnología de catálogos digitales por{' '}
+            <a href="https://miprodu.com" target="_blank" rel="noopener noreferrer"
+               style={{ color: '#C9A227', textDecoration: 'none', fontWeight: '600' }}>
+              MiProdu
             </a>
           </p>
         </div>

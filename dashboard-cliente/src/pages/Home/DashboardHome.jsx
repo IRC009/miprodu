@@ -9,26 +9,16 @@ export default function DashboardHome() {
 
   const {
     stats,
-    recentReservations,
     waiterStats,
     loading
   } = useDashboardData(restaurantId, isBranchAllowed);
-
-  const getStatusBadge = (status) => {
-    switch(status) {
-      case 'pending': return <span className="badge" style={{ backgroundColor: '#fef3c7', color: '#92400e' }}>Pendiente</span>;
-      case 'confirmed': return <span className="badge badge-success">Confirmada</span>;
-      case 'cancelled': return <span className="badge" style={{ backgroundColor: '#fee2e2', color: '#b91c1c' }}>Cancelada</span>;
-      default: return <span className="badge">{status}</span>;
-    }
-  };
 
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
         <div>
           <h1 className="page-title">Dashboard</h1>
-          <p className="page-subtitle">Resumen general de tu restaurante</p>
+          <p className="page-subtitle">Resumen general de tu negocio</p>
         </div>
       </div>
 
@@ -38,9 +28,16 @@ export default function DashboardHome() {
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
             <div className="card">
-              <h3 style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Visitas al Menú</h3>
-              <div style={{ fontSize: '2rem', fontWeight: 700, marginTop: '0.5rem', color: 'var(--text-primary)' }}>{stats.visits}</div>
-              <p style={{ fontSize: '0.875rem', color: 'var(--success)', marginTop: '0.5rem' }}>+12% esta semana</p>
+              <h3 style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Visitas al Catálogo</h3>
+              <div style={{ fontSize: '2rem', fontWeight: 700, marginTop: '0.5rem', color: 'var(--text-primary)' }}>{stats.visits.toLocaleString()}</div>
+              <p style={{ 
+                fontSize: '0.875rem', 
+                color: stats.visitsGrowth > 0 ? 'var(--success)' : stats.visitsGrowth < 0 ? '#ef4444' : 'var(--text-secondary)', 
+                marginTop: '0.5rem',
+                fontWeight: 600
+              }}>
+                {stats.visitsGrowth > 0 ? `+${stats.visitsGrowth}%` : `${stats.visitsGrowth}%`} esta semana
+              </p>
             </div>
             
             <div className="card">
@@ -48,59 +45,12 @@ export default function DashboardHome() {
               <div style={{ fontSize: '2rem', fontWeight: 700, marginTop: '0.5rem', color: 'var(--text-primary)' }}>{stats.customers}</div>
               <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Guardados en CRM</p>
             </div>
-
-            <div className="card">
-              <h3 style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Reservas Pendientes</h3>
-              <div style={{ fontSize: '2rem', fontWeight: 700, marginTop: '0.5rem', color: 'var(--primary)' }}>{stats.pendingReservations}</div>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Requieren tu atención</p>
-            </div>
-
-            <div className="card">
-              <h3 style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Reservas</h3>
-              <div style={{ fontSize: '2rem', fontWeight: 700, marginTop: '0.5rem', color: 'var(--text-primary)' }}>{stats.totalReservations}</div>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Histórico total</p>
-            </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 350px), 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-            {/* Últimas Reservas */}
-            <div className="card">
-              <div className="flex justify-between items-center mb-4">
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Últimas Reservas</h3>
-                <Link to="/reservations" style={{ color: 'var(--primary)', fontWeight: 500, fontSize: '0.875rem' }}>Ver todas</Link>
-              </div>
-              
-              <div className="table-container">
-                <table className="saas-table">
-                  <thead>
-                    <tr>
-                      <th>Cliente</th>
-                      <th>Fecha</th>
-                      <th>Personas</th>
-                      <th>Estado</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentReservations.length === 0 ? (
-                      <tr><td colSpan="4" style={{ textAlign: 'center' }}>No hay reservas recientes.</td></tr>
-                    ) : (
-                      recentReservations.map(res => (
-                        <tr key={res.id}>
-                          <td style={{ fontWeight: 500 }}>{res.customerName}</td>
-                          <td>{res.date} a las {res.time}</td>
-                          <td>{res.guests} pax</td>
-                          <td>{getStatusBadge(res.status)}</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem', marginBottom: '2rem' }}>
             {/* Actividad de Personal */}
             <div className="card" style={{ position: 'relative', overflow: 'hidden' }}>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1.5rem' }}>Mesas por Mesero</h3>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1.5rem' }}>Pedidos por Personal</h3>
               
               {isUnipersonal && (
                 <div style={{
@@ -132,7 +82,7 @@ export default function DashboardHome() {
                   </div>
                   <h4 style={{ fontWeight: 800, fontSize: '0.9rem', color: '#1e293b', marginBottom: '0.25rem' }}>Función Bloqueada</h4>
                   <p style={{ fontSize: '0.72rem', color: '#64748b', maxWidth: '220px', marginBottom: '0.75rem', lineHeight: '1.3' }}>
-                    La gestión de personal y asignación de mesas está disponible en el <strong>Plan Carta y Mesa</strong>.
+                    La gestión de personal y asignación de mesas está disponible en el <strong>Plan Pro</strong>.
                   </p>
                   <Link to="/subscription" className="btn-primary" style={{
                     padding: '8px 16px',

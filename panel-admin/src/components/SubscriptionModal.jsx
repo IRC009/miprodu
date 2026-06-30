@@ -130,44 +130,21 @@ export default function SubscriptionModal({ selectedRes, onSave, onClose }) {
             <form onSubmit={handleNextStep}>
               
               <div style={{ background: 'rgba(124,58,237,0.05)', border: '1px solid rgba(124,58,237,0.15)', borderRadius: '8px', padding: '1rem', marginBottom: '1rem' }}>
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ fontSize: '0.75rem', fontWeight: '700', color: '#fbbf24', display: 'block', marginBottom: '4px' }}>
-                    Sedes en Plan Tradicional (⛔)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    style={{ ...styles.input, marginBottom: 0 }}
-                    value={branchesPlan0}
-                    onChange={(e) => setBranchesPlan0(parseInt(e.target.value) || 0)}
-                    required
-                  />
-                </div>
-
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ fontSize: '0.75rem', fontWeight: '700', color: '#a78bfa', display: 'block', marginBottom: '4px' }}>
-                    Sedes en Plan Carta (📋)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    style={{ ...styles.input, marginBottom: 0 }}
-                    value={branchesPlan1}
-                    onChange={(e) => setBranchesPlan1(parseInt(e.target.value) || 0)}
-                    required
-                  />
-                </div>
-
                 <div>
                   <label style={{ fontSize: '0.75rem', fontWeight: '700', color: '#60a5fa', display: 'block', marginBottom: '4px' }}>
-                    Sedes en Plan Carta y Mesa (🚀)
+                    Sedes en Plan Pro (🚀)
                   </label>
                   <input
                     type="number"
                     min="0"
                     style={{ ...styles.input, marginBottom: 0 }}
                     value={branchesPlan2}
-                    onChange={(e) => setBranchesPlan2(parseInt(e.target.value) || 0)}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 0;
+                      setBranchesPlan2(val);
+                      setBranchesPlan0(0);
+                      setBranchesPlan1(0);
+                    }}
                     required
                   />
                 </div>
@@ -199,7 +176,6 @@ export default function SubscriptionModal({ selectedRes, onSave, onClose }) {
                   onChange={(e) => setStatus(e.target.value)}
                 >
                   <option value="active">Activo</option>
-                  <option value="explore">Prueba (Explore)</option>
                   <option value="authorized">Autorizado</option>
                   <option value="pending">Pendiente</option>
                   <option value="cancelled">Cancelado</option>
@@ -233,14 +209,12 @@ export default function SubscriptionModal({ selectedRes, onSave, onClose }) {
               Estás a punto de re-configurar la suscripción de <strong style={{ color: '#ffffff' }}>{selectedRes.name}</strong> de forma directa en la base de datos.
             </p>
 
-            <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: '10px', padding: '1rem', marginBottom: '1.5rem', fontSize: '0.8rem' }}>
+             <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: '10px', padding: '1rem', marginBottom: '1.5rem', fontSize: '0.8rem' }}>
               <div style={{ marginBottom: '6px', color: '#94a3b8' }}>RESUMEN DE NUEVO PLAN:</div>
               <div>
-                📁 Tipo: <strong style={{ color: '#fff' }}>Plan Mixto / Distribuido</strong><br />
-                ⛔ Sedes Plan Tradicional: <strong style={{ color: '#fff' }}>{branchesPlan0}</strong><br />
-                📋 Sedes Plan Carta: <strong style={{ color: '#fff' }}>{branchesPlan1}</strong><br />
-                🚀 Sedes Plan Carta y Mesa: <strong style={{ color: '#fff' }}>{branchesPlan2}</strong><br />
-                🏢 Total Sedes: <strong style={{ color: '#fff' }}>{branchesPlan0 + branchesPlan1 + branchesPlan2}</strong>
+                📁 Tipo: <strong style={{ color: '#fff' }}>Plan Pro (E-commerce / Catálogo)</strong><br />
+                🚀 Sedes Plan Pro: <strong style={{ color: '#fff' }}>{branchesPlan2}</strong><br />
+                🏢 Total Sedes: <strong style={{ color: '#fff' }}>{branchesPlan2}</strong>
               </div>
               <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid rgba(245,158,11,0.15)' }}>
                 📅 Vencimiento: <strong style={{ color: '#fff' }}>{cycleEndDate ? new Date(cycleEndDate).toLocaleDateString() : '♾️ Vitalicio / Indefinido'}</strong><br />

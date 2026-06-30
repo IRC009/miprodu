@@ -3,7 +3,7 @@ import { useSubscription } from '../../context/SubscriptionContext';
 import { useRestaurantData } from '../../context/RestaurantDataContext';
 import { useAlert } from '../../context/AlertContext';
 import './LinksManager.css';
-
+import { Eye, EyeOff, Pencil, Trash2 } from 'lucide-react';
 import { useLinksData } from './hooks/useLinksData';
 
 export default function LinksManager() {
@@ -49,10 +49,10 @@ export default function LinksManager() {
                 </div>
                 <div className="link-actions">
                   <button onClick={() => toggleLinkStatus(link)} title={link.active ? "Desactivar" : "Activar"}>
-                    {link.active ? '👁️' : '🚫'}
+                    {link.active ? <Eye size={16} /> : <EyeOff size={16} />}
                   </button>
-                  <button onClick={() => openEditModal(link)}>✏️</button>
-                  <button onClick={() => handleDelete(link.id)} className="delete">🗑️</button>
+                  <button onClick={() => openEditModal(link)}><Pencil size={16} /></button>
+                  <button onClick={() => handleDelete(link.id)} className="delete"><Trash2 size={16} /></button>
                 </div>
               </div>
             ))}
@@ -65,8 +65,8 @@ export default function LinksManager() {
             <div className="mockup-status-bar">
               <span className="mockup-time">12:45</span>
               <div className="mockup-status-icons">
-                <span className="icon">📶</span>
-                <span className="icon">🔋</span>
+                <span className="icon" style={{ fontSize: '0.7rem', fontWeight: 700 }}>▲▲▲</span>
+                <span className="icon" style={{ fontSize: '0.7rem', fontWeight: 700 }}>▮▮▮</span>
               </div>
             </div>
             <div className="mockup-notch"></div>
@@ -101,9 +101,11 @@ export default function LinksManager() {
 
                 <div className="preview-footer">
                   <div className="social-icons">
-                    <span>📸</span><span>📘</span><span>🎵</span>
+                    <span style={{ fontSize: '0.9rem' }}>&#xF030;</span>
+                    <span style={{ fontSize: '0.9rem' }}>&#xF09A;</span>
+                    <span style={{ fontSize: '0.9rem' }}>&#x266B;</span>
                   </div>
-                  <p>Hecho con Carta y Mesa</p>
+                  <p>Hecho con MiProdu</p>
                 </div>
               </div>
             </div>

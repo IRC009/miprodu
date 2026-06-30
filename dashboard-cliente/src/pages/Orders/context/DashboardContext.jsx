@@ -80,7 +80,7 @@ export function DashboardProvider({ children }) {
 
   useEffect(() => {
     if (branchPlanLevel <= 0) {
-      setActiveTab('calls');
+      setActiveTab('inbox');
     }
   }, [branchPlanLevel]);
 
@@ -290,27 +290,7 @@ export function DashboardProvider({ children }) {
 
   const filteredWaiterCalls = getFilteredWaiterCalls();
 
-  const isFirstRenderCalls = React.useRef(true);
-  const prevCallsCountRef = React.useRef(0);
-
-  useEffect(() => {
-    const currentCount = filteredWaiterCalls.length;
-    if (isFirstRenderCalls.current) {
-      prevCallsCountRef.current = currentCount;
-      isFirstRenderCalls.current = false;
-      return;
-    }
-    if (currentCount > prevCallsCountRef.current) {
-      // Play alert sound
-      const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-200.wav');
-      audio.volume = 0.5;
-      audio.play().catch(() => {});
-      
-      const latestCall = filteredWaiterCalls[filteredWaiterCalls.length - 1];
-      showAlert(`Mesa ${latestCall?.tableNumber} solicita atención.`, 'Llamada de Mesa', 'info');
-    }
-    prevCallsCountRef.current = currentCount;
-  }, [filteredWaiterCalls, showAlert]);
+  // Waiter calls feature removed — product catalog flow uses inbox pipeline only
 
   // Initial Data Fetch (Real-time sync)
   useEffect(() => {
@@ -385,14 +365,8 @@ export function DashboardProvider({ children }) {
       });
       showAlert('Pedido aceptado y asignado', 'Éxito', 'success');
       
-      // Navigate to the correct tab based on order type
-      if (order?.orderType === 'table' || order?.tableNumber) {
-        setActiveTab('tables');
-      } else if (order?.orderType === 'delivery') {
-        setActiveTab('delivery');
-      } else {
-        setActiveTab('bar');
-      }
+      // All accepted orders go to the unified preparing pipeline
+      setActiveTab('preparing');
     } catch (err) {
       console.error(err);
       showAlert('Error al aceptar pedido', 'Error', 'error');
@@ -423,7 +397,7 @@ export function DashboardProvider({ children }) {
           collectedAt: new Date().toISOString()
         });
       }
-      showAlert('Pago validado correctamente.', 'Pago Aprobado ✅', 'success');
+      showAlert('Pago validado correctamente.', 'Pago Aprobado', 'success');
     } catch (error) {
       console.error(error);
       showAlert('Error al validar el pago.', 'Error', 'error');
@@ -440,7 +414,7 @@ export function DashboardProvider({ children }) {
         billedAt: null,
         rejectedAt: new Date().toISOString()
       });
-      showAlert('El pago ha sido rechazado. El cliente debe subir un nuevo comprobante.', 'Pago Rechazado ❌', 'warning');
+      showAlert('El pago ha sido rechazado. El cliente debe subir un nuevo comprobante.', 'Pago Rechazado', 'warning');
     } catch (error) {
       console.error(error);
       showAlert('Error al rechazar el pago.', 'Error', 'error');

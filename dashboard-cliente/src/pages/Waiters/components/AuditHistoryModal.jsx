@@ -29,7 +29,7 @@ export default function AuditHistoryModal({ isOpen, onClose, restaurantId }) {
     <div className="modal-overlay" style={{ zIndex: 1000 }}>
       <div className="modal-box" style={{ maxWidth: '800px', width: '90%', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h2 className="modal-title" style={{ margin: 0 }}>🛡️ Registro de Auditoría y Seguridad</h2>
+          <h2 className="modal-title" style={{ margin: 0 }}>Registro de Auditoría y Seguridad</h2>
           <button style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer' }} onClick={onClose}>✕</button>
         </div>
         

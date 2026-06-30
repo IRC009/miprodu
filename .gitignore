@@ -36,3 +36,9 @@ yarn-debug.log*
 # Scratch files
 scratch_*.js
 scratch_*.txt
+artifacts/
+scratch/
+test_results.txt
+functions/list_restaurants.js
+functions/test_fcm_admin.js
+functions/test_push.js

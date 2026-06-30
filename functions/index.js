@@ -10,7 +10,6 @@ if (!admin.apps.length) {
   admin.initializeApp();
 }
 
-const { handleOnWaiterCallCreated } = require("./src/waiterCalls/triggers");
 
 // ─────────────────────────────────────────────
 // HANDLERS
@@ -95,10 +94,6 @@ exports.onOrderCreated = onDocumentCreated(
   handleOnOrderCreated
 );
 
-exports.onWaiterCallCreated = onDocumentCreated(
-  "restaurants/{restaurantId}/waiter_calls/{callId}",
-  handleOnWaiterCallCreated
-);
 
 // ─────────────────────────────────────────────
 // GESTIÓN DE PERSONAL (STAFF)

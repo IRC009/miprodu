@@ -22,7 +22,14 @@ import { LogIn, Mail, Lock, User, Hash, Building2, ChevronRight } from 'lucide-r
 const MODE_ADMIN = 'admin';
 const MODE_STAFF = 'staff';
 
-export default function LoginScreen({ onLoginSuccess }) {
+const LIGHT = {
+  bg: '#f5f5f5', card: '#ffffff', header: '#ffffff', tabBar: '#ffffff',
+  border: '#e5e7eb', primary: '#C9A227', primaryText: '#1e293b',
+  text: '#1e293b', sub: '#64748b', muted: '#9ca3af',
+  online: '#10b981', offline: '#ef4444',
+};
+
+export default function LoginScreen({ onLoginSuccess, t = LIGHT }) {
   const [mode, setMode] = useState(MODE_ADMIN);
 
   // Admin fields
@@ -53,14 +60,14 @@ export default function LoginScreen({ onLoginSuccess }) {
       );
       if (userProfile.role === 'staff' || userProfile.isStaff) {
         await logoutUser();
-        setError('Esta cuenta es de un empleado. Usa el modo "Mesero / Staff" para ingresar.');
+        setError('Esta cuenta es de un empleado. Usa el modo "Vendedor / Personal" para ingresar.');
         return;
       }
       onLoginSuccess(userCredential.user);
     } catch (err) {
       console.error('[Admin Login]', err);
       if (err.message === 'access_denied_staff') {
-        setError('Esta cuenta es de un empleado. Usa el modo "Mesero / Staff" para ingresar.');
+        setError('Esta cuenta es de un empleado. Usa el modo "Vendedor / Personal" para ingresar.');
       } else if (
         err.code === 'auth/wrong-password' ||
         err.code === 'auth/user-not-found' ||
@@ -145,7 +152,7 @@ export default function LoginScreen({ onLoginSuccess }) {
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.container}
+        style={[styles.container, { backgroundColor: t.bg }]}
       >
         <ScrollView
           contentContainerStyle={styles.scrollContent}
@@ -154,46 +161,46 @@ export default function LoginScreen({ onLoginSuccess }) {
         >
           {/* ── Logo ── */}
           <View style={styles.logoContainer}>
-            <View style={styles.logoCircle}>
+            <View style={[styles.logoCircle, { backgroundColor: t.primary, shadowColor: t.primary }]}>
               <Text style={styles.logoText}>CM</Text>
             </View>
-            <Text style={styles.title}>MiProdu</Text>
-            <Text style={styles.subtitle}>Panel Móvil de Caja y Restaurante</Text>
+            <Text style={[styles.title, { color: t.text }]}>MiProdu</Text>
+            <Text style={[styles.subtitle, { color: t.sub }]}>Panel Móvil de Caja y Pedidos</Text>
           </View>
 
           {/* ── Mode Selector ── */}
-          <View style={styles.modeSwitcher}>
+          <View style={[styles.modeSwitcher, { backgroundColor: t.card, borderColor: t.border }]}>
             <TouchableOpacity
-              style={[styles.modeBtn, mode === MODE_ADMIN && styles.modeBtnActive]}
+              style={[styles.modeBtn, mode === MODE_ADMIN && { backgroundColor: t.primary }]}
               onPress={() => { setMode(MODE_ADMIN); setError(''); }}
             >
               <Building2
                 size={15}
-                color={mode === MODE_ADMIN ? '#fceef2' : '#9a828a'}
+                color={mode === MODE_ADMIN ? t.primaryText : t.sub}
                 style={{ marginRight: 6 }}
               />
-              <Text style={[styles.modeBtnText, mode === MODE_ADMIN && styles.modeBtnTextActive]}>
+              <Text style={[styles.modeBtnText, { color: mode === MODE_ADMIN ? t.primaryText : t.sub }, mode === MODE_ADMIN && { fontWeight: '700' }]}>
                 Administrador
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.modeBtn, mode === MODE_STAFF && styles.modeBtnActive]}
+              style={[styles.modeBtn, mode === MODE_STAFF && { backgroundColor: t.primary }]}
               onPress={() => { setMode(MODE_STAFF); setError(''); }}
             >
               <User
                 size={15}
-                color={mode === MODE_STAFF ? '#fceef2' : '#9a828a'}
+                color={mode === MODE_STAFF ? t.primaryText : t.sub}
                 style={{ marginRight: 6 }}
               />
-              <Text style={[styles.modeBtnText, mode === MODE_STAFF && styles.modeBtnTextActive]}>
-                Mesero / Staff
+              <Text style={[styles.modeBtnText, { color: mode === MODE_STAFF ? t.primaryText : t.sub }, mode === MODE_STAFF && { fontWeight: '700' }]}>
+                Vendedor / Personal
               </Text>
             </TouchableOpacity>
           </View>
 
           {/* ── Card ── */}
-          <View style={styles.card}>
+          <View style={[styles.card, { backgroundColor: t.card, borderColor: t.border }]}>
 
             {/* Error Banner */}
             {error ? (
@@ -205,12 +212,12 @@ export default function LoginScreen({ onLoginSuccess }) {
             {/* ── Admin Fields ── */}
             {mode === MODE_ADMIN && (
               <>
-                <View style={styles.inputContainer}>
-                  <Mail size={20} color="#9a828a" style={styles.inputIcon} />
+                <View style={[styles.inputContainer, { backgroundColor: t.bg, borderColor: t.border }]}>
+                  <Mail size={20} color={t.sub} style={styles.inputIcon} />
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { color: t.text }]}
                     placeholder="Correo electrónico"
-                    placeholderTextColor="#6d535e"
+                    placeholderTextColor={t.muted}
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
@@ -220,12 +227,12 @@ export default function LoginScreen({ onLoginSuccess }) {
                   />
                 </View>
 
-                <View style={styles.inputContainer}>
-                  <Lock size={20} color="#9a828a" style={styles.inputIcon} />
+                <View style={[styles.inputContainer, { backgroundColor: t.bg, borderColor: t.border }]}>
+                  <Lock size={20} color={t.sub} style={styles.inputIcon} />
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { color: t.text }]}
                     placeholder="Contraseña"
-                    placeholderTextColor="#6d535e"
+                    placeholderTextColor={t.muted}
                     secureTextEntry
                     value={password}
                     onChangeText={setPassword}
@@ -242,17 +249,17 @@ export default function LoginScreen({ onLoginSuccess }) {
             {mode === MODE_STAFF && (
               <>
                 <View style={styles.fieldLabel}>
-                  <Text style={styles.fieldLabelText}>
-                    Pide el código del restaurante a tu administrador
+                  <Text style={[styles.fieldLabelText, { color: t.sub }]}>
+                    Pide el código del negocio a tu administrador
                   </Text>
                 </View>
 
-                <View style={styles.inputContainer}>
-                  <Hash size={20} color="#9a828a" style={styles.inputIcon} />
+                <View style={[styles.inputContainer, { backgroundColor: t.bg, borderColor: t.border }]}>
+                  <Hash size={20} color={t.sub} style={styles.inputIcon} />
                   <TextInput
-                    style={styles.input}
-                    placeholder="Código del restaurante"
-                    placeholderTextColor="#6d535e"
+                    style={[styles.input, { color: t.text }]}
+                    placeholder="Código del negocio"
+                    placeholderTextColor={t.muted}
                     value={restaurantCode}
                     onChangeText={setRestaurantCode}
                     autoCapitalize="none"
@@ -261,12 +268,12 @@ export default function LoginScreen({ onLoginSuccess }) {
                   />
                 </View>
 
-                <View style={styles.inputContainer}>
-                  <User size={20} color="#9a828a" style={styles.inputIcon} />
+                <View style={[styles.inputContainer, { backgroundColor: t.bg, borderColor: t.border }]}>
+                  <User size={20} color={t.sub} style={styles.inputIcon} />
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { color: t.text }]}
                     placeholder="Usuario / nombre de usuario"
-                    placeholderTextColor="#6d535e"
+                    placeholderTextColor={t.muted}
                     value={username}
                     onChangeText={setUsername}
                     autoCapitalize="none"
@@ -275,12 +282,12 @@ export default function LoginScreen({ onLoginSuccess }) {
                   />
                 </View>
 
-                <View style={styles.inputContainer}>
-                  <Lock size={20} color="#9a828a" style={styles.inputIcon} />
+                <View style={[styles.inputContainer, { backgroundColor: t.bg, borderColor: t.border }]}>
+                  <Lock size={20} color={t.sub} style={styles.inputIcon} />
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { color: t.text }]}
                     placeholder="PIN"
-                    placeholderTextColor="#6d535e"
+                    placeholderTextColor={t.muted}
                     value={pin}
                     onChangeText={setPin}
                     keyboardType="numeric"
@@ -294,16 +301,16 @@ export default function LoginScreen({ onLoginSuccess }) {
 
             {/* ── Submit Button ── */}
             <TouchableOpacity
-              style={styles.button}
+              style={[styles.button, { backgroundColor: t.primary, shadowColor: t.primary }]}
               onPress={handleSubmit}
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator color="#fceef2" size="small" />
+                <ActivityIndicator color={t.primaryText} size="small" />
               ) : (
                 <View style={styles.buttonContent}>
-                  <LogIn size={20} color="#fceef2" style={styles.btnIcon} />
-                  <Text style={styles.buttonText}>Iniciar Sesión</Text>
+                  <LogIn size={20} color={t.primaryText} style={styles.btnIcon} />
+                  <Text style={[styles.buttonText, { color: t.primaryText }]}>Iniciar Sesión</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -317,7 +324,7 @@ export default function LoginScreen({ onLoginSuccess }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#12070b',
+    backgroundColor: '#f5f5f5',
   },
   scrollContent: {
     flexGrow: 1,
@@ -334,29 +341,29 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 35,
-    backgroundColor: '#8b1a2e',
+    backgroundColor: '#C9A227',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 14,
-    shadowColor: '#8b1a2e',
+    shadowColor: '#C9A227',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 6,
     elevation: 4,
   },
   logoText: {
-    color: '#fceef2',
+    color: '#ffffff',
     fontSize: 28,
     fontWeight: 'bold',
   },
   title: {
-    color: '#fceef2',
+    color: '#1e293b',
     fontSize: 24,
     fontWeight: 'bold',
     letterSpacing: 0.5,
   },
   subtitle: {
-    color: '#9a828a',
+    color: '#64748b',
     fontSize: 14,
     marginTop: 5,
     textAlign: 'center',
@@ -364,10 +371,10 @@ const styles = StyleSheet.create({
   // ── Mode Switcher ──
   modeSwitcher: {
     flexDirection: 'row',
-    backgroundColor: '#1c0d13',
+    backgroundColor: '#ffffff',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#3a1923',
+    borderColor: '#e5e7eb',
     padding: 4,
     marginBottom: 20,
     width: '100%',
@@ -382,54 +389,54 @@ const styles = StyleSheet.create({
     borderRadius: 11,
   },
   modeBtnActive: {
-    backgroundColor: '#8b1a2e',
-    shadowColor: '#8b1a2e',
+    backgroundColor: '#C9A227',
+    shadowColor: '#C9A227',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 3,
   },
   modeBtnText: {
-    color: '#9a828a',
+    color: '#64748b',
     fontSize: 13,
     fontWeight: '600',
   },
   modeBtnTextActive: {
-    color: '#fceef2',
+    color: '#ffffff',
   },
   // ── Card ──
   card: {
     width: '100%',
     maxWidth: 400,
-    backgroundColor: '#1c0d13',
+    backgroundColor: '#ffffff',
     borderRadius: 24,
     padding: 28,
     borderWidth: 1,
-    borderColor: '#3a1923',
-    shadowColor: '#8b1a2e',
+    borderColor: '#e5e7eb',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.05,
     shadowRadius: 15,
-    elevation: 8,
+    elevation: 4,
   },
   fieldLabel: {
     marginBottom: 14,
   },
   fieldLabelText: {
-    color: '#9a828a',
+    color: '#64748b',
     fontSize: 12,
     textAlign: 'center',
   },
   errorContainer: {
-    backgroundColor: '#991b1b33',
-    borderColor: '#991b1b',
+    backgroundColor: '#fee2e2',
+    borderColor: '#ef4444',
     borderWidth: 1,
     borderRadius: 12,
     padding: 12,
     marginBottom: 18,
   },
   errorText: {
-    color: '#fca5a5',
+    color: '#b91c1c',
     fontSize: 13,
     textAlign: 'center',
     lineHeight: 18,
@@ -437,10 +444,10 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#26121b',
+    backgroundColor: '#f8fafc',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#3a1923',
+    borderColor: '#e5e7eb',
     marginBottom: 14,
     paddingHorizontal: 15,
     height: 56,
@@ -450,17 +457,17 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: '#fceef2',
+    color: '#1e293b',
     fontSize: 16,
   },
   button: {
-    backgroundColor: '#8b1a2e',
+    backgroundColor: '#C9A227',
     borderRadius: 14,
     height: 56,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 8,
-    shadowColor: '#8b1a2e',
+    shadowColor: '#C9A227',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
@@ -475,7 +482,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   buttonText: {
-    color: '#fceef2',
+    color: '#ffffff',
     fontSize: 16,
     fontWeight: 'bold',
   },

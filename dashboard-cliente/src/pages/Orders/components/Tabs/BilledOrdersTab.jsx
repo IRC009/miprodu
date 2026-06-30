@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock } from 'lucide-react';
+import { Lock, Printer, Eye, Download, Share2, RefreshCw, RotateCcw, XCircle, CheckCircle } from 'lucide-react';
 import { useDashboard } from '../../context/DashboardContext';
 import { printTicket } from '../../../../utils/printTicket';
 import { updateOrder } from '../../../../services/orderService';
@@ -55,12 +55,12 @@ export default function BilledOrdersTab() {
         }}>
           <Lock size={32} strokeWidth={1.8} />
         </div>
-        <h2 style={{ color: '#1e293b', marginBottom: '0.75rem', fontWeight: 900, fontSize: '1.75rem' }}>Historial de Facturados Bloqueado</h2>
+        <h2 style={{ color: '#1e293b', marginBottom: '0.75rem', fontWeight: 900, fontSize: '1.75rem' }}>Completados Bloqueados</h2>
         <p style={{ color: '#64748b', maxWidth: '440px', margin: '0 auto 2rem', lineHeight: '1.6', fontSize: '0.975rem', fontWeight: 500 }}>
-          La sede seleccionada tiene el plan <strong>Tradicional</strong>.<br/><br/>
-          Para habilitar el historial y control de comandas facturadas, cierres de caja y arqueos, debes cambiar al <strong>Plan Carta</strong> o superior.
+          La sede seleccionada no tiene el Plan Pro activo.<br/><br/>
+          Activa el Plan Pro para ver el historial de pedidos completados y cobrados.
         </p>
-        <button className="btn-primary" style={{ padding: '0.85rem 2rem', borderRadius: '12px', fontWeight: 700, background: '#8b1a2e', color: 'white', border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(139, 26, 46, 0.2)' }} onClick={() => navigate('/subscription')}>🚀 Mejorar Plan</button>
+        <button className="btn-primary" style={{ padding: '0.85rem 2rem', borderRadius: '12px', fontWeight: 700, background: '#C9A227', color: '#1e293b', border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(201,162,39,0.25)' }} onClick={() => navigate('/subscription')}>Activar Plan Pro</button>
       </div>
     );
   }
@@ -82,8 +82,8 @@ export default function BilledOrdersTab() {
         }}>
           <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
         </div>
-        <h3 style={{ color: '#1e293b', marginBottom: '0.5rem', fontWeight: 800 }}>Historial Vacío</h3>
-        <p style={{ fontSize: '0.95rem', color: '#64748b', margin: 0 }}>Aún no se han facturado pedidos en este turno.</p>
+        <h3 style={{ color: '#1e293b', marginBottom: '0.5rem', fontWeight: 800 }}>Sin pedidos completados</h3>
+        <p style={{ fontSize: '0.95rem', color: '#64748b', margin: 0 }}>Los pedidos cobrados aparecerán aquí.</p>
       </div>
     );
   }
@@ -133,26 +133,26 @@ export default function BilledOrdersTab() {
                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{new Date(order.billedAt || order.createdAt).toLocaleTimeString()}</div>
                                {order.pendingSync && (
                                  <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#f59e0b', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '6px', padding: '1px 6px', display: 'inline-block', marginTop: '3px' }}>
-                                   ⏳ Pendiente de sync
+                                   Pendiente de sync
                                  </div>
                                )}
                              </div>
                            </div>
                          </td>
                          <td>
-                           <span className="rd-origin-badge">
-                             {order.orderType === 'table'
-                              ? `🪑 Mesa ${order.tableNumber}`
-                              : order.orderType === 'bar'
-                              ? '🍸 Barra'
-                              : order.orderType === 'delivery'
-                              ? '🛵 Domicilio'
-                              : (order.orderType === 'counter' || order.orderType === 'pickup' || order.orderType === 'takeaway')
-                              ? '🛍️ Para Recoger'
-                              : order.tableNumber
-                              ? `🪑 Mesa ${order.tableNumber}`
-                              : '🛍️ Para Recoger'}
-                           </span>
+                            <span className="rd-origin-badge">
+                              {order.orderType === 'table'
+                               ? `Mesa ${order.tableNumber}`
+                               : order.orderType === 'bar'
+                               ? 'Barra'
+                               : order.orderType === 'delivery'
+                               ? 'Domicilio'
+                               : (order.orderType === 'counter' || order.orderType === 'pickup' || order.orderType === 'takeaway')
+                               ? 'Para Recoger'
+                               : order.tableNumber
+                               ? `Mesa ${order.tableNumber}`
+                               : 'Para Recoger'}
+                            </span>
                          </td>
                           <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
                             <div>{order.customerName || 'Cliente'}</div>
@@ -169,27 +169,27 @@ export default function BilledOrdersTab() {
                           </td>
                           <td>
                              {order.status === 'refunded' ? (
-                               <span style={{ color: '#ef4444', fontWeight: 700, fontSize: '0.8rem' }}>🚫 Devuelto Total</span>
+                               <span style={{ color: '#ef4444', fontWeight: 700, fontSize: '0.8rem' }}>Devuelto Total</span>
                              ) : order.status === 'partially_refunded' ? (
-                               <span style={{ color: '#f59e0b', fontWeight: 700, fontSize: '0.8rem' }}>🔄 Devuelto Parcial</span>
+                               <span style={{ color: '#f59e0b', fontWeight: 700, fontSize: '0.8rem' }}>Devuelto Parcial</span>
                              ) : order.status === 'cancelled' ? (
-                               <span style={{ color: '#ef4444', fontWeight: 700, fontSize: '0.8rem' }}>🚫 Cancelado</span>
+                               <span style={{ color: '#ef4444', fontWeight: 700, fontSize: '0.8rem' }}>Cancelado</span>
                              ) : (
-                               <span style={{ color: '#10b981', fontWeight: 700, fontSize: '0.8rem' }}>✅ Recaudado</span>
+                               <span style={{ color: '#10b981', fontWeight: 700, fontSize: '0.8rem' }}>Recaudado</span>
                              )}
                              {order.cancelledByName && (
                                <div style={{ fontSize: '0.75rem', color: '#e11d48', marginTop: '4px', fontWeight: 700 }}>
-                                 👤 Canceló: {order.cancelledByName}
+                                 Canceló: {order.cancelledByName}
                                </div>
                              )}
                               {order.billedByName && !order.cancelledByName && (
                                 <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px', fontWeight: 500 }}>
-                                  💳 Cobró: {order.billedByName}
+                                  Cobró: {order.billedByName}
                                 </div>
                               )}
                               {order.dispatchedByWaiterName && (
                                 <div style={{ fontSize: '0.75rem', color: '#0369a1', marginTop: '4px', fontWeight: 500 }}>
-                                  🚀 Despachó: {order.dispatchedByWaiterName}
+                                  Despachó: {order.dispatchedByWaiterName}
                                 </div>
                               )}
                           </td>
@@ -205,18 +205,18 @@ export default function BilledOrdersTab() {
                           </td>
                           <td>
                              <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
-                               <button className="btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.75rem' }} onClick={() => handleReprintInvoice(order)}>
-                                 🖨️ Re-imprimir
+                               <button className="btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }} onClick={() => handleReprintInvoice(order)}>
+                                 <Printer size={12} /> Re-imprimir
                                </button>
                                {order.receiptUrl && (
                                  <>
                                    <button
                                      className="btn-secondary"
                                      title="Ver comprobante de transferencia"
-                                     style={{ padding: '0.5rem 0.75rem', fontSize: '0.75rem', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', fontWeight: 600 }}
+                                     style={{ padding: '0.5rem 0.75rem', fontSize: '0.75rem', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                                      onClick={() => window.open(order.receiptUrl, '_blank')}
                                    >
-                                     🧾 Ver
+                                     <Eye size={12} /> Ver
                                    </button>
                                    <a
                                      href={order.receiptUrl}
@@ -226,12 +226,12 @@ export default function BilledOrdersTab() {
                                      title="Descargar comprobante"
                                      style={{ padding: '0.5rem 0.75rem', fontSize: '0.75rem', background: '#f0fdf4', color: '#15803d', border: '1px solid #86efac', fontWeight: 600, borderRadius: '6px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px', lineHeight: 1 }}
                                    >
-                                     ⬇️ Descargar
+                                     <Download size={12} /> Descargar
                                    </a>
                                    <button
                                      className="btn-secondary"
                                      title="Compartir comprobante por WhatsApp"
-                                     style={{ padding: '0.5rem 0.75rem', fontSize: '0.75rem', background: '#f0fdf4', color: '#16a34a', border: '1px solid #86efac', fontWeight: 600 }}
+                                     style={{ padding: '0.5rem 0.75rem', fontSize: '0.75rem', background: '#f0fdf4', color: '#16a34a', border: '1px solid #86efac', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                                      onClick={() => {
                                        const msg = `Comprobante de pago pedido #${order.id.slice(-6).toUpperCase()} — $${(order.total || 0).toLocaleString()}\n${order.receiptUrl}`;
                                        if (navigator.share) {
@@ -241,7 +241,7 @@ export default function BilledOrdersTab() {
                                        }
                                      }}
                                    >
-                                     💬 Compartir
+                                     <Share2 size={12} /> Compartir
                                    </button>
                                  </>
                                )}
@@ -251,12 +251,12 @@ export default function BilledOrdersTab() {
                                     .reduce((sum, ri) => sum + ri.quantity, 0);
                                   return Number(item.quantity || 0) - Number(alreadyReturned) > 0;
                                 }) && (
-                                  <button className="btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', background: '#fee2e2', color: '#b91c1c', border: '1px solid #fca5a5' }} 
-                                          onClick={() => setAuthModal({ type: 'cancel_action', action: () => handleRefundClick(order), order })} 
-                                          title="Hacer Devolución">
-                                    ↩️ Devolver
-                                  </button>
-                                )}
+                                   <button className="btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', background: '#fee2e2', color: '#b91c1c', border: '1px solid #fca5a5', display: 'inline-flex', alignItems: 'center', gap: '4px' }} 
+                                           onClick={() => setAuthModal({ type: 'cancel_action', action: () => handleRefundClick(order), order })} 
+                                           title="Hacer Devolución">
+                                     <RotateCcw size={12} /> Devolver
+                                   </button>
+                                 )}
                              </div>
                            </td>
                         </tr>
@@ -275,8 +275,8 @@ export default function BilledOrdersTab() {
                                 </h4>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                   {(order.items || []).map((item, idx) => {
-                                    const commandedName = item.commandedByName || order.waiterName || 'Mesero';
-                                    const serverName = order.waiterName || 'Mesero';
+                                    const commandedName = item.commandedByName || order.waiterName || 'Vendedor';
+                                    const serverName = order.waiterName || 'Vendedor';
                                     const billerName = order.billedByName || order.billedByWaiterName || 'Cajero';
                                     return (
                                       <div key={idx} style={{
@@ -293,6 +293,9 @@ export default function BilledOrdersTab() {
                                           <strong style={{ color: 'var(--text-primary)', fontSize: '0.82rem' }}>
                                             {item.quantity}x {item.name}
                                           </strong>
+                                          {item.sku && (
+                                            <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600, marginTop: '2px' }}>SKU: {item.sku}</div>
+                                          )}
                                           {item.selectedOptions && item.selectedOptions.length > 0 && (
                                             <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>
                                               {item.selectedOptions.map(opt => opt.name).join(', ')}
@@ -300,19 +303,19 @@ export default function BilledOrdersTab() {
                                           )}
                                         </div>
                                         <div style={{ display: 'flex', gap: '1rem', color: '#64748b', fontWeight: 500 }}>
-                                          <span>
-                                            👤 Comandó: <strong style={{ color: '#334155' }}>{commandedName}</strong>
-                                          </span>
-                                          <span>
-                                            🛎️ Atendió: <strong style={{ color: '#334155' }}>{serverName}</strong>
-                                          </span>
-                                          <span>
-                                            💳 Cobró: <strong style={{ color: '#334155' }}>{billerName}</strong>
-                                          </span>
-                                          <span>
-                                            🚀 Despachó: <strong style={{ color: '#334155' }}>{order.dispatchedByWaiterName || 'No especificado'}</strong>
-                                          </span>
-                                        </div>
+                                           <span>
+                                             Vendió: <strong style={{ color: '#334155' }}>{commandedName}</strong>
+                                           </span>
+                                           <span>
+                                             Atendió: <strong style={{ color: '#334155' }}>{serverName}</strong>
+                                           </span>
+                                           <span>
+                                             Cobró: <strong style={{ color: '#334155' }}>{billerName}</strong>
+                                           </span>
+                                           <span>
+                                             Despachó: <strong style={{ color: '#334155' }}>{order.dispatchedByWaiterName || 'No especificado'}</strong>
+                                           </span>
+                                         </div>
                                       </div>
                                     );
                                   })}

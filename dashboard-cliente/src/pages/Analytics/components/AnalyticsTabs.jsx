@@ -3,31 +3,38 @@ import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, Legend, XAxis, YAxis, Tooltip, ResponsiveContainer
 } from 'recharts';
 import { KPICard, CustomTooltip, RankingList } from './AnalyticsShared';
+import { 
+  DollarSign, ShoppingBag, Target, Smartphone, Clock, Users, CreditCard, Award, 
+  CheckCircle2, AlertTriangle, AlertOctagon, Package, RefreshCw, Eye, ShoppingCart, Trash2, 
+  Cpu, CloudRain, Sun, MapPin, Monitor, Info
+} from 'lucide-react';
 import { getTopCustomers } from '../../../services/loyaltyService';
 
 const COLORS = ['#6366f1','#06b6d4','#10b981','#f59e0b','#f43f5e','#8b5cf6','#0ea5e9'];
 const fmt = v => new Intl.NumberFormat('es-CO', { style:'currency', currency:'COP', minimumFractionDigits:0 }).format(v);
 const fmtN = v => new Intl.NumberFormat('es-CO').format(Math.round(v));
 
-export function ExecutiveTab({ data }) {
+export function ExecutiveTab({ data, isEcommerce }) {
   const { revenue, count, avgTicket, convRate, hourBuckets, byPayment, byType, byOrigin } = data;
   const hourData = hourBuckets.map((v,h) => ({ hour: `${h}h`, ventas: v }));
   const payData  = Object.entries(byPayment).map(([k,v]) => ({ name: k==='cash'?'Efectivo':k==='card'?'Tarjeta':'Otro', value: v }));
-  const typeData = Object.entries(byType).map(([k,v]) => ({ name: k==='table'?'Mesa':k==='delivery'?'Domicilio':'Barra', value: v }));
+  const typeData = Object.entries(byType).map(([k,v]) => ({ name: k==='table'?(isEcommerce?'Local / QR':'Mesa'):k==='delivery'?'Domicilio':(isEcommerce?'Retiro en Tienda':'Barra'), value: v }));
 
   return (
     <>
       <div className="ac-kpi-grid">
         <KPICard 
           label="Ventas Totales"   
-          value={fmt(revenue)}        
-          icon="💰" 
+          value={fmt(revenue)}
+          numericValue={revenue}
+          formatter="currency"
+          icon={<DollarSign size={20} />} 
           accent="#10b981" 
           sub={`${count} órdenes (POS: ${byOrigin?.pos || 0} | Menú: ${byOrigin?.menu || 0})`} 
         />
-        <KPICard label="Ticket Promedio"  value={fmt(avgTicket)}      icon="🎯" accent="#6366f1" />
-        <KPICard label="Conversión Menú"  value={`${convRate.toFixed(1)}%`} icon="📱" accent="#06b6d4" sub="vistas → pedido" />
-        <KPICard label="Hora Pico"        value={`${hourBuckets.indexOf(Math.max(...hourBuckets))}:00`} icon="⏰" accent="#f59e0b" sub="mayor actividad" />
+        <KPICard label="Ticket Promedio" value={fmt(avgTicket)} numericValue={avgTicket} formatter="currency" icon={<Target size={20} />} accent="#6366f1" />
+        <KPICard label={isEcommerce ? "Conversión Tienda" : "Conversión Menú"} value={`${convRate.toFixed(1)}%`} numericValue={convRate} formatter="percent" icon={<Smartphone size={20} />} accent="#06b6d4" sub="vistas → pedido" />
+        <KPICard label="Hora Pico"        value={`${hourBuckets.indexOf(Math.max(...hourBuckets))}:00`} icon={<Clock size={20} />} accent="#f59e0b" sub="mayor actividad" />
       </div>
 
       <div className="ac-grid-2">
@@ -133,25 +140,25 @@ export function SalesTab({ data }) {
   );
 }
 
-export function StaffTab({ data }) {
+export function StaffTab({ data, isEcommerce }) {
   const { waiters, cashiers, globalAvgTicket, attendance } = data;
   return (
     <>
       <div className="ac-kpi-grid">
-        <KPICard label="Meseros Activos"  value={waiters.length}  icon="🧑‍🍳" accent="#6366f1" />
-        <KPICard label="Ticket Prom. Global" value={fmt(globalAvgTicket)} icon="🎯" accent="#10b981" />
-        <KPICard label="Cajeros Activos"  value={cashiers.length} icon="💳" accent="#f59e0b" />
-        <KPICard label="Líder de Ventas"  value={waiters[0]?.name || '—'} icon="⭐" accent="#f43f5e" sub={waiters[0] ? fmt(waiters[0].revenue) : ''} />
+        <KPICard label={isEcommerce ? "Vendedores Activos" : "Meseros Activos"} value={waiters.length} numericValue={waiters.length} formatter="number" icon={<Users size={20} />} accent="#6366f1" />
+        <KPICard label="Ticket Prom. Global" value={fmt(globalAvgTicket)} numericValue={globalAvgTicket} formatter="currency" icon={<Target size={20} />} accent="#10b981" />
+        <KPICard label="Cajeros Activos" value={cashiers.length} numericValue={cashiers.length} formatter="number" icon={<CreditCard size={20} />} accent="#f59e0b" />
+        <KPICard label="Líder de Ventas"  value={waiters[0]?.name || '—'} icon={<Award size={20} />} accent="#f43f5e" sub={waiters[0] ? fmt(waiters[0].revenue) : ''} />
       </div>
       <div className="ac-grid-2">
         <div className="ac-chart-card">
-          <div className="ac-chart-title">Ranking Meseros — Ventas</div>
+          <div className="ac-chart-title">{isEcommerce ? "Ranking Vendedores — Ventas" : "Ranking Meseros — Ventas"}</div>
           {waiters.length > 0
             ? <RankingList items={waiters} valueKey="revenue" labelKey="name" formatFn={fmt}/>
-            : <div className="ac-empty"><div className="ac-empty-icon">👥</div><div className="ac-empty-text">Sin datos de personal</div></div>}
+            : <div className="ac-empty"><div className="ac-empty-icon"><Users size={48} style={{ color: '#94a3b8' }} /></div><div className="ac-empty-text">Sin datos de personal</div></div>}
         </div>
         <div className="ac-chart-card">
-          <div className="ac-chart-title">Ticket Promedio por Mesero</div>
+          <div className="ac-chart-title">{isEcommerce ? "Ticket Promedio por Vendedor" : "Ticket Promedio por Mesero"}</div>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={waiters.slice(0,8)} layout="vertical" barSize={16}>
               <XAxis type="number" hide/>
@@ -172,7 +179,7 @@ export function StaffTab({ data }) {
       {/* Analytics Asistencia */}
       {attendance && attendance.staffSummary && attendance.staffSummary.length > 0 && (
         <div className="ac-chart-card" style={{ marginTop: '1rem' }}>
-          <div className="ac-chart-title">⏱️ Resumen de Asistencia (Horas Trabajadas)</div>
+          <div className="ac-chart-title">Resumen de Asistencia (Horas Trabajadas)</div>
           <div className="ac-table-wrap">
             <table className="ac-table">
               <thead>
@@ -211,7 +218,7 @@ export function StaffTab({ data }) {
   );
 }
 
-export function OperationsTab({ data, tableData }) {
+export function OperationsTab({ data, tableData, isEcommerce }) {
   const { avgServiceMin, fastestMin, slowestMin, slowPct, efficiencyPct, avgOccupancy, ordersByHour, peakHour } = data;
   const { tables, topByRevenue, topByOccupancy, topByEfficiency } = tableData || { tables: [], topByRevenue: [], topByOccupancy: [], topByEfficiency: [] };
   const heatData = ordersByHour.map((v,h) => ({ hour:`${h}h`, pedidos:v }));
@@ -220,10 +227,10 @@ export function OperationsTab({ data, tableData }) {
   return (
     <>
       <div className="ac-kpi-grid">
-        <KPICard label="Tiempo Prom. Servicio" value={`${avgServiceMin.toFixed(0)} min`} icon="⏱️" accent="#6366f1" />
-        <KPICard label="Eficiencia Operacional" value={`${efficiencyPct.toFixed(0)}%`} icon="✅" accent="#10b981" sub="órdenes ≤ 45 min" />
-        <KPICard label="Órdenes Lentas"  value={`${slowPct.toFixed(0)}%`} icon="🐢" accent="#f43f5e" sub="> 60 min" />
-        <KPICard label="Ocup. Prom. Mesa" value={`${avgOccupancy.toFixed(0)} min`} icon="🪑" accent="#f59e0b" />
+        <KPICard label="Tiempo Prom. Servicio" value={`${avgServiceMin.toFixed(0)} min`} numericValue={avgServiceMin} formatter="duration" icon={<Clock size={20} />} accent="#6366f1" />
+        <KPICard label="Eficiencia Operacional" value={`${efficiencyPct.toFixed(0)}%`} numericValue={efficiencyPct} formatter="percentInt" icon={<CheckCircle2 size={20} />} accent="#10b981" sub="órdenes ≤ 45 min" />
+        <KPICard label="Órdenes Lentas" value={`${slowPct.toFixed(0)}%`} numericValue={slowPct} formatter="percentInt" icon={<AlertTriangle size={20} />} accent="#f43f5e" sub="> 60 min" />
+        {!isEcommerce && <KPICard label="Ocup. Prom. Mesa" value={`${avgOccupancy.toFixed(0)} min`} numericValue={avgOccupancy} formatter="duration" icon={<Users size={20} />} accent="#f59e0b" />}
       </div>
 
       <div className="ac-chart-card">
@@ -256,52 +263,56 @@ export function OperationsTab({ data, tableData }) {
         </ResponsiveContainer>
       </div>
 
-      <div className="ac-header-row" style={{ marginTop: '2rem' }}>
-        <h2 className="ac-chart-title" style={{ fontSize: '1.1rem' }}>🪑 Análisis Detallado de Mesas</h2>
-      </div>
+      {!isEcommerce && (
+        <>
+          <div className="ac-header-row" style={{ marginTop: '2rem' }}>
+            <h2 className="ac-chart-title" style={{ fontSize: '1.1rem' }}>Análisis Detallado de Mesas</h2>
+          </div>
 
-      <div className="ac-grid-2">
-        <div className="ac-chart-card">
-          <div className="ac-chart-title">💎 Rentabilidad (Venta por Minuto)</div>
-          <RankingList items={topByEfficiency} valueKey="revenuePerMin" labelKey="table" formatFn={v => `${fmt(v)} / min`}/>
-        </div>
-        <div className="ac-chart-card">
-          <div className="ac-chart-title">⏳ Mayor Ocupación Total</div>
-          <RankingList items={topByOccupancy} valueKey="totalOccupancy" labelKey="table" formatFn={v => `${v} min`}/>
-        </div>
-      </div>
+          <div className="ac-grid-2">
+            <div className="ac-chart-card">
+              <div className="ac-chart-title">Rentabilidad (Venta por Minuto)</div>
+              <RankingList items={topByEfficiency} valueKey="revenuePerMin" labelKey="table" formatFn={v => `${fmt(v)} / min`}/>
+            </div>
+            <div className="ac-chart-card">
+              <div className="ac-chart-title">Mayor Ocupación Total</div>
+              <RankingList items={topByOccupancy} valueKey="totalOccupancy" labelKey="table" formatFn={v => `${v} min`}/>
+            </div>
+          </div>
 
-      <div className="ac-chart-card">
-        <div className="ac-chart-title">📊 Matriz de Rendimiento por Mesa</div>
-        <div className="ac-table-wrap">
-          <table className="ac-table">
-            <thead>
-              <tr>
-                <th>Mesa</th>
-                <th>Órdenes</th>
-                <th>Ingresos</th>
-                <th>Ticket Prom.</th>
-                <th>Ocup. Prom.</th>
-                <th>Venta/Hora</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tables.map((t,i) => (
-                <tr key={i}>
-                  <td style={{ fontWeight:700 }}>Mesa {t.table}</td>
-                  <td>{t.orders}</td>
-                  <td>{fmt(t.revenue)}</td>
-                  <td>{fmt(t.avgTicket)}</td>
-                  <td>{Math.round(t.avgOccupancy)} min</td>
-                  <td style={{ color: t.revenuePerHour > 100000 ? '#10b981' : 'inherit' }}>
-                    {fmt(t.revenuePerHour)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+          <div className="ac-chart-card">
+            <div className="ac-chart-title">Matriz de Rendimiento por Mesa</div>
+            <div className="ac-table-wrap">
+              <table className="ac-table">
+                <thead>
+                  <tr>
+                    <th>Mesa</th>
+                    <th>Órdenes</th>
+                    <th>Ingresos</th>
+                    <th>Ticket Prom.</th>
+                    <th>Ocup. Prom.</th>
+                    <th>Venta/Hora</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tables.map((t,i) => (
+                    <tr key={i}>
+                      <td style={{ fontWeight:700 }}>Mesa {t.table}</td>
+                      <td>{t.orders}</td>
+                      <td>{fmt(t.revenue)}</td>
+                      <td>{fmt(t.avgTicket)}</td>
+                      <td>{Math.round(t.avgOccupancy)} min</td>
+                      <td style={{ color: t.revenuePerHour > 100000 ? '#10b981' : 'inherit' }}>
+                        {fmt(t.revenuePerHour)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 }
@@ -312,16 +323,16 @@ export function ProductsTab({ data }) {
     <>
       <div className="ac-grid-2">
         <div className="ac-chart-card">
-          <div className="ac-chart-title">🏆 Top 10 Más Vendidos</div>
+          <div className="ac-chart-title">Top 10 Más Vendidos</div>
           <RankingList items={top10} valueKey="qty" labelKey="name" formatFn={v => `${v} uds`}/>
         </div>
         <div className="ac-chart-card">
-          <div className="ac-chart-title">💰 Top 10 por Ingresos</div>
+          <div className="ac-chart-title">Top 10 por Ingresos</div>
           <RankingList items={byRevenue} valueKey="revenue" labelKey="name" formatFn={fmt}/>
         </div>
       </div>
       <div className="ac-chart-card">
-        <div className="ac-chart-title">📉 Menor Rotación — Oportunidades de Menú</div>
+        <div className="ac-chart-title">{data.isEcommerce ? "Menor Rotación — Oportunidades de Catálogo" : "Menor Rotación — Oportunidades de Menú"}</div>
         <div className="ac-table-wrap">
           <table className="ac-table">
             <thead>
@@ -370,10 +381,10 @@ export function InventoryTab({ data }) {
   return (
     <>
       <div className="ac-kpi-grid">
-        <KPICard label="Total Insumos" value={totalIngredients} icon="📦" accent="#6366f1" />
-        <KPICard label="Stock Crítico" value={criticalStock.length} icon="🚨" accent="#f43f5e" sub="bajo el mínimo" />
-        <KPICard label="Movimientos" value={totalMovements} icon="🔄" accent="#06b6d4" sub="en el periodo" />
-        <KPICard label="Top Consumo" value={topConsumed[0]?.name || '—'} icon="🔥" accent="#10b981" sub={topConsumed[0] ? `${topConsumed[0].consumption.toFixed(1)} ${topConsumed[0].unit || ''}` : ''} />
+        <KPICard label="Total Insumos" value={totalIngredients} numericValue={totalIngredients} formatter="number" icon={<Package size={20} />} accent="#6366f1" />
+        <KPICard label="Stock Crítico" value={criticalStock.length} numericValue={criticalStock.length} formatter="number" icon={<AlertTriangle size={20} />} accent="#f43f5e" sub="bajo el mínimo" />
+        <KPICard label="Movimientos" value={totalMovements} numericValue={totalMovements} formatter="number" icon={<RefreshCw size={20} />} accent="#06b6d4" sub="en el periodo" />
+        <KPICard label="Top Consumo" value={topConsumed[0]?.name || '—'} icon={<ShoppingBag size={20} />} accent="#10b981" sub={topConsumed[0] ? `${topConsumed[0].consumption.toFixed(1)} ${topConsumed[0].unit || ''}` : ''} />
       </div>
 
       <div className="ac-grid-2">
@@ -396,7 +407,7 @@ export function InventoryTab({ data }) {
       </div>
 
       <div className="ac-chart-card">
-        <div className="ac-chart-title">⚠️ Insumos en Estado Crítico</div>
+        <div className="ac-chart-title">Insumos en Estado Crítico</div>
         <div className="ac-table-wrap">
           <table className="ac-table">
             <thead>
@@ -435,21 +446,21 @@ export function InventoryTab({ data }) {
   );
 }
 
-export function EngagementTab({ data }) {
+export function EngagementTab({ data, isEcommerce }) {
   const { views, sessions, cartAdditions, abandonment, conversionRate, cartConvRate, avgSessionSec, funnel, topViewed, topAddedToCart, digitalByType, digitalCount } = data;
   const maxFunnel = funnel[0]?.value || 1;
 
   return (
     <>
       <div className="ac-kpi-grid">
-        <KPICard label="Visitas Menú"     value={fmtN(views)}       icon="👁️" accent="#06b6d4" />
-        <KPICard label="Conversión Pedido" value={`${conversionRate.toFixed(1)}%`} icon="✅" accent="#10b981" />
-        <KPICard label="Órdenes Menú"     value={digitalCount} icon="🛒" accent="#6366f1" sub={`Mesa: ${digitalByType?.table || 0} | Dom: ${digitalByType?.delivery || 0}`} />
-        <KPICard label="Abandono Carrito" value={`${abandonment.toFixed(1)}%`}     icon="🗑️" accent="#f43f5e" />
+        <KPICard label={isEcommerce ? "Visitas Tienda" : "Visitas Menú"} value={fmtN(views)} numericValue={views} formatter="number" icon={<Eye size={20} />} accent="#06b6d4" />
+        <KPICard label="Conversión Pedido" value={`${conversionRate.toFixed(1)}%`} numericValue={conversionRate} formatter="percent" icon={<CheckCircle2 size={20} />} accent="#10b981" />
+        <KPICard label={isEcommerce ? "Órdenes Tienda" : "Órdenes Menú"} value={digitalCount} numericValue={digitalCount} formatter="number" icon={<ShoppingCart size={20} />} accent="#6366f1" sub={isEcommerce ? `Local: ${digitalByType?.table || 0} | Dom: ${digitalByType?.delivery || 0}` : `Mesa: ${digitalByType?.table || 0} | Dom: ${digitalByType?.delivery || 0}`} />
+        <KPICard label="Abandono Carrito" value={`${abandonment.toFixed(1)}%`} numericValue={abandonment} formatter="percent" icon={<Trash2 size={20} />} accent="#f43f5e" />
       </div>
 
       <div className="ac-chart-card">
-        <div className="ac-chart-title">Embudo de Conversión QR</div>
+        <div className="ac-chart-title">{isEcommerce ? "Embudo de Conversión Tienda" : "Embudo de Conversión QR"}</div>
         <div className="ac-funnel" style={{ marginTop:'1rem' }}>
           {funnel.map((step, i) => {
             const baseValue = funnel[0].value || 1;
@@ -457,7 +468,14 @@ export function EngagementTab({ data }) {
             const colors = ['#6366f1','#06b6d4','#f59e0b','#10b981'];
             return (
               <div key={i} className="ac-funnel-step">
-                <span className="ac-funnel-label">{step.icon} {step.label}</span>
+                <span className="ac-funnel-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  {step.icon === 'views'    ? <Eye size={16} /> :
+                   step.icon === 'sessions' ? <Monitor size={16} /> :
+                   step.icon === 'cart'     ? <ShoppingCart size={16} /> :
+                   step.icon === 'orders'   ? <CheckCircle2 size={16} /> :
+                   null}
+                  {step.label}
+                </span>
                 <div className="ac-funnel-bar-wrap">
                   <div className="ac-funnel-bar" style={{ width:`${Math.min(pct, 100)}%`, background: colors[i] }}>
                     {step.value > 0 && fmtN(step.value)}
@@ -474,15 +492,19 @@ export function EngagementTab({ data }) {
         <div className="ac-chart-title">Distribución por Tipo de Pedido Digital</div>
         <div className="ac-digital-dist">
           <div className="ac-dist-item">
-            <div className="ac-dist-icon" style={{ background: '#e0e7ff', color: '#4338ca' }}>🪑</div>
+            <div className="ac-dist-icon" style={{ background: '#e0e7ff', color: '#4338ca' }}>
+              {isEcommerce ? <ShoppingBag size={16} /> : <Users size={16} />}
+            </div>
             <div className="ac-dist-info">
-              <span className="ac-dist-label">Mesa (QR)</span>
+              <span className="ac-dist-label">{isEcommerce ? "Local / QR" : "Mesa (QR)"}</span>
               <span className="ac-dist-val">{digitalByType?.table?.count || 0} pedidos</span>
             </div>
             <div className="ac-dist-amount">{fmt(digitalByType?.table?.revenue || 0)}</div>
           </div>
           <div className="ac-dist-item">
-            <div className="ac-dist-icon" style={{ background: '#ecfdf5', color: '#047857' }}>🛵</div>
+            <div className="ac-dist-icon" style={{ background: '#ecfdf5', color: '#047857' }}>
+              <MapPin size={16} />
+            </div>
             <div className="ac-dist-info">
               <span className="ac-dist-label">Domicilio</span>
               <span className="ac-dist-val">{digitalByType?.delivery?.count || 0} pedidos</span>
@@ -490,9 +512,11 @@ export function EngagementTab({ data }) {
             <div className="ac-dist-amount">{fmt(digitalByType?.delivery?.revenue || 0)}</div>
           </div>
           <div className="ac-dist-item">
-            <div className="ac-dist-icon" style={{ background: '#fff7ed', color: '#c2410c' }}>🥡</div>
+            <div className="ac-dist-icon" style={{ background: '#fff7ed', color: '#c2410c' }}>
+              <Package size={16} />
+            </div>
             <div className="ac-dist-info">
-              <span className="ac-dist-label">Llevar / Mostrador</span>
+              <span className="ac-dist-label">Retiro en Tienda / Llevar</span>
               <span className="ac-dist-val">{digitalByType?.counter?.count || 0} pedidos</span>
             </div>
             <div className="ac-dist-amount">{fmt(digitalByType?.counter?.revenue || 0)}</div>
@@ -502,11 +526,11 @@ export function EngagementTab({ data }) {
 
       <div className="ac-grid-2">
         <div className="ac-chart-card">
-          <div className="ac-chart-title">👁️ Productos Más Vistos en Menú</div>
+          <div className="ac-chart-title">{isEcommerce ? "Productos Más Vistos en Catálogo" : "Productos Más Vistos en Menú"}</div>
           <RankingList items={topViewed} valueKey="views" labelKey="name" formatFn={v => `${v} vistas`}/>
         </div>
         <div className="ac-chart-card">
-          <div className="ac-chart-title">🛒 Más Añadidos al Carrito</div>
+          <div className="ac-chart-title">Más Añadidos al Carrito</div>
           <RankingList items={topAddedToCart} valueKey="cartAdditions" labelKey="name" formatFn={v => `${v} veces`}/>
         </div>
       </div>
@@ -517,7 +541,7 @@ export function EngagementTab({ data }) {
 export function InsightsTab({ data }) {
   if (!data?.length) return (
     <div className="ac-empty">
-      <div className="ac-empty-icon">🤖</div>
+      <div className="ac-empty-icon"><Cpu size={48} style={{ color: '#94a3b8' }} /></div>
       <div className="ac-empty-text">Cargando inteligencia... necesitas más datos del período seleccionado.</div>
     </div>
   );
@@ -525,7 +549,12 @@ export function InsightsTab({ data }) {
     <div className="ac-insights-grid">
       {data.map((ins, i) => (
         <div key={i} className={`ac-insight-card ${ins.type}`}>
-          <div className="ac-insight-icon">{ins.icon}</div>
+          <div className="ac-insight-icon">
+            {ins.type === 'danger'  ? <AlertOctagon  size={20} /> :
+             ins.type === 'warning' ? <AlertTriangle size={20} /> :
+             ins.type === 'success' ? <CheckCircle2  size={20} /> :
+             <Info size={20} />}
+          </div>
           <div>
             <div className="ac-insight-title">{ins.title}</div>
             <div className="ac-insight-text">{ins.text}</div>
@@ -549,11 +578,11 @@ export function LoyaltyTab({ restaurantId }) {
   }, [restaurantId]);
 
   if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}><div className="spinner" style={{ margin: '0 auto' }}></div></div>;
-  if (customers.length === 0) return <div className="ac-empty"><div className="ac-empty-icon">⭐</div><div className="ac-empty-text">Aún no hay clientes con puntos.</div></div>;
+  if (customers.length === 0) return <div className="ac-empty"><div className="ac-empty-icon"><Award size={48} style={{ color: '#94a3b8' }} /></div><div className="ac-empty-text">Aún no hay clientes con puntos.</div></div>;
 
   return (
     <div style={{ background: 'white', padding: '1.5rem', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-      <h3 style={{ margin: '0 0 1rem 0', color: '#1e293b', fontSize: '1.2rem', fontWeight: 800 }}>⭐ Top Clientes por Puntos</h3>
+      <h3 style={{ margin: '0 0 1rem 0', color: '#1e293b', fontSize: '1.2rem', fontWeight: 800 }}>Top Clientes por Puntos</h3>
       <div className="table-container" style={{ maxHeight: '400px', overflowY: 'auto' }}>
         <table className="saas-table" style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
           <thead>
@@ -607,7 +636,7 @@ export function DeliveryScatterMap({ locations, branchLat, branchLng }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: '#f8fafc', padding: '1.5rem', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
       <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1e293b', marginBottom: '1.25rem', width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <span>🎯 Radar de Domicilios (Ventas Relativas)</span>
+        <span>Radar de Domicilios (Ventas Relativas)</span>
       </div>
       
       <div style={{ position: 'relative', width: '270px', height: '270px', background: '#0f172a', borderRadius: '50%', border: '4px solid #1e293b', overflow: 'hidden', boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5)' }}>
@@ -649,8 +678,8 @@ export function DeliveryScatterMap({ locations, branchLat, branchLng }) {
       </div>
       
       <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginTop: '1.25rem', fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>
-        <span>🔴 Centro: Sede</span>
-        <span>🟢 Domicilios</span>
+        <span><span style={{ color: '#ef4444', marginRight: '4px' }}>●</span> Centro: Sede</span>
+        <span><span style={{ color: '#10b981', marginRight: '4px' }}>●</span> Domicilios</span>
       </div>
     </div>
   );
@@ -668,15 +697,15 @@ export function IntelligenceTab({ data }) {
   return (
     <>
       <div className="ac-kpi-grid">
-        <KPICard label="Pedidos con Inteligencia" value={ordersWithMetadataCount} icon="🧠" accent="#6366f1" sub="Enriquecidos con clima/dispositivo" />
-        <KPICard label="Ticket Prom. con Lluvia" value={fmt(weather.avgRainTicket)} icon="🌧️" accent="#0ea5e9" sub={`${weather.rainCount} pedidos registrados`} />
-        <KPICard label="Ticket Prom. Despejado" value={fmt(weather.avgClearTicket)} icon="☀️" accent="#f59e0b" sub={`${weather.clearCount} pedidos registrados`} />
-        <KPICard label="Ubicaciones Domicilios" value={deliveryLocations.length} icon="📍" accent="#10b981" sub="Geolocalizaciones capturadas" />
+        <KPICard label="Pedidos con Inteligencia" value={ordersWithMetadataCount} numericValue={ordersWithMetadataCount} formatter="number" icon={<Cpu size={20} />} accent="#6366f1" sub="Enriquecidos con clima/dispositivo" />
+        <KPICard label="Ticket Prom. con Lluvia" value={fmt(weather.avgRainTicket)} numericValue={weather.avgRainTicket} formatter="currency" icon={<CloudRain size={20} />} accent="#0ea5e9" sub={`${weather.rainCount} pedidos registrados`} />
+        <KPICard label="Ticket Prom. Despejado" value={fmt(weather.avgClearTicket)} numericValue={weather.avgClearTicket} formatter="currency" icon={<Sun size={20} />} accent="#f59e0b" sub={`${weather.clearCount} pedidos registrados`} />
+        <KPICard label="Ubicaciones Domicilios" value={deliveryLocations.length} numericValue={deliveryLocations.length} formatter="number" icon={<MapPin size={20} />} accent="#10b981" sub="Geolocalizaciones capturadas" />
       </div>
 
       {ordersWithMetadataCount === 0 ? (
         <div style={{ background: '#f8fafc', padding: '3rem 2rem', borderRadius: '16px', border: '1px dashed #cbd5e1', textAlign: 'center', marginTop: '1.5rem' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📈</div>
+          <div style={{ color: '#6366f1', marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}><RefreshCw size={48} /></div>
           <h4 style={{ fontWeight: 800, color: '#1e293b', fontSize: '1.2rem', marginBottom: '0.5rem' }}>Esperando Datos en Vivo</h4>
           <p style={{ color: '#64748b', maxWidth: '500px', margin: '0 auto', fontSize: '0.95rem' }}>
             Los metadatos se están recolectando en vivo en cada nuevo pedido creado. 
@@ -687,7 +716,7 @@ export function IntelligenceTab({ data }) {
         <>
           <div className="ac-grid-2">
             <div className="ac-chart-card">
-              <div className="ac-chart-title">📱 Dispositivos Utilizados por Clientes</div>
+              <div className="ac-chart-title">Dispositivos Utilizados por Clientes</div>
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
                   <Pie data={deviceCounts} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} innerRadius={40}>
@@ -700,7 +729,7 @@ export function IntelligenceTab({ data }) {
             </div>
 
             <div className="ac-chart-card">
-              <div className="ac-chart-title">🌧️ Impacto del Clima en Ticket Promedio</div>
+              <div className="ac-chart-title">Impacto del Clima en Ticket Promedio</div>
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={weatherImpactData} barSize={40}>
                   <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
@@ -717,7 +746,7 @@ export function IntelligenceTab({ data }) {
 
           <div className="ac-grid-2">
             <div className="ac-chart-card">
-              <div className="ac-chart-title">🌡️ Ventas por Rango de Temperatura</div>
+              <div className="ac-chart-title">Ventas por Rango de Temperatura</div>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={weather.tempBuckets} barSize={30}>
                   <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
@@ -729,7 +758,7 @@ export function IntelligenceTab({ data }) {
             </div>
 
             <div className="ac-chart-card">
-              <div className="ac-chart-title">🌐 Sistemas Operativos y Navegadores</div>
+              <div className="ac-chart-title">Sistemas Operativos y Navegadores</div>
               <div style={{ display: 'flex', gap: '1rem', height: '180px', overflowY: 'auto' }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', marginBottom: '0.5rem' }}>OS</div>
@@ -760,7 +789,7 @@ export function IntelligenceTab({ data }) {
           <DeliveryScatterMap locations={deliveryLocations} />
           
           <div className="ac-chart-card" style={{ margin: 0, height: '100%' }}>
-            <div className="ac-chart-title">📍 Ubicación Geográfica de Domicilios (Detalle)</div>
+            <div className="ac-chart-title">Ubicación Geográfica de Domicilios (Detalle)</div>
             <div className="ac-table-wrap">
               <table className="ac-table">
                 <thead>
@@ -787,7 +816,7 @@ export function IntelligenceTab({ data }) {
                           className="ac-badge-live"
                           style={{ background: '#e0f2fe', color: '#0369a1', textDecoration: 'none', cursor: 'pointer', display: 'inline-block' }}
                         >
-                          📍 Mapa
+                          Mapa
                         </a>
                       </td>
                     </tr>

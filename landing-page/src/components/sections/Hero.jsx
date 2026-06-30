@@ -100,7 +100,7 @@ export default function Hero() {
         <div ref={leftContentRef} className="hero-copy">
           <div className="hero-badge">
             <span className="hero-badge-dot" />
-            La plataforma de catálogos digitales
+            La plataforma de catálogos y tiendas virtuales
           </div>
           
           <h1 className="hero-title">
@@ -108,11 +108,11 @@ export default function Hero() {
           </h1>
           
           <p className="hero-subtitle">
-            MiProdu es la plataforma todo-en-uno para digitalizar tu catálogo de productos — camisas, accesorios, gadgets, lo que quieras. QR por producto, pedidos en línea y analytics en un solo lugar.
+            MiProdu es la plataforma todo-en-uno para digitalizar tu catálogo de productos — ropa, accesorios, gadgets y más. Catálogo interactivo, pedidos en línea a WhatsApp y analíticas en un solo lugar.
           </p>
 
           <div className="hero-actions">
-            <a href="https://app.tu-nuevo-dominio.com" target="_blank" rel="noopener noreferrer" className="btn-primary">
+            <a href="https://app.miprodu.com" target="_blank" rel="noopener noreferrer" className="btn-primary">
               {trialDays > 0 ? `Empezar ${trialDays} días gratis` : 'Empezar gratis'}
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
             </a>
@@ -124,7 +124,7 @@ export default function Hero() {
           <div className="hero-stats-row">
             <div className="hero-stat">
               <span className="hero-stat-val">+50</span>
-              <span className="hero-stat-label">Catálogos<br/>activos</span>
+              <span className="hero-stat-label">Tiendas<br/>activas</span>
             </div>
             <div className="hero-stat-divider" />
             <div className="hero-stat">
@@ -147,21 +147,36 @@ export default function Hero() {
                   <div className="ps-nav"><span/><span/></div>
                 </div>
                 <div className="ps-hero">
-                  <div className="ps-hero-img">👕</div>
+                  <div className="ps-hero-img">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '1.75rem', height: '1.75rem', color: '#C9A227' }}>
+                      <path d="M20.38 3.46 16 7.83V4a2 2 0 0 0-2-2H10a2 2 0 0 0-2 2v3.83L3.62 3.46a2 2 0 0 0-2.42.42L.41 4.67a2 2 0 0 0 .42 2.42L6 11.26V20a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-8.74l5.17-4.17a2 2 0 0 0 .42-2.42l-.79-7.9a2 2 0 0 0-2.42-.42Z" />
+                    </svg>
+                  </div>
                   <div className="ps-hero-title">Camiseta Premium</div>
                   <div className="ps-hero-price">$85.000</div>
                   <div className="ps-hero-btn">Agregar al carrito</div>
                 </div>
                 <div className="ps-list">
                   <div className="ps-list-item">
-                    <div className="ps-item-img wine-bg">👟</div>
+                    <div className="ps-item-img wine-bg">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '1.25rem', height: '1.25rem', color: '#ffffff' }}>
+                        <path d="M21 16V8a2 2 0 0 0-2-2h-6L9 10H3v6c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2z" />
+                        <path d="M3 14h6" />
+                      </svg>
+                    </div>
                     <div className="ps-item-info">
                       <div className="ps-line w-full"/>
                       <div className="ps-line w-half"/>
                     </div>
                   </div>
                   <div className="ps-list-item">
-                    <div className="ps-item-img black-bg">🧢</div>
+                    <div className="ps-item-img black-bg">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '1.25rem', height: '1.25rem', color: '#ffffff' }}>
+                        <path d="M2 18h20" />
+                        <path d="M18 18a6 6 0 0 0-12 0" />
+                        <circle cx="12" cy="10" r="2" />
+                      </svg>
+                    </div>
                     <div className="ps-item-info">
                       <div className="ps-line w-full"/>
                       <div className="ps-line w-half"/>
@@ -173,16 +188,27 @@ export default function Hero() {
 
             {/* Floating 3D Element 1: QR Code Badge */}
             <div className="mockup-float float-qr visual-card">
-              <div className="fq-icon">📱</div>
+              <div className="fq-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '1.5rem', height: '1.5rem', color: '#c9a227' }}>
+                  <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+                  <line x1="12" y1="18" x2="12.01" y2="18" />
+                </svg>
+              </div>
               <div className="fq-text">
-                <strong>Producto #04</strong>
-                <span>Escaneado activo</span>
+                <strong>Catálogo Web</strong>
+                <span>Acceso instantáneo</span>
               </div>
             </div>
 
             {/* Floating 3D Element 2: New Order Alert */}
             <div className="mockup-float float-order visual-card">
-              <div className="fo-avatar">🛍️</div>
+              <div className="fo-avatar">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '1.35rem', height: '1.35rem', color: '#10b981' }}>
+                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <path d="M16 10a4 4 0 0 1-8 0" />
+                </svg>
+              </div>
               <div className="fo-text">
                 <strong>Nuevo Pedido #102</strong>
                 <span>Hace 2 min</span>

@@ -1,8 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { generateDishDescription, cleanAiResponse } from '../aiService';
 
-// Mock de fetch global
-globalThis.fetch = vi.fn();
+// Mock de firebase/functions
+const mockChatWithAi = vi.fn();
+vi.mock('firebase/functions', () => ({
+  httpsCallable: vi.fn(() => mockChatWithAi)
+}));
+
+// Mock de firebase
+vi.mock('../firebase', () => ({
+  functions: {},
+  db: {}
+}));
 
 describe('aiService - Karol Assistant', () => {
   
@@ -16,35 +25,39 @@ describe('aiService - Karol Assistant', () => {
   });
 
   it('debe generar una descripción de plato llamando a la API correctamente', async () => {
-    const mockResponse = {
-      choices: [{
-        message: {
-          content: 'Una deliciosa pizza artesanal con masa madre.'
+    mockChatWithAi.mockResolvedValue({
+      data: {
+        success: true,
+        data: {
+          choices: [{
+            message: {
+              content: 'Una deliciosa pizza artesanal con masa madre.'
+            }
+          }]
         }
-      }]
-    };
-
-    fetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(mockResponse)
+      }
     });
 
     const description = await generateDishDescription('Pizza Margherita');
     
     expect(description).toContain('pizza artesanal');
-    expect(fetch).toHaveBeenCalledWith(
-      expect.stringContaining('deepseek'),
+    expect(mockChatWithAi).toHaveBeenCalledWith(
       expect.objectContaining({
-        method: 'POST',
-        body: expect.stringContaining('Pizza Margherita')
+        messages: expect.arrayContaining([
+          expect.objectContaining({
+            content: expect.stringContaining('Pizza Margherita')
+          })
+        ])
       })
     );
   });
 
   it('debe manejar errores de la API de IA', async () => {
-    fetch.mockResolvedValue({
-      ok: false,
-      json: () => Promise.resolve({ error: { message: 'API Key invalid' } })
+    mockChatWithAi.mockResolvedValue({
+      data: {
+        success: false,
+        error: 'API Key invalid'
+      }
     });
 
     await expect(generateDishDescription('Algo')).rejects.toThrow('API Key invalid');

@@ -26,7 +26,7 @@ const AiAssistant = React.memo(function AiAssistant() {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      text: '¡Hola! Soy **Karol**, tu asistente de Carta y Mesa 🍽️\n\n¿En qué te puedo ayudar hoy?',
+      text: '¡Hola! Soy **Karol**, tu asistente de MiProdu 🍽️\n\n¿En qué te puedo ayudar hoy?',
     },
   ]);
 
@@ -174,7 +174,7 @@ ${initialContext}
   const clearChat = () => {
     setMessages([{
       role: 'assistant',
-      text: '¡Hola! Soy **Karol**, tu asistente de Carta y Mesa 🍽️\n\n¿En qué te puedo ayudar hoy?',
+      text: '¡Hola! Soy **Karol**, tu asistente de MiProdu 🍽️\n\n¿En qué te puedo ayudar hoy?',
     }]);
     setShowSuggestions(true);
     setForcedContext(null);
@@ -281,7 +281,7 @@ ${initialContext}
             </svg>
           </button>
         </div>
-        <div className="ai-footer-note">Asistente Virtual · Solo temas de Carta y Mesa</div>
+        <div className="ai-footer-note">Asistente Virtual · Solo temas de MiProdu</div>
       </div>
     </>
   );

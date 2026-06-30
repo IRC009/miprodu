@@ -5,6 +5,7 @@ import imageCompression from 'browser-image-compression';
 export const Storage = {
   async uploadFile(path, file) {
     let fileToUpload = file;
+    let finalPath = path;
 
     // Optimizar solo si es una imagen
     if (file.type.startsWith('image/')) {
@@ -20,18 +21,22 @@ export const Storage = {
         fileToUpload = await imageCompression(file, options);
         
         // Ajustar el nombre si se convirtió a webp
-        if (fileToUpload.type === 'image/webp' && !path.toLowerCase().endsWith('.webp')) {
-          // Opcional: podrías cambiar la extensión en el path, 
-          // pero Firebase Storage no requiere que la extensión coincida con el MIME type.
-          // Sin embargo, es mejor para la claridad.
+        if (fileToUpload.type === 'image/webp' && !finalPath.toLowerCase().endsWith('.webp')) {
+          const lastDotIndex = finalPath.lastIndexOf('.');
+          if (lastDotIndex !== -1) {
+            finalPath = finalPath.substring(0, lastDotIndex) + '.webp';
+          } else {
+            finalPath = finalPath + '.webp';
+          }
         }
       } catch (error) {
         console.error('[Storage] Error al optimizar imagen, subiendo original:', error);
         fileToUpload = file;
+        finalPath = path;
       }
     }
 
-    const storageRef = ref(storage, path);
+    const storageRef = ref(storage, finalPath);
     const snapshot = await uploadBytes(storageRef, fileToUpload);
     return await getDownloadURL(snapshot.ref);
   },

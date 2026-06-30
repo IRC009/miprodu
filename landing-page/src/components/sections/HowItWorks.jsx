@@ -45,22 +45,22 @@ const BASE_STEPS = [
   {
     num: '02',
     Icon: MenuIcon,
-    title: 'Configura tu menú',
-    getDesc: () => 'Carga tus platos con fotos, precios y categorías. Personaliza los colores y el logo de tu restaurante.',
+    title: 'Configura tu catálogo',
+    getDesc: () => 'Sube tus productos con fotos, precios, variaciones y categorías. Personaliza los colores y el logo de tu marca.',
     detail: '~15 minutos de configuración',
   },
   {
     num: '03',
     Icon: QrShareIcon,
-    title: 'Comparte el QR',
-    getDesc: () => 'Imprime o muestra el código QR en tus mesas. Tus clientes acceden al menú instantáneamente desde cualquier celular.',
-    detail: 'Sin instalar apps · Funciona offline',
+    title: 'Comparte tu tienda',
+    getDesc: () => 'Comparte tu link en Instagram o imprime códigos QR para empaques y vitrinas. Tus clientes acceden al instante.',
+    detail: 'Sin instalar apps · Acceso inmediato',
   },
   {
     num: '04',
     Icon: ZapIcon,
     title: 'Recibe y gestiona pedidos',
-    getDesc: () => 'Los pedidos llegan en tiempo real a la cocina. Tus meseros los gestionan desde el panel de comandas.',
+    getDesc: () => 'Los pedidos llegan en tiempo real a tu WhatsApp o al Panel de Control. Gestiona tus entregas sin perder clientes.',
     detail: 'Operación inmediata el primer día',
   },
 ];
@@ -100,7 +100,7 @@ export default function HowItWorks() {
             Listo en <span className="wine-text">menos de un día</span>
           </h2>
           <p className="section-subtitle">
-            Cuatro pasos simples para digitalizar tu restaurante y empezar a vender más.
+            Cuatro pasos simples para digitalizar tu negocio / tienda y empezar a vender más.
           </p>
         </div>
 

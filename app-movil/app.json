@@ -5,23 +5,23 @@
     "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/icono.png",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash-image.png",
+      "image": "./assets/icono.png",
       "resizeMode": "contain",
-      "backgroundColor": "#12070b"
+      "backgroundColor": "#ffffff"
     },
     "androidNavigationBar": {
       "visible": "always",
-      "barStyle": "light-content",
-      "backgroundColor": "#1c0d13"
+      "barStyle": "dark-content",
+      "backgroundColor": "#ffffff"
     },
     "plugins": [
       [
         "expo-notifications",
         {
-          "icon": "./assets/splash-image.png",
-          "color": "#8b1a2e",
+          "icon": "./assets/notification_icon.png",
+          "color": "#C9A227",
           "androidMode": "default",
           "androidCollapsedTitle": "Nuevo Pedido",
           "iosDisplayInForeground": true,
@@ -41,8 +41,8 @@
       "versionCode": 2,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/splash-image.png",
-        "backgroundColor": "#12070b"
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundColor": "#ffffff"
       },
       "permissions": [
         "NOTIFICATIONS",
@@ -55,11 +55,11 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
+    "owner": "irc009",
     "extra": {
       "eas": {
-        "projectId": "3ac54c27-6c7a-4e1d-9509-03404074626a"
+        "projectId": "127a63af-a338-45b6-924d-be453ec06e04"
       }
-    },
-    "owner": "irc009"
+    }
   }
 }

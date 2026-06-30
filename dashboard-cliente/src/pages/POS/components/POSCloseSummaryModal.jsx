@@ -1,4 +1,5 @@
 import React from 'react';
+import { Landmark } from 'lucide-react';
 import s from '../POS.module.css';
 
 export default function POSCloseSummaryModal({ closeSummary, onCancel, onConfirm }) {
@@ -13,7 +14,9 @@ export default function POSCloseSummaryModal({ closeSummary, onCancel, onConfirm
 
           {/* Reconciliación */}
           <div className={s.summaryReconciliation}>
-            <h4 className={s.summaryReconciliationTitle}>💰 Reconciliación</h4>
+            <h4 className={s.summaryReconciliationTitle} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <Landmark size={16} /> Reconciliación
+            </h4>
             <table className={s.summaryTable}>
               <thead>
                 <tr className={s.summaryTableHeader}>
@@ -25,9 +28,9 @@ export default function POSCloseSummaryModal({ closeSummary, onCancel, onConfirm
               </thead>
               <tbody>
                 {[
-                  { label: '💵 Efectivo', key: 'cash' },
-                  { label: '📲 Transf.',  key: 'transfer' },
-                  { label: '💳 Tarjeta',  key: 'card' },
+                  { label: 'Efectivo', key: 'cash' },
+                  { label: 'Transf.',  key: 'transfer' },
+                  { label: 'Tarjeta',  key: 'card' },
                 ].map(({ label, key }) => (
                   <tr key={key}>
                     <td className={s.summaryTableCell}>{label}</td>
@@ -56,7 +59,7 @@ export default function POSCloseSummaryModal({ closeSummary, onCancel, onConfirm
 
           {/* Salidas */}
           <div className={s.summaryOutSection}>
-            <h4 className={s.summaryOutTitle}>📤 Salidas de Caja: ${closeSummary.totalOut.toLocaleString()}</h4>
+            <h4 className={s.summaryOutTitle}>Salidas de Caja: ${closeSummary.totalOut.toLocaleString()}</h4>
             <div className={s.summaryOutScroll}>
               {closeSummary.movements.filter(m => m.type === 'out').map((m, i) => (
                 <div key={i} className={s.summaryOutItem}>

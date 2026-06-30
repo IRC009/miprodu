@@ -1,16 +1,22 @@
 import React, { useState } from 'react';
+import { 
+  ShoppingCart, AlertTriangle, ShoppingBag, Calendar, MapPin, 
+  Award, Cpu, RefreshCw, MessageCircle, HelpCircle, Star, DollarSign,
+  Sun, Moon, Package, Target, Zap, Plus
+} from 'lucide-react';
+import { useRestaurantData } from '../../../context/RestaurantDataContext';
 import './StrategicIntelligenceTab.css';
 
 const fmt = v => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
 const fmtMin = m => m < 60 ? `${Math.round(m)} min` : `${(m / 60).toFixed(1)} h`;
 
-const MEDALS = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
+const MEDALS = ['#1', '#2', '#3', '#4', '#5'];
 
 // ─── BASKET CROSS-SELL SECTION ────────────────────────────────────────────────
 function BasketSection({ data }) {
   if (!data?.combos?.length) return (
     <div className="si-empty-card">
-      <span>🛒</span>
+      <ShoppingCart size={40} style={{ color: '#64748b' }} />
       <p>Necesitas al menos 2 órdenes con productos compartidos para detectar combos.</p>
     </div>
   );
@@ -18,7 +24,7 @@ function BasketSection({ data }) {
   return (
     <div className="si-section">
       <div className="si-section-header">
-        <span className="si-section-icon">🛒</span>
+        <ShoppingCart size={28} className="si-section-icon" style={{ color: '#6366f1' }} />
         <div>
           <h3>Análisis de Canasta (Cross-Selling)</h3>
           <p>Productos que se compran juntos con mayor frecuencia</p>
@@ -50,18 +56,18 @@ function BasketSection({ data }) {
 }
 
 // ─── CHURN DETECTION SECTION ──────────────────────────────────────────────────
-function ChurnSection({ data }) {
+function ChurnSection({ data, isEcommerce }) {
   const atRisk = data?.atRisk || [];
   const loyal  = data?.loyal  || [];
 
   const buildWhatsAppMsg = (c) => {
-    const msg = `Hola ${c.name}, te extrañamos 🙏 Han pasado ${c.daysSinceLast} días desde tu última visita. Te tenemos una sorpresa especial. ¡Esperamos verte pronto! 🎁`;
+    const msg = `Hola ${c.name}, te extrañamos. Han pasado ${c.daysSinceLast} días desde tu última visita. Te tenemos una sorpresa especial. ¡Esperamos verte pronto!`;
     return `https://wa.me/${c.phone?.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`;
   };
 
   if (!atRisk.length && !loyal.length) return (
     <div className="si-empty-card">
-      <span>⚠️</span>
+      <AlertTriangle size={40} style={{ color: '#64748b' }} />
       <p>Se necesitan clientes identificados con al menos 2 visitas para calcular el Churn.</p>
     </div>
   );
@@ -69,16 +75,19 @@ function ChurnSection({ data }) {
   return (
     <div className="si-section">
       <div className="si-section-header">
-        <span className="si-section-icon">⚠️</span>
+        <AlertTriangle size={28} className="si-section-icon" style={{ color: '#ef4444' }} />
         <div>
           <h3>Retención de Clientes (Churn VIP)</h3>
-          <p>Clientes que podrían estar abandonando el restaurante</p>
+          <p>Clientes que podrían estar abandonando {isEcommerce ? "la tienda" : "el restaurante"}</p>
         </div>
       </div>
 
       {atRisk.length > 0 && (
         <>
-          <div className="si-churn-badge danger">🔴 {atRisk.length} clientes en riesgo de abandono</div>
+          <div className="si-churn-badge danger">
+            <span style={{ color: '#ef4444', marginRight: '6px' }}>●</span>
+            {atRisk.length} clientes en riesgo de abandono
+          </div>
           <div className="si-table-wrap">
             <table className="si-table">
               <thead>
@@ -101,8 +110,9 @@ function ChurnSection({ data }) {
                     <td style={{ color: '#10b981', fontWeight: 700 }}>{fmt(c.totalSpent)}</td>
                     <td>
                       {c.phone ? (
-                        <a href={buildWhatsAppMsg(c)} target="_blank" rel="noreferrer" className="si-whatsapp-btn">
-                          💬 WhatsApp
+                        <a href={buildWhatsAppMsg(c)} target="_blank" rel="noreferrer" className="si-whatsapp-btn" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <MessageCircle size={12} />
+                          WhatsApp
                         </a>
                       ) : (
                         <span className="si-no-phone">Sin teléfono</span>
@@ -118,11 +128,16 @@ function ChurnSection({ data }) {
 
       {loyal.length > 0 && (
         <div style={{ marginTop: '1rem' }}>
-          <div className="si-churn-badge success">✅ Top {loyal.length} clientes leales</div>
+          <div className="si-churn-badge success">
+            <span style={{ color: '#10b981', marginRight: '6px' }}>✔</span>
+            Top {loyal.length} clientes leales
+          </div>
           <div className="si-loyal-grid">
             {loyal.map((c, i) => (
               <div key={i} className="si-loyal-card">
-                <div className="si-loyal-medal">{MEDALS[i] || '🏅'}</div>
+                <div className="si-loyal-medal" style={{ fontSize: '1.2rem', fontWeight: 900, color: '#f59e0b', marginBottom: '4px' }}>
+                  {MEDALS[i] || `#${i + 1}`}
+                </div>
                 <div className="si-loyal-name">{c.name}</div>
                 <div className="si-loyal-stat">{c.orderCount} visitas · {fmt(c.totalSpent)}</div>
               </div>
@@ -135,27 +150,27 @@ function ChurnSection({ data }) {
 }
 
 // ─── MENU MATRIX SECTION ──────────────────────────────────────────────────────
-function MenuMatrixSection({ data }) {
+function MenuMatrixSection({ data, isEcommerce }) {
   if (!data?.all?.length) return (
     <div className="si-empty-card">
-      <span>🍽️</span>
-      <p>Se necesitan productos vendidos para calcular la Ingeniería de Menú.</p>
+      <ShoppingBag size={40} style={{ color: '#64748b' }} />
+      <p>Se necesitan productos vendidos para calcular la Ingeniería de {isEcommerce ? "Catálogo" : "Menú"}.</p>
     </div>
   );
 
   const quadrants = [
-    { key: 'stars',   emoji: '⭐', label: 'Estrellas',    desc: 'Alta venta · Alta rentabilidad', color: '#10b981', bg: '#ecfdf5', items: data.stars },
-    { key: 'cows',    emoji: '🐄', label: 'Vacas',        desc: 'Alta venta · Baja rentabilidad', color: '#f59e0b', bg: '#fffbeb', items: data.cows },
-    { key: 'puzzles', emoji: '🧩', label: 'Rompecabezas', desc: 'Baja venta · Alta rentabilidad', color: '#6366f1', bg: '#eef2ff', items: data.puzzles },
-    { key: 'dogs',    emoji: '🐕', label: 'Perros',       desc: 'Baja venta · Baja rentabilidad', color: '#ef4444', bg: '#fef2f2', items: data.dogs },
+    { key: 'stars',   icon: <Star size={16} />, label: 'Estrellas',    desc: 'Alta venta · Alta rentabilidad', color: '#10b981', bg: '#ecfdf5', items: data.stars },
+    { key: 'cows',    icon: <DollarSign size={16} />, label: 'Vacas',        desc: 'Alta venta · Baja rentabilidad', color: '#f59e0b', bg: '#fffbeb', items: data.cows },
+    { key: 'puzzles', icon: <HelpCircle size={16} />, label: 'Rompecabezas', desc: 'Baja venta · Alta rentabilidad', color: '#6366f1', bg: '#eef2ff', items: data.puzzles },
+    { key: 'dogs',    icon: <AlertTriangle size={16} />, label: 'Perros',       desc: 'Baja venta · Baja rentabilidad', color: '#ef4444', bg: '#fef2f2', items: data.dogs },
   ];
 
   return (
     <div className="si-section">
       <div className="si-section-header">
-        <span className="si-section-icon">🍽️</span>
+        <ShoppingBag size={28} className="si-section-icon" style={{ color: '#10b981' }} />
         <div>
-          <h3>Ingeniería de Menú</h3>
+          <h3>Ingeniería de {isEcommerce ? "Catálogo" : "Menú"}</h3>
           <p>Matriz de Popularidad vs. Rentabilidad por producto · Umbral: {data.avgQty} uds · {data.avgMargin}% margen</p>
         </div>
       </div>
@@ -163,7 +178,10 @@ function MenuMatrixSection({ data }) {
         {quadrants.map(q => (
           <div key={q.key} className="si-quadrant" style={{ '--q-color': q.color, '--q-bg': q.bg }}>
             <div className="si-quadrant-header">
-              <span>{q.emoji} {q.label}</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                {q.icon}
+                {q.label}
+              </span>
               <span className="si-quadrant-desc">{q.desc}</span>
             </div>
             <div className="si-quadrant-items">
@@ -223,7 +241,7 @@ function DemandHeatmapSection({ data }) {
     <div className="si-section">
       <div className="si-section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-          <span className="si-section-icon">🗓️</span>
+          <Calendar size={28} className="si-section-icon" style={{ color: '#f59e0b' }} />
           <div>
             <h3>Predicción de Demanda</h3>
             <p>Mapa de calor de ventas por día y hora · Pico: {peakDay} a las {peakHour}:00 h</p>
@@ -259,9 +277,16 @@ function DemandHeatmapSection({ data }) {
 
       {selectedProduct === 'ALL' && (
         <div className="si-block-bars">
-          {[['mañana', '🌅 Mañana (6-11h)'], ['tarde', '☀️ Tarde (12-17h)'], ['noche', '🌙 Noche (18-23h)']].map(([k, label]) => (
+          {[
+            ['mañana', 'Mañana (6-11h)', <Sun size={14} style={{ color: '#fbbf24', marginRight: '6px' }} />],
+            ['tarde', 'Tarde (12-17h)', <Sun size={14} style={{ color: '#f59e0b', marginRight: '6px' }} />],
+            ['noche', 'Noche (18-23h)', <Moon size={14} style={{ color: '#818cf8', marginRight: '6px' }} />]
+          ].map(([k, label, icon]) => (
             <div key={k} className="si-block-bar-wrap">
-              <div className="si-block-label">{label}</div>
+              <div className="si-block-label" style={{ display: 'flex', alignItems: 'center' }}>
+                {icon}
+                {label}
+              </div>
               <div className="si-block-track">
                 <div className="si-block-fill" style={{ width: `${Math.round((blockRevenue[k] / blockMax) * 100)}%` }} />
               </div>
@@ -314,7 +339,7 @@ function GeoSection({ data }) {
   const locs = data?.locationsWithCoords || [];
   if (!top.length && !locs.length) return (
     <div className="si-empty-card">
-      <span>📍</span>
+      <MapPin size={40} style={{ color: '#64748b' }} />
       <p>No hay órdenes de domicilio con dirección registrada en este período.</p>
     </div>
   );
@@ -350,7 +375,7 @@ function GeoSection({ data }) {
   return (
     <div className="si-section">
       <div className="si-section-header">
-        <span className="si-section-icon">📍</span>
+        <MapPin size={28} className="si-section-icon" style={{ color: '#0ea5e9' }} />
         <div>
           <h3>Geo-BI: Zonas de Domicilio</h3>
           <p>Barrios o sectores con mayor facturación de domicilios</p>
@@ -379,8 +404,9 @@ function GeoSection({ data }) {
         {locs.length > 0 && (
           <div className="si-geo-radar-wrap">
             {renderRadar()}
-            <div className="si-radar-legend">
-              <span>🔴 Sede &nbsp;&nbsp; 🟢 Domicilios ({locs.length})</span>
+            <div className="si-radar-legend" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
+              <span style={{ color: '#ef4444' }}>●</span> Sede &nbsp;&nbsp; 
+              <span style={{ color: '#10b981' }}>●</span> Domicilios ({locs.length})
             </div>
           </div>
         )}
@@ -390,46 +416,49 @@ function GeoSection({ data }) {
 }
 
 // ─── STAFF GAMIFICATION SECTION ───────────────────────────────────────────────
-function StaffGamificationSection({ data }) {
+function StaffGamificationSection({ data, isEcommerce }) {
   const [view, setView] = useState('volume');
   if (!data) return null;
 
   const categories = [
-    { key: 'volume', icon: '📦', label: 'Más Órdenes',    list: data.topByVolume, statKey: 'orders',        statFmt: v => `${v} órdenes` },
-    { key: 'ticket', icon: '🎯', label: 'Mayor Ticket',   list: data.topByTicket, statKey: 'avgTicket',     statFmt: fmt },
-    { key: 'speed',  icon: '⚡', label: 'Más Velocidad',  list: data.topBySpeed,  statKey: 'avgServiceMin', statFmt: fmtMin },
-    { key: 'addons', icon: '➕', label: 'Más Add-ons',    list: data.topByAddons, statKey: 'addons',        statFmt: v => `${v} add-ons` },
+    { key: 'volume', icon: <Package size={14} />, label: 'Más Órdenes',    list: data.topByVolume, statKey: 'orders',        statFmt: v => `${v} órdenes` },
+    { key: 'ticket', icon: <Target size={14} />, label: 'Mayor Ticket',   list: data.topByTicket, statKey: 'avgTicket',     statFmt: fmt },
+    { key: 'speed',  icon: <Zap size={14} />, label: 'Más Velocidad',  list: data.topBySpeed,  statKey: 'avgServiceMin', statFmt: fmtMin },
+    { key: 'addons', icon: <Plus size={14} />, label: 'Más Add-ons',    list: data.topByAddons, statKey: 'addons',        statFmt: v => `${v} add-ons` },
   ];
 
   const active = categories.find(c => c.key === view);
 
   if (!active?.list?.length) return (
     <div className="si-empty-card">
-      <span>🏆</span>
-      <p>No hay órdenes con mesero asignado en este período para la gamificación.</p>
+      <Award size={40} style={{ color: '#64748b' }} />
+      <p>No hay órdenes con {isEcommerce ? 'vendedor' : 'mesero'} asignado en este período para la gamificación.</p>
     </div>
   );
 
   return (
     <div className="si-section">
       <div className="si-section-header">
-        <span className="si-section-icon">🏆</span>
+        <Award size={28} className="si-section-icon" style={{ color: '#8b5cf6' }} />
         <div>
           <h3>Gamificación de Personal</h3>
-          <p>Ranking de desempeño de meseros por categoría</p>
+          <p>Ranking de desempeño de {isEcommerce ? 'vendedores' : 'meseros'} por categoría</p>
         </div>
       </div>
       <div className="si-staff-tabs">
         {categories.map(c => (
-          <button key={c.key} className={`si-staff-tab ${view === c.key ? 'active' : ''}`} onClick={() => setView(c.key)}>
-            {c.icon} {c.label}
+          <button key={c.key} className={`si-staff-tab ${view === c.key ? 'active' : ''}`} onClick={() => setView(c.key)} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            {c.icon}
+            {c.label}
           </button>
         ))}
       </div>
       <div className="si-podium-grid">
         {active.list.map((w, i) => (
           <div key={w.id} className={`si-podium-card rank-${i + 1}`}>
-            <div className="si-podium-medal">{MEDALS[i] || '🏅'}</div>
+            <div className="si-podium-medal" style={{ fontSize: '1.2rem', fontWeight: 900, color: '#f59e0b', marginBottom: '8px' }}>
+              {MEDALS[i] || `#${i + 1}`}
+            </div>
             <div className="si-podium-name">{w.name}</div>
             <div className="si-podium-value">{active.statFmt(w[active.statKey])}</div>
             <div className="si-podium-sub">{w.orders} órdenes · {fmt(w.revenue)}</div>
@@ -442,10 +471,15 @@ function StaffGamificationSection({ data }) {
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 export default function StrategicIntelligenceTab({ data, biLoading, biProgress, biStep, cooldownSecs, onRefresh }) {
+  const { design } = useRestaurantData();
+  const isEcommerce = design?.ecommerceMode === true;
+
   if (biLoading) {
     return (
       <div className="si-loading-wrap">
-        <div className="si-loading-brain">🧠</div>
+        <div className="si-loading-brain" style={{ color: '#6366f1' }}>
+          <Cpu size={64} />
+        </div>
         <h3 className="si-loading-title">Procesando Inteligencia Estratégica</h3>
         <p className="si-loading-step">{biStep}</p>
         <div className="si-progress-track">
@@ -458,7 +492,7 @@ export default function StrategicIntelligenceTab({ data, biLoading, biProgress, 
 
   if (!data) return (
     <div className="si-empty-card" style={{ marginTop: '2rem' }}>
-      <span>🧠</span>
+      <Cpu size={40} style={{ color: '#64748b' }} />
       <p>Esperando datos de analíticas para calcular la inteligencia estratégica.</p>
     </div>
   );
@@ -478,19 +512,25 @@ export default function StrategicIntelligenceTab({ data, biLoading, biProgress, 
           className={`si-refresh-btn ${cooldownSecs > 0 ? 'disabled' : ''}`}
           onClick={onRefresh}
           disabled={cooldownSecs > 0 || biLoading}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
         >
-          {cooldownSecs > 0
-            ? `⏳ Re-calcular en ${fmt2min(cooldownSecs)}`
-            : '↻ Actualizar Inteligencia'}
+          {cooldownSecs > 0 ? (
+            <>⏳ Re-calcular en {fmt2min(cooldownSecs)}</>
+          ) : (
+            <>
+              <RefreshCw size={14} />
+              Actualizar Inteligencia
+            </>
+          )}
         </button>
       </div>
 
-      <BasketSection         data={data.basket} />
-      <ChurnSection          data={data.churn} />
-      <MenuMatrixSection     data={data.menuMatrix} />
-      <DemandHeatmapSection  data={data.demandHeatmap} />
-      <GeoSection            data={data.geo} />
-      <StaffGamificationSection data={data.staff} />
+      <BasketSection            data={data.basket} />
+      <ChurnSection             data={data.churn} isEcommerce={isEcommerce} />
+      <MenuMatrixSection        data={data.menuMatrix} isEcommerce={isEcommerce} />
+      <DemandHeatmapSection     data={data.demandHeatmap} />
+      <GeoSection               data={data.geo} />
+      <StaffGamificationSection data={data.staff} isEcommerce={isEcommerce} />
     </div>
   );
 }

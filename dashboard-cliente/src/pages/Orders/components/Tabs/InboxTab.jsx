@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDashboard } from '../../context/DashboardContext';
 import { printTicket } from '../../../../utils/printTicket';
 import { updateOrder } from '../../../../services/orderService';
-import { Lock } from 'lucide-react';
+import { Lock, Printer, Trash2, X, RefreshCw, RotateCcw, Upload, Check, Eye, User, ShoppingBag, AlertCircle } from 'lucide-react';
 
 // ─── Payment type helpers ───────────────────────────────────────────────────
 const isQrPayment   = (o) => o.paymentMethod === 'qr' || o.paymentMethod === 'qr_code' || o.paymentMethod === 'nequi_qr';
@@ -57,20 +57,21 @@ export default function InboxTab() {
         }}>
           <Lock size={32} strokeWidth={1.8} />
         </div>
-        <h2 style={{ color: '#1e293b', marginBottom: '0.75rem', fontWeight: 900, fontSize: '1.75rem' }}>Bandeja de Entrada Bloqueada</h2>
+        <h2 style={{ color: '#1e293b', marginBottom: '0.75rem', fontWeight: 900, fontSize: '1.75rem' }}>Pedidos Entrantes Bloqueados</h2>
         <p style={{ color: '#64748b', maxWidth: '440px', margin: '0 auto 2rem', lineHeight: '1.6', fontSize: '0.975rem', fontWeight: 500 }}>
-          La sede seleccionada tiene el plan <strong>Tradicional</strong>.<br/><br/>
-          Para habilitar la bandeja de entrada, recibir comandas en tiempo real y gestionar pedidos de clientes, debes cambiar al <strong>Plan Carta</strong> o superior.
+          La sede seleccionada no tiene el Plan Pro activo.<br/><br/>
+          Para recibir pedidos en tiempo real desde tu tienda QR activa el Plan Pro.
         </p>
-        <button className="btn-primary" style={{ padding: '0.85rem 2rem', borderRadius: '12px', fontWeight: 700, background: '#8b1a2e', color: 'white', border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(139, 26, 46, 0.2)' }} onClick={() => navigate('/subscription')}>🚀 Mejorar Plan</button>
+        <button className="btn-primary" style={{ padding: '0.85rem 2rem', borderRadius: '12px', fontWeight: 700, background: '#C9A227', color: '#1e293b', border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(201,162,39,0.25)' }} onClick={() => navigate('/subscription')}>Activar Plan Pro</button>
       </div>
     );
   }
 
   return (
     <div className="inbox-section">
-      <div style={{ marginBottom: '1.5rem', textAlign: 'right' }}>
-        <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Pedidos entrantes desde el Menú QR que requieren atención.</p>
+      <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '6px' }}><ShoppingBag size={18} /> Nuevos Pedidos</h2>
+        <p style={{ color: '#64748b', fontSize: '0.85rem', margin: 0 }}>Pedidos recibidos que esperan confirmación y despacho.</p>
       </div>
 
       <div className="rd-orders-grid">
@@ -98,18 +99,19 @@ export default function InboxTab() {
               {/* ── Header row ── */}
               <div className="rd-ticket-meta">
                 <div>
-                  <span className="rd-ticket-number">Mesa {order.tableNumber || 'Digital'}</span>
-                  <div className="rd-ticket-time">{new Date(order.createdAt).toLocaleTimeString()}</div>
+                  <span className="rd-ticket-number">#{order.id.slice(-6).toUpperCase()}</span>
+                  <div className="rd-ticket-time">{new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                  {order.tableNumber && <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '2px' }}>Ref: {order.tableNumber}</div>}
                 </div>
 
                 {/* Payment status badge */}
                 {isCancelled ? (
                   <span style={{ background: '#fee2e2', color: '#b91c1c', fontWeight: 800, padding: '4px 10px', borderRadius: '8px', fontSize: '0.72rem', letterSpacing: '0.5px' }}>
-                    ❌ CANCELADO
+                    CANCELADO
                   </span>
                 ) : isQR ? (
                   <span style={{ background: '#dcfce7', color: '#15803d', fontWeight: 800, padding: '4px 10px', borderRadius: '8px', fontSize: '0.72rem', letterSpacing: '0.5px' }}>
-                    ✅ PAGADO (QR)
+                    PAGADO (QR)
                   </span>
                 ) : isPaid ? (
                   <span style={{ background: '#dcfce7', color: '#15803d', fontWeight: 800, padding: '4px 10px', borderRadius: '8px', fontSize: '0.72rem' }}>
@@ -117,7 +119,7 @@ export default function InboxTab() {
                   </span>
                 ) : isPendingVerif ? (
                   <span style={{ background: '#fef3c7', color: '#92400e', fontWeight: 800, padding: '4px 10px', borderRadius: '8px', fontSize: '0.72rem' }}>
-                    ⏳ POR VALIDAR
+                    POR VALIDAR
                   </span>
                 ) : (
                   <span style={{ background: '#ede9fe', color: '#5b21b6', fontWeight: 800, padding: '4px 10px', borderRadius: '8px', fontSize: '0.72rem' }}>
@@ -128,18 +130,18 @@ export default function InboxTab() {
 
               {/* ── Customer info ── */}
               <div className="rd-customer-info">
-                <div className="rd-customer-name">👤 {order.customerName || 'Cliente Web'}</div>
+                <div className="rd-customer-name" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><User size={14} /> {order.customerName || 'Cliente Web'}</div>
                 {order.paymentMethod && (
                   <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '3px', fontWeight: 500 }}>
                     {isCancelled 
-                      ? `🚫 Cancelado (${isQR ? 'Pago QR' : isTransferOrder ? 'Transferencia' : order.paymentMethod})`
+                      ? `Cancelado (${isQR ? 'Pago QR' : isTransferOrder ? 'Transferencia' : order.paymentMethod})`
                       : isQR
-                        ? '📱 Pago QR (ya facturado)'
+                        ? 'Pago QR (ya facturado)'
                         : isTransferOrder
-                          ? '📲 Transferencia'
+                          ? 'Transferencia'
                           : order.paymentMethod === 'card'
-                            ? '💳 Tarjeta (Online)'
-                            : `💵 ${order.paymentMethod}`}
+                            ? 'Tarjeta (Online)'
+                            : `Método: ${order.paymentMethod}`}
                   </div>
                 )}
               </div>
@@ -149,7 +151,11 @@ export default function InboxTab() {
                 {order.items?.map((item, iIdx) => (
                   <li key={iIdx} className="rd-ticket-item">
                     <span className="qty">{item.quantity}x</span>
-                    <span className="name">{item.name}</span>
+                    <span className="name">
+                      {item.name}
+                      {item.selectedVariant && <span style={{ fontSize: '0.7rem', color: '#64748b', marginLeft: '4px' }}>({item.selectedVariant})</span>}
+                      {item.sku && <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block', fontWeight: 600 }}>SKU: {item.sku}</span>}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -182,30 +188,30 @@ export default function InboxTab() {
                 {isCancelled ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%' }}>
                     <div style={{
-                      padding: '8px 12px',
-                      background: '#fee2e2', color: '#b91c1c',
-                      border: '1px solid #fca5a5', borderRadius: '10px',
-                      fontSize: '0.8rem', fontWeight: 800, textAlign: 'center'
+                       padding: '8px 12px',
+                       background: '#fee2e2', color: '#b91c1c',
+                       border: '1px solid #fca5a5', borderRadius: '10px',
+                       fontSize: '0.8rem', fontWeight: 800, textAlign: 'center'
                     }}>
-                      🚫 Pedido Cancelado/Rechazado
+                      Pedido Cancelado/Rechazado
                     </div>
                     
                     <div style={{ display: 'flex', gap: '0.4rem', width: '100%' }}>
                       {order.receiptUrl && (
                         <button
                           className="btn-secondary"
-                          style={{ flex: 1, padding: '0.6rem', background: '#f8fafc', color: '#16a34a', border: '1px solid #16a34a', borderRadius: '10px', fontWeight: 600, fontSize: '0.8rem' }}
+                          style={{ flex: 1, padding: '0.6rem', background: '#f8fafc', color: '#16a34a', border: '1px solid #16a34a', borderRadius: '10px', fontWeight: 600, fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
                           onClick={() => window.open(order.receiptUrl, '_blank')}
                         >
-                          📸 Comprobante
+                          <Eye size={14} /> Comprobante
                         </button>
                       )}
                       <button
                         className="btn-secondary"
-                        style={{ flex: 1, padding: '0.6rem', background: '#fee2e2', color: '#b91c1c', border: '1px solid #fca5a5', borderRadius: '10px', fontSize: '0.8rem', fontWeight: 700 }}
+                        style={{ flex: 1, padding: '0.6rem', background: '#fee2e2', color: '#b91c1c', border: '1px solid #fca5a5', borderRadius: '10px', fontSize: '0.8rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
                         onClick={() => showAlert('¿Estás seguro de que deseas eliminar permanentemente este pedido de la base de datos?', 'Eliminar Pedido', 'warning', () => handleDeleteOrder(order.id))}
                       >
-                        🗑️ Eliminar
+                        <Trash2 size={14} /> Eliminar
                       </button>
                     </div>
                   </div>
@@ -217,9 +223,10 @@ export default function InboxTab() {
                         padding: '8px 12px',
                         background: '#f0fdf4', color: '#15803d',
                         border: '1px solid #86efac', borderRadius: '10px',
-                        fontSize: '0.8rem', fontWeight: 700, textAlign: 'center'
+                        fontSize: '0.8rem', fontWeight: 700, textAlign: 'center',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px'
                       }}>
-                        💰 Pago QR recibido — Listo para atender
+                        <Check size={14} /> Pago QR recibido — Listo para atender
                       </div>
                     )}
 
@@ -229,9 +236,10 @@ export default function InboxTab() {
                         padding: '8px 12px',
                         background: '#fef3c7', color: '#92400e',
                         border: '1px solid #f59e0b', borderRadius: '10px',
-                        fontSize: '0.8rem', fontWeight: 800, textAlign: 'center'
+                        fontSize: '0.8rem', fontWeight: 800, textAlign: 'center',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px'
                       }}>
-                        ⏳ PAGO POR VALIDAR
+                        <AlertCircle size={14} /> PAGO POR VALIDAR
                       </div>
                     )}
 
@@ -241,14 +249,14 @@ export default function InboxTab() {
                         {order.receiptUrl ? (
                           <button
                             className="btn-secondary"
-                            style={{ width: '100%', padding: '0.6rem', background: '#f8fafc', color: '#16a34a', border: '1px solid #16a34a', borderRadius: '10px', fontWeight: 600, fontSize: '0.8rem' }}
+                            style={{ width: '100%', padding: '0.6rem', background: '#f8fafc', color: '#16a34a', border: '1px solid #16a34a', borderRadius: '10px', fontWeight: 600, fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
                             onClick={() => window.open(order.receiptUrl, '_blank')}
                           >
-                            📸 Ver Comprobante de Pago
+                            <Eye size={14} /> Ver Comprobante de Pago
                           </button>
                         ) : (
-                          <label className="btn-secondary" style={{ display: 'block', textAlign: 'center', padding: '0.6rem', cursor: 'pointer', background: '#fef3c7', color: '#92400e', border: '1px solid #f59e0b', borderRadius: '10px', fontSize: '0.8rem', fontWeight: 700 }}>
-                            📤 Subir Comprobante
+                          <label className="btn-secondary" style={{ display: 'block', textAlign: 'center', padding: '0.6rem', cursor: 'pointer', background: '#fef3c7', color: '#92400e', border: '1px solid #f59e0b', borderRadius: '10px', fontSize: '0.8rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                            <Upload size={14} /> Subir Comprobante
                             <input
                               type="file"
                               accept="image/*"
@@ -269,14 +277,14 @@ export default function InboxTab() {
                           style={{ flex: 1, padding: '0.6rem', background: '#10b981', borderRadius: '10px', fontSize: '0.8rem', fontWeight: 700 }}
                           onClick={() => handleValidatePayment(order.id)}
                         >
-                          ✅ Validar Pago
+                          Validar Pago
                         </button>
                         <button
                           className="btn-secondary"
                           style={{ flex: 1, padding: '0.6rem', background: '#fee2e2', color: '#b91c1c', border: '1px solid #fca5a5', borderRadius: '10px', fontSize: '0.8rem', fontWeight: 700 }}
                           onClick={() => handleInvalidatePayment(order.id)}
                         >
-                          ❌ Rechazar Pago
+                          Rechazar Pago
                         </button>
                       </div>
                     )}
@@ -288,26 +296,26 @@ export default function InboxTab() {
                       <div style={{ display: 'flex', gap: '4px' }}>
                         <button
                           className="btn-secondary"
-                          style={{ padding: '0.6rem 0.8rem', borderRadius: '10px' }}
+                          style={{ padding: '0.6rem 0.8rem', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                           onClick={() => handlePrintComanda(order)}
-                          title="Imprimir Comanda"
+                          title="Imprimir Orden de Preparación"
                         >
-                          🖨️
+                          <Printer size={16} />
                         </button>
                         
                         {(!order.items || order.items.some(item => item.quantity > 0 && getItemNetQty(order, item) > 0) || order.total < 0) && (
                           <button
                             className="btn-secondary"
-                            style={{ padding: '0.6rem 0.8rem', background: '#fee2e2', color: '#b91c1c', border: '1px solid #fca5a5', borderRadius: '10px' }}
+                            style={{ padding: '0.6rem 0.8rem', background: '#fee2e2', color: '#b91c1c', border: '1px solid #fca5a5', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                             onClick={() => setAuthModal({ type: 'cancel_action', action: () => (order.isBilled && order.total > 0) ? handleReturnOrder(order) : handleCancelOrder(order), order })}
                             title={order.total < 0 ? 'Reponer Anulación' : (order.isBilled ? 'Hacer Devolución' : 'Cancelar Pedido')}
                           >
-                            {order.total < 0 ? '♻️' : (order.isBilled ? '↩️' : '❌')}
+                            {order.total < 0 ? <RefreshCw size={16} /> : (order.isBilled ? <RotateCcw size={16} /> : <X size={16} />)}
                           </button>
                         )}
                       </div>
 
-                      {/* Main action: Accept Order / Atender */}
+                      {/* Main action: Confirm & process order */}
                       {(!isTransferOrder || !isPendingVerif) && (
                         <button
                           className="btn-primary"
@@ -318,20 +326,11 @@ export default function InboxTab() {
                             action: (waiter) => handleAcceptOrder(order.id, waiter)
                           })}
                         >
-                          🤝 Atender
+                          <Check size={14} /> Confirmar Pedido
                         </button>
                       )}
 
-                      {/* Optional action: Call Client */}
-                      {(!isTransferOrder || !isPendingVerif) && showCallClient && (
-                        <button
-                          className="btn-primary"
-                          style={{ padding: '0.6rem 1rem', fontWeight: 800, background: '#f59e0b', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.82rem', borderRadius: '10px' }}
-                          onClick={() => handleCallClient(order.id)}
-                        >
-                          🔔 Llamar {order.calledCount > 0 && <span style={{ background: 'rgba(255,255,255,0.3)', borderRadius: '10px', padding: '1px 6px', fontSize: '0.7rem' }}>{order.calledCount}</span>}
-                        </button>
-                      )}
+                      {/* Call client button removed — product catalog flow */}
                     </div>
                   </>
                 )}
@@ -342,9 +341,9 @@ export default function InboxTab() {
 
         {inboxOrders.length === 0 && (
           <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '4rem', background: 'white', borderRadius: '20px', border: '2px dashed #e2e8f0' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📥</div>
-            <h3 style={{ color: '#1e293b' }}>Bandeja Vacía</h3>
-            <p style={{ color: '#64748b' }}>No hay pedidos nuevos por atender.</p>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}><ShoppingBag size={48} style={{ color: '#cbd5e1' }} /></div>
+            <h3 style={{ color: '#1e293b' }}>Sin pedidos nuevos</h3>
+            <p style={{ color: '#64748b' }}>Cuando un cliente realice un pedido desde la tienda aparecerá aquí para ser procesado.</p>
           </div>
         )}
       </div>

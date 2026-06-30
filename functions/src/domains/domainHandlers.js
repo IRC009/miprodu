@@ -21,7 +21,7 @@ const CF_EMAIL     = config.CF_EMAIL;
 
 // Dominios base de la plataforma — estos nunca pueden registrarse como dominio de cliente
 const PLATFORM_DOMAINS = [
-  "cartaymesa.com",
+  "miprodu.com",
   "web.app",
   "firebaseapp.com",
   "localhost",
@@ -139,8 +139,8 @@ async function handleRegisterCustomDomain(request) {
     instructions: {
       type: "CNAME",
       // El cliente debe crear un registro CNAME en su proveedor de dominios apuntando al fallback
-      target: "menu.cartaymesa.com",
-      message: "Crea un registro CNAME en tu proveedor de dominios apuntando a menu.cartaymesa.com y luego haz clic en 'Verificar'.",
+      target: "miprodu.com",
+      message: "Crea un registro CNAME en tu proveedor de dominios apuntando a miprodu.com y luego haz clic en 'Verificar'.",
     },
   };
 }

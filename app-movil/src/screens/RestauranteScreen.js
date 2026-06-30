@@ -8,7 +8,7 @@ import {
   Clock, DollarSign, User, ChevronRight, AlertCircle, X
 } from 'lucide-react-native';
 import {
-  updateOrderStatusMobile, billOrderMobile, fetchBilledOrdersMobile
+  updateOrderStatusMobile, billOrderMobile
 } from '../services/dbService';
 
 // ── THEME ─────────────────────────────────────────────────────────────────────
@@ -32,13 +32,79 @@ const DARK = {
 // ── HELPERS ────────────────────────────────────────────────────────────────────
 const getElapsed = (ts) => {
   if (!ts) return '—';
-  const mins = Math.floor((Date.now() - new Date(ts)) / 60000);
+  let date;
+  try {
+    if (typeof ts.toDate === 'function') {
+      date = ts.toDate();
+    } else if (ts && typeof ts === 'object' && (ts.seconds !== undefined || ts._seconds !== undefined)) {
+      const secs = ts.seconds !== undefined ? ts.seconds : ts._seconds;
+      date = new Date(Number(secs) * 1000);
+    } else if (typeof ts === 'string' || typeof ts === 'number') {
+      date = new Date(ts);
+    } else if (ts instanceof Date) {
+      date = ts;
+    } else {
+      date = new Date(ts);
+    }
+  } catch (e) {
+    return '—';
+  }
+
+  if (!date || isNaN(date.getTime())) {
+    return '—';
+  }
+
+  const now = Date.now();
+  const diffMs = now - date.getTime();
+  const mins = Math.floor(diffMs / 60000);
+  
+  if (typeof mins !== 'number' || isNaN(mins) || !isFinite(mins)) {
+    return '—';
+  }
+  
   if (mins < 1) return 'Ahora';
   if (mins < 60) return `${mins}m`;
-  return `${Math.floor(mins / 60)}h ${mins % 60}m`;
+  
+  const hours = Math.floor(mins / 60);
+  const remainingMins = mins % 60;
+  
+  if (isNaN(hours) || isNaN(remainingMins)) {
+    return '—';
+  }
+  
+  return `${hours}h ${remainingMins}m`;
 };
+
 const elapsedColor = (ts, t) => {
-  const mins = Math.floor((Date.now() - new Date(ts)) / 60000);
+  if (!ts) return t.success;
+  let date;
+  try {
+    if (typeof ts.toDate === 'function') {
+      date = ts.toDate();
+    } else if (ts && typeof ts === 'object' && (ts.seconds !== undefined || ts._seconds !== undefined)) {
+      const secs = ts.seconds !== undefined ? ts.seconds : ts._seconds;
+      date = new Date(Number(secs) * 1000);
+    } else if (typeof ts === 'string' || typeof ts === 'number') {
+      date = new Date(ts);
+    } else if (ts instanceof Date) {
+      date = ts;
+    } else {
+      date = new Date(ts);
+    }
+  } catch (e) {
+    return t.success;
+  }
+
+  if (!date || isNaN(date.getTime())) return t.success;
+
+  const now = Date.now();
+  const diffMs = now - date.getTime();
+  const mins = Math.floor(diffMs / 60000);
+  
+  if (typeof mins !== 'number' || isNaN(mins) || !isFinite(mins)) {
+    return t.success;
+  }
+  
   if (mins > 30) return t.danger;
   if (mins > 15) return t.warning;
   return t.success;
@@ -83,7 +149,7 @@ function PayBadge({ order, t }) {
 }
 
 // ── ORDER CARD ────────────────────────────────────────────────────────────────
-function OrderCard({ order, t, onAccept, onMarkReady, onMarkListo, onDispatch, onBill, onConfirmDelivery, onCancel }) {
+function OrderCard({ order, products = [], t, onAccept, onMarkReady, onMarkListo, onDispatch, onBill, onConfirmDelivery, onCancel }) {
   const st = STATUS[order.status] || { label: order.status, color: t.muted };
   const ec = elapsedColor(order.createdAt, t);
   const items = order.items || [];
@@ -107,15 +173,24 @@ function OrderCard({ order, t, onAccept, onMarkReady, onMarkListo, onDispatch, o
 
       {/* Items list */}
       <View style={[styles.itemsBox, { backgroundColor: t.badge, borderColor: t.border }]}>
-        {items.slice(0, 5).map((it, i) => (
-          <View key={i} style={styles.itemRow}>
-            <Text style={[styles.itemQty, { color: t.primary }]}>{it.quantity}x</Text>
-            <Text style={[styles.itemName, { color: t.text }]} numberOfLines={1}>{it.name}</Text>
-            {it.price > 0 && (
-              <Text style={[styles.itemPrice, { color: t.sub }]}>{fmtMoney(it.price * it.quantity)}</Text>
-            )}
-          </View>
-        ))}
+        {items.slice(0, 5).map((it, i) => {
+          const prod = products.find(p => p.id === it.id);
+          const sku = prod?.sku || it.sku || null;
+          return (
+            <View key={i} style={styles.itemRow}>
+              <Text style={[styles.itemQty, { color: t.text, fontWeight: '800' }]}>{it.quantity}x</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.itemName, { color: t.text }]} numberOfLines={1}>{it.name}</Text>
+                {!!sku && (
+                  <Text style={{ fontSize: 9, color: t.sub, fontWeight: '700' }}>SKU: {sku}</Text>
+                )}
+              </View>
+              {it.price > 0 && (
+                <Text style={[styles.itemPrice, { color: t.sub }]}>{fmtMoney(it.price * it.quantity)}</Text>
+              )}
+            </View>
+          );
+        })}
         {items.length > 5 && (
           <Text style={[styles.moreItems, { color: t.muted }]}>+{items.length - 5} más...</Text>
         )}
@@ -130,7 +205,7 @@ function OrderCard({ order, t, onAccept, onMarkReady, onMarkListo, onDispatch, o
 
       {/* Footer: total + actions */}
       <View style={styles.cardFooter}>
-        <Text style={[styles.totalText, { color: t.primary }]}>{fmtMoney(order.total)}</Text>
+        <Text style={[styles.totalText, { color: t.text }]}>{fmtMoney(order.total)}</Text>
         <View style={styles.actionsRow}>
           {/* Cancel */}
           {order.status !== 'completed' && order.status !== 'cancelled' && (
@@ -222,18 +297,15 @@ const PIPELINE = [
   { id: 'preparing',  label: 'Preparando', Icon: Package,     filter: o => o.status === 'preparing' },
   { id: 'ready',      label: 'Listo',      Icon: CheckSquare, filter: o => o.status === 'ready' || o.status === 'ready_for_pickup' },
   { id: 'dispatched', label: 'En Camino',  Icon: Truck,       filter: o => o.status === 'dispatched' },
-  { id: 'completed',  label: 'Historial',  Icon: CheckCircle, filter: null }, // loaded separately
 ];
 
 export default function RestauranteScreen({
-  restaurantId, profile, orders = [], selectedBranch, planLevel = 2
+  restaurantId, profile, orders = [], selectedBranch, planLevel = 2,
+  products = [],
+  t = LIGHT
 }) {
-  const scheme = useColorScheme();
-  const t = scheme === 'dark' ? DARK : LIGHT;
 
   const [activeTab, setActiveTab] = useState('inbox');
-  const [history, setHistory] = useState([]);
-  const [loadingHistory, setLoadingHistory] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   // Filter by branch
@@ -246,36 +318,21 @@ export default function RestauranteScreen({
   const counts = useMemo(() => {
     const c = {};
     PIPELINE.forEach(p => {
-      c[p.id] = p.filter ? branchOrders.filter(p.filter).length : history.length;
+      c[p.id] = branchOrders.filter(p.filter).length;
     });
     return c;
-  }, [branchOrders, history]);
+  }, [branchOrders]);
 
   // Current tab orders
   const tabOrders = useMemo(() => {
     const p = PIPELINE.find(x => x.id === activeTab);
-    if (!p || !p.filter) return history;
+    if (!p) return [];
     return branchOrders.filter(p.filter);
-  }, [branchOrders, history, activeTab]);
-
-  // Load history
-  const loadHistory = useCallback(async () => {
-    if (!restaurantId || !selectedBranch?.id) return;
-    setLoadingHistory(true);
-    const today = new Date().toISOString().split('T')[0];
-    const res = await fetchBilledOrdersMobile(restaurantId, selectedBranch.id, today).catch(() => []);
-    setHistory(res);
-    setLoadingHistory(false);
-  }, [restaurantId, selectedBranch?.id]);
-
-  useEffect(() => {
-    if (activeTab === 'completed') loadHistory();
-  }, [activeTab, loadHistory]);
+  }, [branchOrders, activeTab]);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    if (activeTab === 'completed') await loadHistory();
-    setRefreshing(false);
+    setTimeout(() => setRefreshing(false), 500);
   };
 
   // ── ACTIONS ──────────────────────────────────────────────────────────────────
@@ -347,20 +404,15 @@ export default function RestauranteScreen({
       </View>
 
       {/* Content */}
-      {activeTab === 'completed' && loadingHistory ? (
-        <View style={styles.loader}>
-          <ActivityIndicator color={t.primary} size="large" />
-          <Text style={[styles.loaderText, { color: t.sub }]}>Cargando historial...</Text>
-        </View>
-      ) : tabOrders.length === 0 ? (
+      {tabOrders.length === 0 ? (
         <ScrollView
           contentContainerStyle={styles.emptyScroll}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={t.primary} />}
         >
           {(() => {
             const p = PIPELINE.find(x => x.id === activeTab);
-            const icons = { inbox: Inbox, preparing: Package, ready: CheckSquare, dispatched: Truck, completed: CheckCircle };
-            const msgs  = { inbox: 'No hay pedidos nuevos', preparing: 'Nada en preparación', ready: 'Ningún pedido listo', dispatched: 'Ningún pedido en camino', completed: 'Sin historial hoy' };
+            const icons = { inbox: Inbox, preparing: Package, ready: CheckSquare, dispatched: Truck };
+            const msgs  = { inbox: 'No hay pedidos nuevos', preparing: 'Nada en preparación', ready: 'Ningún pedido listo', dispatched: 'Ningún pedido en camino' };
             const Icon = icons[activeTab] || Inbox;
             return <EmptyState icon={Icon} label={msgs[activeTab] || 'Sin pedidos'} t={t} />;
           })()}
@@ -374,6 +426,7 @@ export default function RestauranteScreen({
           renderItem={({ item }) => (
             <OrderCard
               order={item}
+              products={products}
               t={t}
               onAccept={() => doAccept(item)}
               onMarkListo={() => doMarkListo(item)}

@@ -4,8 +4,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #ffffff;
-  color: #8B1A2E;
+  background: var(--bg-color, #ffffff);
+  color: var(--primary-color, #1e293b);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   position: fixed;
   top: 0;
@@ -24,23 +24,31 @@
 .premium-loader-icon {
   width: 64px;
   height: 64px;
-  color: #8B1A2E;
+  color: var(--primary-color, #1e293b);
   animation: premium-pulse 2s ease-in-out infinite;
 }
 
 .premium-loader-bar-container {
   width: 140px;
   height: 3px;
-  background: rgba(139, 26, 46, 0.12);
+  background: transparent;
   border-radius: 10px;
   overflow: hidden;
   position: relative;
 }
 
+.premium-loader-bar-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--primary-color, #1e293b);
+  opacity: 0.15;
+}
+
 .premium-loader-bar {
   width: 60px;
   height: 100%;
-  background: linear-gradient(90deg, #8B1A2E, #C23055);
+  background: var(--primary-color, #1e293b);
   border-radius: 10px;
   position: absolute;
   left: -60px;
@@ -48,7 +56,7 @@
 }
 
 .premium-loader-text {
-  color: #8B1A2E;
+  color: var(--primary-color, #1e293b);
   font-size: 0.85rem;
   font-weight: 600;
   margin: 0;

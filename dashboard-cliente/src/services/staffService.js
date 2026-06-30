@@ -6,7 +6,7 @@ import { getDocsOfflineFirst, getDocOfflineFirst } from '../utils/firestoreOffli
 
 const functions = getFunctions(app);
 
-const STAFF_EMAIL_DOMAIN = 'staff.cartaymesa.com';
+const STAFF_EMAIL_DOMAIN = 'staff.miprodu.com';
 
 /**
  * Generates the synthetic Firebase Auth email for a staff member.

@@ -133,23 +133,6 @@ export const subscribeToActiveOrders = (restaurantId, callback) => {
   });
 };
 
-export const subscribeToWaiterCalls = (restaurantId, branchId, callback) => {
-  const callsRef = collection(db, `restaurants/${restaurantId}/waiter_calls`);
-  const q = branchId && branchId !== 'ALL'
-    ? query(callsRef, where('branchId', '==', branchId))
-    : callsRef;
-  return onSnapshot(q, (snap) => {
-    const calls = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    calls.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-    callback(calls);
-  }, (err) => {
-    console.error('[dbService] Error subscribing to waiter calls:', err);
-  });
-};
-
-export const dismissWaiterCall = async (restaurantId, callId) => {
-  await deleteDoc(doc(db, `restaurants/${restaurantId}/waiter_calls`, callId));
-};
 
 export const createOrderMobile = async (restaurantId, orderData) => {
   const orderId = orderData.id || `order_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
@@ -258,8 +241,7 @@ export const updateOrderStatusMobile = async (restaurantId, orderId, status, ext
     if (!snap.exists()) return false;
     
     const currentData = snap.data();
-    const isBilled = currentData.isBilled || extraFields.isBilled;
-    const shouldArchive = status === 'cancelled' || status === 'completed' || (status === 'dispatched' && isBilled && currentData.orderType !== 'table');
+    const shouldArchive = status === 'cancelled' || status === 'completed';
     
     if (shouldArchive) {
       await archiveOrderMobile(restaurantId, orderId, { status, ...extraFields });
@@ -282,7 +264,6 @@ export const billOrderMobile = async (restaurantId, orderId, waiterName) => {
     const orderRef = doc(db, `restaurants/${restaurantId}/active_orders`, orderId);
     const snap = await getDoc(orderRef);
     if (snap.exists()) {
-      const currentData = snap.data();
       const updatePayload = {
         isBilled: true,
         billedAt: new Date().toISOString(),
@@ -290,14 +271,7 @@ export const billOrderMobile = async (restaurantId, orderId, waiterName) => {
         updatedAt: new Date().toISOString()
       };
       
-      const isTable = currentData.orderType === 'table';
-      const isPendingPrep = ['pending', 'preparing'].includes(currentData.status || 'pending');
-      
-      if (!isTable && !isPendingPrep) {
-        await archiveOrderMobile(restaurantId, orderId, updatePayload);
-      } else {
-        await updateDoc(orderRef, updatePayload);
-      }
+      await updateDoc(orderRef, updatePayload);
     }
     return true;
   } catch (e) {

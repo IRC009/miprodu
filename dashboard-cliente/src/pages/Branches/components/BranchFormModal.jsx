@@ -21,14 +21,6 @@ function parseGoogleMapsUrl(url) {
   return null;
 }
 
-const DAYS = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
-const DAY_NAMES = { lunes: 'Lunes', martes: 'Martes', miercoles: 'Miércoles', jueves: 'Jueves', viernes: 'Viernes', sabado: 'Sábado', domingo: 'Domingo' };
-
-const defaultScheduleObj = DAYS.reduce((acc, day) => {
-  acc[day] = { active: true, ranges: [{ open: '08:00', close: '20:00' }] };
-  return acc;
-}, {});
-
 export default function BranchFormModal({
   showModal,
   setShowModal,
@@ -60,57 +52,7 @@ export default function BranchFormModal({
 
   if (!showModal) return null;
 
-  const isScheduleObject = typeof newBranch.schedule === 'object' && newBranch.schedule !== null;
-  const scheduleObj = isScheduleObject ? newBranch.schedule : defaultScheduleObj;
 
-  const handleToggleDay = (day) => {
-    if (!isScheduleObject) setNewBranch({ ...newBranch, schedule: defaultScheduleObj });
-    const current = isScheduleObject ? newBranch.schedule : defaultScheduleObj;
-    setNewBranch({
-      ...newBranch,
-      schedule: {
-        ...current,
-        [day]: { ...current[day], active: !current[day].active }
-      }
-    });
-  };
-
-  const handleAddRange = (day) => {
-    const current = isScheduleObject ? newBranch.schedule : defaultScheduleObj;
-    setNewBranch({
-      ...newBranch,
-      schedule: {
-        ...current,
-        [day]: { ...current[day], ranges: [...current[day].ranges, { open: '08:00', close: '20:00' }] }
-      }
-    });
-  };
-
-  const handleRemoveRange = (day, index) => {
-    const current = isScheduleObject ? newBranch.schedule : defaultScheduleObj;
-    const newRanges = current[day].ranges.filter((_, i) => i !== index);
-    setNewBranch({
-      ...newBranch,
-      schedule: {
-        ...current,
-        [day]: { ...current[day], ranges: newRanges }
-      }
-    });
-  };
-
-  const handleChangeTime = (day, index, field, value) => {
-    if (!isScheduleObject) setNewBranch({ ...newBranch, schedule: defaultScheduleObj });
-    const current = isScheduleObject ? newBranch.schedule : defaultScheduleObj;
-    const newRanges = [...current[day].ranges];
-    newRanges[index][field] = value;
-    setNewBranch({
-      ...newBranch,
-      schedule: {
-        ...current,
-        [day]: { ...current[day], ranges: newRanges }
-      }
-    });
-  };
 
   return (
     <div className="modal-overlay">
@@ -147,32 +89,15 @@ export default function BranchFormModal({
               <div className="form-group">
                 <label className="form-label">Plan Asignado a esta Sede</label>
                 <select className="form-input" required value={newBranch.planLevel} onChange={e => setNewBranch({...newBranch, planLevel: parseInt(e.target.value)})}>
-                  <option value={-1}>Ninguno (Sede Inactiva - Solo Menú)</option>
+                  <option value={-1}>Ninguno (Sede Inactiva - Solo Catálogo)</option>
                   {planLevel !== -1 && (
-                    isMixed ? (
-                      <>
-                        <option value={0} disabled={!canAddFree && newBranch.planLevel !== 0}>Plan Tradicional (Disponibles: {Math.max(0, subscribedBranches0 - branchesFree + (editingBranchId && newBranch.planLevel === 0 ? 1 : 0))})</option>
-                        <option value={1} disabled={!canAddP1 && newBranch.planLevel !== 1}>Plan Carta (Disponibles: {Math.max(0, subscribedBranches1 - branchesP1 + (editingBranchId && newBranch.planLevel === 1 ? 1 : 0))})</option>
-                        <option value={2} disabled={!canAddP2 && newBranch.planLevel !== 2}>Plan Carta y Mesa (Disponibles: {Math.max(0, subscribedBranches2 - branchesP2 + (editingBranchId && newBranch.planLevel === 2 ? 1 : 0))})</option>
-                      </>
-                    ) : (
-                      <>
-                        {planLevel === 0 ? (
-                          <option value={0} disabled={!canAddFree && newBranch.planLevel !== 0}>Plan Tradicional (Disponibles: {Math.max(0, subscribedBranches - branchesFree + (editingBranchId && newBranch.planLevel === 0 ? 1 : 0))})</option>
-                        ) : (
-                          <>
-                            <option value={0} disabled={!canAddFree && newBranch.planLevel !== 0}>Plan Tradicional (Disponibles: {Math.max(0, (planLevel >= 0 ? 1 : 0) - branchesFree + (editingBranchId && newBranch.planLevel === 0 ? 1 : 0))})</option>
-                            <option value={planLevel} disabled={(planLevel === 1 ? !canAddP1 : !canAddP2) && newBranch.planLevel !== planLevel}>
-                              Plan {planLevel === 1 ? 'Carta' : 'Carta y Mesa'} (Disponibles: {Math.max(0, subscribedBranches - (planLevel === 1 ? branchesP1 : branchesP2) + (editingBranchId && newBranch.planLevel === planLevel ? 1 : 0))})
-                            </option>
-                          </>
-                        )}
-                      </>
-                    )
+                    <option value={2} disabled={!canAddP2 && newBranch.planLevel !== 2}>
+                      Plan Pro (Disponibles: {Math.max(0, subscribedBranches - branchesP2 + (editingBranchId && newBranch.planLevel === 2 ? 1 : 0))})
+                    </option>
                   )}
                 </select>
                 <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
-                  Si una sede no tiene un plan asignado, no podrá recibir pedidos online.
+                  Si una sede no tiene el Plan Pro asignado, no podrá recibir pedidos online.
                 </p>
               </div>
 
@@ -207,56 +132,7 @@ export default function BranchFormModal({
                 <input required type="text" className="form-input" value={newBranch.address} onChange={e => setNewBranch({...newBranch, address: e.target.value})} />
               </div>
 
-              <div className="form-group">
-                <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Horario de Atención (Estilo WhatsApp)</span>
-                  {!isScheduleObject && (
-                    <button type="button" onClick={() => setNewBranch({ ...newBranch, schedule: defaultScheduleObj })} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}>
-                      Configurar Horario Detallado
-                    </button>
-                  )}
-                </label>
-                
-                {!isScheduleObject ? (
-                  <input type="text" className="form-input" placeholder="Lun–Vie 8am–10pm" value={newBranch.schedule} onChange={e => setNewBranch({...newBranch, schedule: e.target.value})} />
-                ) : (
-                  <div style={{ border: '1px solid var(--border-light)', borderRadius: '8px', padding: '1rem', background: '#f8fafc' }}>
-                    {DAYS.map(day => {
-                      const dayData = scheduleObj[day] || { active: false, ranges: [] };
-                      return (
-                        <div key={day} style={{ display: 'flex', alignItems: 'flex-start', padding: '0.5rem 0', borderBottom: '1px solid #e2e8f0' }}>
-                          <div style={{ width: '100px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <input type="checkbox" checked={dayData.active} onChange={() => handleToggleDay(day)} style={{ cursor: 'pointer' }} />
-                            <span style={{ fontSize: '0.875rem', fontWeight: 500, color: dayData.active ? '#0f172a' : '#94a3b8' }}>{DAY_NAMES[day]}</span>
-                          </div>
-                          
-                          <div style={{ flex: 1 }}>
-                            {!dayData.active ? (
-                              <span style={{ fontSize: '0.875rem', color: '#94a3b8' }}>Cerrado</span>
-                            ) : (
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                {dayData.ranges.map((range, idx) => (
-                                  <div key={idx} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                    <input type="time" value={range.open} onChange={(e) => handleChangeTime(day, idx, 'open', e.target.value)} className="form-input" style={{ padding: '0.25rem', width: 'auto' }} />
-                                    <span style={{ color: '#64748b' }}>-</span>
-                                    <input type="time" value={range.close} onChange={(e) => handleChangeTime(day, idx, 'close', e.target.value)} className="form-input" style={{ padding: '0.25rem', width: 'auto' }} />
-                                    {dayData.ranges.length > 1 && (
-                                      <button type="button" onClick={() => handleRemoveRange(day, idx)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '1.2rem', padding: '0 0.25rem' }}>×</button>
-                                    )}
-                                  </div>
-                                ))}
-                                <button type="button" onClick={() => handleAddRange(day)} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.8rem', textAlign: 'left', marginTop: '0.25rem', width: 'fit-content' }}>
-                                  + Añadir horario partido
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+
 
               <ImageUploadField
                 label="📷 Foto de la Sede (se muestra en la tarjeta principal)"

@@ -112,13 +112,13 @@ describe('DesignSettings - Persistencia de Datos', () => {
       );
 
       // Verificamos que estamos en la pestaña Plantillas (es la pestaña por defecto)
-      // Buscamos una de las plantillas (por ejemplo, "Luxury Noir") y le hacemos clic para aplicar
-      const themeCard = screen.getByText(/Luxury Noir/i);
+      // Buscamos una de las plantillas (por ejemplo, "Noir Luxe") y le hacemos clic para aplicar
+      const themeCard = screen.getByText(/Noir Luxe/i);
       fireEvent.click(themeCard);
 
       // Al hacer clic, se abre el Confirm Modal.
       // Debe estar el título de confirmación
-      expect(screen.getByText(/Aplicar.*Luxury Noir/i)).toBeInTheDocument();
+      expect(screen.getByText(/Aplicar.*Noir Luxe/i)).toBeInTheDocument();
 
       // No debe mostrar la pregunta/checkbox para importar los productos de muestra
       expect(screen.queryByText(/También crear categorías y productos de ejemplo/i)).not.toBeInTheDocument();
@@ -147,10 +147,10 @@ describe('DesignSettings - Persistencia de Datos', () => {
         </BrowserRouter>
       );
 
-      const themeCard = screen.getByText(/Luxury Noir/i);
+      const themeCard = screen.getByText(/Noir Luxe/i);
       fireEvent.click(themeCard);
 
-      expect(screen.getByText(/Aplicar.*Luxury Noir/i)).toBeInTheDocument();
+      expect(screen.getByText(/Aplicar.*Noir Luxe/i)).toBeInTheDocument();
 
       // Debe mostrar el checkbox para importar los productos de muestra
       const checkboxLabel = screen.getByText(/También crear categorías y productos de ejemplo/i);
@@ -180,7 +180,7 @@ describe('DesignSettings - Persistencia de Datos', () => {
         </BrowserRouter>
       );
 
-      const themeCard = screen.getByText(/Luxury Noir/i);
+      const themeCard = screen.getByText(/Noir Luxe/i);
       fireEvent.click(themeCard);
 
       // Encontrar el checkbox y marcarlo

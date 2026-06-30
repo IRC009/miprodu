@@ -52,14 +52,15 @@ export function useDashboardOrders(restaurantId, selectedBranch, startDate) {
       }
 
       const orders = allOrders.filter(o => o.status !== 'payment_initiated');
-      // Helper check to identify actual incoming external/QR orders that need manual approval
+      // Helper: any unassigned incoming order from the catalog lands in inbox
       const isInboxOrder = (o) => {
-        const isTableNoWaiter = !o.waiterId && o.orderType === 'table';
-        if (!isTableNoWaiter) return false;
+        // Already assigned to a staff member → not inbox
+        if (o.waiterId) return false;
         
         const isQrOrTransfer = ['qr', 'qr_code', 'nequi_qr', 'transfer', 'transferencia'].includes(o.paymentMethod || o.paymentStatus);
         
         if (o.status === 'pending') return true;
+        // Cancelled transfers with unverified payment still show for cleanup
         if (o.status === 'cancelled' && isQrOrTransfer && o.paymentStatus !== 'paid') return true;
         
         return false;
@@ -68,11 +69,11 @@ export function useDashboardOrders(restaurantId, selectedBranch, startDate) {
       // 1. Inbox: orders with status 'pending' that are not POS-initiated and do not have an assigned waiter yet
       setInboxOrders(orders.filter(isInboxOrder));
       
-      // 2. Active: orders currently in the kitchen/floor (not pending in inbox, not billed)
-      setActiveOrders(orders.filter(o => !o.isBilled && !isInboxOrder(o) && o.status !== 'cancelled'));
+      // 2. Active: orders currently in the fulfillment/logistics pipeline (not pending in inbox, not completed/cancelled)
+      setActiveOrders(orders.filter(o => !isInboxOrder(o) && o.status !== 'completed' && o.status !== 'cancelled'));
       
-      // 3. Keep liveBilledOrders internally so they can still show on tables/bar/delivery until archived
-      setLiveBilledOrders(orders.filter(o => o.isBilled && !isInboxOrder(o)));
+      // 3. Keep liveBilledOrders internally for any legacy references (orders that are billed but not completed/cancelled)
+      setLiveBilledOrders(orders.filter(o => o.isBilled && !isInboxOrder(o) && o.status !== 'completed' && o.status !== 'cancelled'));
       
       setLoading(false);
     }, selectedBranch);
