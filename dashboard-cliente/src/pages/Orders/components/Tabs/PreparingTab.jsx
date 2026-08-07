@@ -106,7 +106,11 @@ export default function PreparingTab() {
                       <span className="qty">{item.quantity}x</span>
                       <span className="name">
                         {item.name}
-                        {item.selectedVariant && <span style={{ fontSize: '0.7rem', color: '#64748b', marginLeft: '4px' }}>({item.selectedVariant})</span>}
+                        {item.selectedVariant && (
+                          <span style={{ fontSize: '0.7rem', color: '#64748b', marginLeft: '4px' }}>
+                            ({typeof item.selectedVariant === 'string' ? item.selectedVariant : (item.selectedVariant?.name || '')})
+                          </span>
+                        )}
                         {item.sku && <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block', fontWeight: 600 }}>SKU: {item.sku}</span>}
                       </span>
                     </div>
