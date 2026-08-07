@@ -1,5 +1,29 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import LoadingScreen from './LoadingScreen';
+
+const normalizeDateString = (val) => {
+  if (typeof val !== 'string') return val;
+  let s = val.replace(/^(\d{4})-(\d{2})-(\d)([T\s])/, '$1-$2-0$3$4');
+  s = s.replace(/^(\d{4})-(\d)-/, '$1-0$2-');
+  return s;
+};
+
+const getSubscriptionExpirationDate = (sub) => {
+  if (!sub) return null;
+  const val = sub.cycleEndDate || sub.endDate;
+  if (val) {
+    let dateObj;
+    if (typeof val.toDate === 'function') {
+      dateObj = val.toDate();
+    } else if (val.seconds !== undefined) {
+      dateObj = new Date(val.seconds * 1000);
+    } else {
+      dateObj = new Date(normalizeDateString(val));
+    }
+    if (!isNaN(dateObj.getTime())) return dateObj;
+  }
+  return null;
+};
 
 /**
  * PaywallCheck
@@ -20,9 +44,11 @@ const PaywallCheck = ({ restaurantData, designConfig, children }) => {
       // Siempre permitido dentro del iframe de preview del dashboard
       let isPreview = false;
       try {
-        isPreview = typeof window !== 'undefined' && window.self !== window.top;
-      } catch (e) {
-        isPreview = false;
+        if (typeof window !== 'undefined' && window.self !== window.top) {
+          isPreview = true;
+        }
+      } catch {
+        // Ignored
       }
 
       if (isPreview) {
@@ -34,18 +60,27 @@ const PaywallCheck = ({ restaurantData, designConfig, children }) => {
       const sub = restaurantData.subscription || {};
       const subStatus = sub.status;
 
+      const BLOCKED_STATUSES = ['unpaid', 'pending', 'paused', 'suspended', 'rejected', 'failed'];
+      if (subStatus && BLOCKED_STATUSES.includes(subStatus)) {
+        setStatus('blocked');
+        return;
+      }
+
       let isRegTrialActive = false;
       if (restaurantData.createdAt) {
-        let trialDays = 7;
-        try {
-          const { doc, getDoc } = await import('firebase/firestore');
-          const { db } = await import('../services/firebase');
-          const pricingSnap = await getDoc(doc(db, 'platform_settings', 'pricing'));
-          if (pricingSnap.exists() && typeof pricingSnap.data().trialDays === 'number') {
-            trialDays = pricingSnap.data().trialDays;
+        let trialDays = restaurantData.registrationTrialDays;
+        if (typeof trialDays !== 'number') {
+          trialDays = 7;
+          try {
+            const { doc, getDoc } = await import('firebase/firestore');
+            const { db } = await import('../services/firebase');
+            const pricingSnap = await getDoc(doc(db, 'platform_settings', 'pricing'));
+            if (pricingSnap.exists() && typeof pricingSnap.data().trialDays === 'number') {
+              trialDays = pricingSnap.data().trialDays;
+            }
+          } catch (e) {
+            console.warn("Error fetching trial days in PaywallCheck:", e);
           }
-        } catch (e) {
-          console.warn("Error fetching trial days in PaywallCheck:", e);
         }
 
         const createdDate = new Date(restaurantData.createdAt);
@@ -53,6 +88,25 @@ const PaywallCheck = ({ restaurantData, designConfig, children }) => {
           const diffTime = new Date().getTime() - createdDate.getTime();
           const diffDays = diffTime / (1000 * 60 * 60 * 24);
           isRegTrialActive = diffDays >= 0 && diffDays <= trialDays;
+        }
+      }
+
+      // Validar expiración de suscripción de manera uniforme con 5 días de gracia
+      const expDate = getSubscriptionExpirationDate(sub);
+      const now = new Date();
+      if (expDate) {
+        if (subStatus === 'cancelled') {
+          if (expDate < now) {
+            setStatus('blocked');
+            return;
+          }
+        } else {
+          const gracePeriodMs = 5 * 24 * 60 * 60 * 1000; // 5 días de gracia
+          const expiredDateWithGrace = new Date(expDate.getTime() + gracePeriodMs);
+          if (expiredDateWithGrace < now) {
+            setStatus('blocked');
+            return;
+          }
         }
       }
 
@@ -65,7 +119,7 @@ const PaywallCheck = ({ restaurantData, designConfig, children }) => {
         } else {
           setStatus('allowed');
         }
-      } else if (subStatus === 'authorized' || subStatus === 'active' || isRegTrialActive) {
+      } else if (subStatus === 'authorized' || subStatus === 'active' || isRegTrialActive || (subStatus === 'cancelled' && expDate && expDate >= now)) {
         setStatus('allowed');
       } else {
         // Sin plan activo o cancelado → catálogo bloqueado

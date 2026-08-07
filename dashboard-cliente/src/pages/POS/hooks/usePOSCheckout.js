@@ -5,6 +5,7 @@ import { earnPoints, redeemPoints, getCustomer } from '../../../services/loyalty
 import { printTicket } from '../../../utils/printTicket';
 import { resolveRecipeDeductions, deductInventoryForOrder } from '../../../services/inventoryService';
 import { queueAction } from '../../../services/offlineSyncService';
+import { calculateOrderCost } from '../../../services/costAtSaleService';
 
 export function usePOSCheckout(options) {
   const {
@@ -305,6 +306,21 @@ export function usePOSCheckout(options) {
         }
       }
 
+      let costData = {
+        items: finalItems,
+        productionCostAtSale: 0,
+        grossProfitAtSale: finalOrderTotal,
+        marginPctAtSale: 0
+      };
+
+      if (isBilling) {
+        try {
+          costData = await calculateOrderCost(restaurantId, finalItems, finalOrderTotal);
+        } catch (err) {
+          console.error('[usePOSCheckout] Error calculating order cost:', err);
+        }
+      }
+
       try {
         if (editingOrderIds.length > 0 && isBilling) {
           const billingMeta = { 
@@ -322,7 +338,11 @@ export function usePOSCheckout(options) {
             loyaltyPointsRedeemed: loyaltyPointsToRedeem,
             total: finalOrderTotal,
             customerId: loyaltyCustomerId || null,
-            loyaltyEarned: willProcessLoyalty ? true : false
+            loyaltyEarned: willProcessLoyalty ? true : false,
+            items: costData.items,
+            productionCostAtSale: costData.productionCostAtSale,
+            grossProfitAtSale: costData.grossProfitAtSale,
+            marginPctAtSale: costData.marginPctAtSale
           };
           // Actualizar en segundo plano (non-blocking) para cerrar el modal de inmediato
           (async () => {
@@ -334,7 +354,7 @@ export function usePOSCheckout(options) {
           })();
           const autoPrintInv = localStorage.getItem('autoPrintInvoice') === 'true';
           if (autoPrintInv) {
-            printTicket({ id: editingOrderIds[0], items: finalItems, total: finalOrderTotal, tip: Number(tip), discount: Number(discount) + pointsDiscountValue, subtotal: cartTotal, customerName, tableNumber: orderType === 'table' ? tableNumber : (orderType === 'bar' ? 'Barra' : (orderType === 'fast' ? 'Caja Fast' : 'Domicilio')), paymentMethod: effectivePaymentMethod, mixedPayments: effectiveMixedPayments }, 'Caja', 'invoice');
+            printTicket({ id: editingOrderIds[0], items: costData.items, total: finalOrderTotal, tip: Number(tip), discount: Number(discount) + pointsDiscountValue, subtotal: cartTotal, customerName, tableNumber: orderType === 'table' ? tableNumber : (orderType === 'bar' ? 'Barra' : (orderType === 'fast' ? 'Caja Fast' : 'Domicilio')), paymentMethod: effectivePaymentMethod, mixedPayments: effectiveMixedPayments }, 'Caja', 'invoice');
           }
           if (pointsEarned > 0) {
             showAlert(`⭐ +${pointsEarned} puntos acumulados para el cliente!`, 'Puntos Ganados', 'success');
@@ -349,7 +369,7 @@ export function usePOSCheckout(options) {
             customerName, 
             customerPhone, 
             customerAddress, 
-            items: finalItems,
+            items: isBilling ? costData.items : finalItems,
             subtotal: cartTotal,
             tip: Number(tip),
             discount: Number(discount) + pointsDiscountValue,
@@ -374,8 +394,14 @@ export function usePOSCheckout(options) {
             loyaltyPointsRedeemed: isBilling ? loyaltyPointsToRedeem : 0,
             status: orderType === 'fast' ? 'completed' : 'pending',
             customerId: loyaltyCustomerId || null,
-            loyaltyEarned: willProcessLoyalty ? true : false
+            loyaltyEarned: willProcessLoyalty ? true : false,
+            ...(isBilling ? {
+              productionCostAtSale: costData.productionCostAtSale,
+              grossProfitAtSale: costData.grossProfitAtSale,
+              marginPctAtSale: costData.marginPctAtSale
+            } : {})
           };
+
           const newOrder = await createOrder(restaurantId, orderData);
           // Deducir insumos en segundo plano (non-blocking) para máxima velocidad de la caja
           (async () => {

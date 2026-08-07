@@ -63,7 +63,8 @@ export function useInventoryData(restaurantId) {
     branchId: 'ALL',
     location: '',
     hasVariants: false,
-    variants: []
+    variants: [],
+    components: []
   });
 
   const loadIngredients = async () => {
@@ -111,7 +112,8 @@ export function useInventoryData(restaurantId) {
           sku: v.sku || '',
           currentStock: v.currentStock !== undefined ? v.currentStock : '',
           minAlertThreshold: v.minAlertThreshold !== undefined ? v.minAlertThreshold : ''
-        }))
+        })),
+        components: (ingredient.components || []).map(c => ({ ...c }))
       });
     } else {
       setEditingIngredient(null);
@@ -128,7 +130,8 @@ export function useInventoryData(restaurantId) {
         branchId: defaultBranchId || 'ALL',
         location: '',
         hasVariants: false,
-        variants: []
+        variants: [],
+        components: []
       });
     }
     setIsModalOpen(true);
@@ -159,7 +162,13 @@ export function useInventoryData(restaurantId) {
           sku: v.sku || '',
           currentStock: parseFloat(v.currentStock) || 0,
           minAlertThreshold: parseFloat(v.minAlertThreshold) || 0
-        }))
+        })),
+        components: (formData.components || []).map(c => ({
+          ingredientId: c.ingredientId,
+          ingredientName: c.ingredientName,
+          unit: c.unit || '',
+          quantity: parseFloat(c.quantity) || 0
+        })).filter(c => c.ingredientId && c.quantity > 0)
       };
 
       if (editingIngredient) {

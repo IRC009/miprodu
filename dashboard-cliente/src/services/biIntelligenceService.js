@@ -119,7 +119,10 @@ export const buildMenuMatrix = (orders, ingredients = []) => {
       const key = item.name || item.id;
       if (!key) return;
       if (!itemMap[key]) {
-        itemMap[key] = { name: key, qty: 0, revenue: 0, price: item.price || 0, cost: costMap[key.toLowerCase()] || 0 };
+        const itemCost = item.costAtSale !== undefined && item.costAtSale !== null
+          ? item.costAtSale
+          : (costMap[key.toLowerCase()] || 0);
+        itemMap[key] = { name: key, qty: 0, revenue: 0, price: item.price || 0, cost: itemCost };
       }
       itemMap[key].qty     += (item.quantity || 1);
       itemMap[key].revenue += (item.price || 0) * (item.quantity || 1);

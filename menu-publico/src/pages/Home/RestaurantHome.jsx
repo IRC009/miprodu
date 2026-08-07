@@ -3,6 +3,30 @@ import { useOutletContext, Link, useNavigate, useSearchParams } from 'react-rout
 import DynamicBackground from '../../components/DynamicBackground';
 import './RestaurantHome.css';
 
+const normalizeDateString = (val) => {
+  if (typeof val !== 'string') return val;
+  let s = val.replace(/^(\d{4})-(\d{2})-(\d)([T\s])/, '$1-$2-0$3$4');
+  s = s.replace(/^(\d{4})-(\d)-/, '$1-0$2-');
+  return s;
+};
+
+const getSubscriptionExpirationDate = (sub) => {
+  if (!sub) return null;
+  const val = sub.cycleEndDate || sub.endDate;
+  if (val) {
+    let dateObj;
+    if (typeof val.toDate === 'function') {
+      dateObj = val.toDate();
+    } else if (val.seconds !== undefined) {
+      dateObj = new Date(val.seconds * 1000);
+    } else {
+      dateObj = new Date(normalizeDateString(val));
+    }
+    if (!isNaN(dateObj.getTime())) return dateObj;
+  }
+  return null;
+};
+
 export default function RestaurantHome() {
   const { restaurant, basePath } = useOutletContext();
   const navigate = useNavigate();
@@ -13,8 +37,42 @@ export default function RestaurantHome() {
   const customLinks = designConfig.customLinks || [];
 
   const sub = restaurant?.subscription || {};
+  const subStatus = sub.status || 'inactive';
+
+  let isRegTrialActive = false;
+  if (restaurant?.createdAt) {
+    const trialDays = typeof restaurant.registrationTrialDays === 'number'
+      ? restaurant.registrationTrialDays
+      : 7;
+    const createdDate = new Date(restaurant.createdAt);
+    if (!isNaN(createdDate.getTime())) {
+      const diffTime = new Date().getTime() - createdDate.getTime();
+      const diffDays = diffTime / (1000 * 60 * 60 * 24);
+      isRegTrialActive = diffDays >= 0 && diffDays <= trialDays;
+    }
+  }
+
+  let isSubActive = false;
+  const BLOCKED_STATUSES = ['unpaid', 'pending', 'paused', 'suspended', 'rejected', 'failed'];
+  if (isRegTrialActive) {
+    isSubActive = true;
+  } else if (sub && subStatus && !BLOCKED_STATUSES.includes(subStatus)) {
+    const expDate = getSubscriptionExpirationDate(sub);
+    const now = new Date();
+    if (expDate) {
+      if (subStatus === 'cancelled') {
+        isSubActive = expDate >= now;
+      } else {
+        const gracePeriodMs = 5 * 24 * 60 * 60 * 1000;
+        isSubActive = new Date(expDate.getTime() + gracePeriodMs) >= now;
+      }
+    } else {
+      isSubActive = subStatus === 'active' || subStatus === 'authorized';
+    }
+  }
+
   const isExplore = false;
-  const planLevel = parseInt(sub.planLevel) || 0;
+  const planLevel = isSubActive ? (isRegTrialActive ? 2 : (parseInt(sub.planLevel) || 0)) : 0;
   const canReserveTable = planLevel >= 2;
 
   useEffect(() => {

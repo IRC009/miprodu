@@ -111,7 +111,7 @@ export default function App() {
       
       // Is subscription active?
       const isActive = (() => {
-        if (sub.status === 'cancelled') return false;
+        if (sub.status === 'cancelled' || sub.status === 'unpaid') return false;
         
         // Check expiration
         if (sub.cycleEndDate || sub.endDate) {
@@ -127,7 +127,7 @@ export default function App() {
       })();
       
 
-      if (!isActive) return 0; // If inactive/expired, act as Plan 0 (or restrict)
+      if (!isActive) return -1; // If inactive/expired, block access
       
       if (selectedBranch?.planLevel !== undefined && selectedBranch?.planLevel !== null) {
         const pl = parseInt(selectedBranch.planLevel);
@@ -141,7 +141,7 @@ export default function App() {
       return parseInt(sub.planLevel) || 0;
     })();
 
-    return rawLevel < 0 ? 0 : rawLevel;
+    return rawLevel;
   }, [restaurant, selectedBranch]);
 
   // Filter branches based on user permissions
@@ -563,15 +563,24 @@ export default function App() {
           )}
 
           {activeTab === 'restaurante' && (
-            <RestauranteScreen
-              restaurantId={profile.restaurantId}
-              profile={profile}
-              orders={orders}
-              selectedBranch={selectedBranch}
-              planLevel={effectivePlanLevel}
-              products={products}
-              t={t}
-            />
+            effectivePlanLevel < 0 ? (
+              <LockedFeatureScreen
+                featureName="Pedidos"
+                requiredPlan="MiProdu Pro"
+                currentPlan="Plan Básico"
+                onSwitchBranch={() => setActiveTab('perfil')}
+              />
+            ) : (
+              <RestauranteScreen
+                restaurantId={profile.restaurantId}
+                profile={profile}
+                orders={orders}
+                selectedBranch={selectedBranch}
+                planLevel={effectivePlanLevel}
+                products={products}
+                t={t}
+              />
+            )
           )}
 
           {activeTab === 'perfil' && (

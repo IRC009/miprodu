@@ -349,8 +349,8 @@ export default function ProductCard({
               <div className="product-variants-list" style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '6px', marginBottom: '6px' }}>
                 {product.variants.map((v, idx) => (
                   <div key={idx} className="product-variant-item" style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', alignItems: 'center' }}>
-                    <span className="product-variant-name" style={{ fontSize: px(descSize) || '0.8rem', color: titleColor || 'var(--text-color, inherit)' }}>{v.name}</span>
-                    <span className="product-variant-price" style={{ fontSize: px(descSize) || '0.8rem', fontWeight: 'bold', color: priceColor || 'var(--price-color, inherit)' }}>{formatPrice(v.price)}</span>
+                    <span className="product-variant-name" style={{ fontSize: px(descSize) || '0.8rem', color: titleColor || 'var(--text-color, inherit)' }}>{typeof v?.name === 'string' ? v.name : (v?.name?.name || '')}</span>
+                    <span className="product-variant-price" style={{ fontSize: px(descSize) || '0.8rem', fontWeight: 'bold', color: priceColor || 'var(--price-color, inherit)' }}>{formatPrice(typeof v === 'number' ? v : v?.price)}</span>
                   </div>
                 ))}
               </div>
@@ -429,9 +429,9 @@ export default function ProductCard({
                   <div className="product-variants-list" style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '8px', marginBottom: '4px', width: '100%' }}>
                     {product.variants.map((v, idx) => (
                       <div key={idx} className="product-variant-item" style={{ display: 'flex', justifyContent: (textAlign === 'center' ? 'center' : 'space-between'), gap: '8px', alignItems: 'center', width: '100%' }}>
-                        <span className="product-variant-name" style={{ fontSize: px(descSize) || '0.85rem', color: titleColor || 'var(--text-color, inherit)', opacity: 0.9 }}>{v.name}</span>
+                        <span className="product-variant-name" style={{ fontSize: px(descSize) || '0.85rem', color: titleColor || 'var(--text-color, inherit)', opacity: 0.9 }}>{typeof v?.name === 'string' ? v.name : (v?.name?.name || '')}</span>
                         {textAlign === 'center' && <span style={{ fontSize: px(descSize) || '0.85rem', opacity: 0.5 }}>|</span>}
-                        <span className="product-variant-price" style={{ fontSize: px(descSize) || '0.85rem', fontWeight: 'bold', color: priceColor || 'var(--price-color, inherit)' }}>{formatPrice(v.price)}</span>
+                        <span className="product-variant-price" style={{ fontSize: px(descSize) || '0.85rem', fontWeight: 'bold', color: priceColor || 'var(--price-color, inherit)' }}>{formatPrice(typeof v === 'number' ? v : v?.price)}</span>
                       </div>
                     ))}
                   </div>
@@ -518,9 +518,9 @@ export default function ProductCard({
                   <div className="product-variants-list" style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '8px', marginBottom: '4px', width: '100%' }}>
                     {product.variants.map((v, idx) => (
                       <div key={idx} className="product-variant-item" style={{ display: 'flex', justifyContent: (textAlign === 'center' ? 'center' : 'space-between'), gap: '8px', alignItems: 'center', width: '100%' }}>
-                        <span className="product-variant-name" style={{ fontSize: px(descSize) || '0.85rem', color: titleColor || 'var(--text-color, inherit)', opacity: 0.9 }}>{v.name}</span>
+                        <span className="product-variant-name" style={{ fontSize: px(descSize) || '0.85rem', color: titleColor || 'var(--text-color, inherit)', opacity: 0.9 }}>{typeof v?.name === 'string' ? v.name : (v?.name?.name || '')}</span>
                         {textAlign === 'center' && <span style={{ fontSize: px(descSize) || '0.85rem', opacity: 0.5 }}>|</span>}
-                        <span className="product-variant-price" style={{ fontSize: px(descSize) || '0.85rem', fontWeight: 'bold', color: priceColor || 'var(--price-color, inherit)' }}>{formatPrice(v.price)}</span>
+                        <span className="product-variant-price" style={{ fontSize: px(descSize) || '0.85rem', fontWeight: 'bold', color: priceColor || 'var(--price-color, inherit)' }}>{formatPrice(typeof v === 'number' ? v : v?.price)}</span>
                       </div>
                     ))}
                   </div>
@@ -598,9 +598,9 @@ export default function ProductCard({
                 <div className="product-variants-list" style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '8px' }}>
                   {product.variants.map((v, idx) => (
                     <div key={idx} className="product-variant-item" style={{ display: 'flex', justifyContent: (textAlign === 'center' ? 'center' : 'space-between'), gap: '8px', alignItems: 'center' }}>
-                      <span className="product-variant-name" style={{ fontSize: px(descSize) || '0.85rem', color: titleColor || 'var(--text-color, inherit)', opacity: 0.9 }}>{v.name}</span>
+                      <span className="product-variant-name" style={{ fontSize: px(descSize) || '0.85rem', color: titleColor || 'var(--text-color, inherit)', opacity: 0.9 }}>{typeof v?.name === 'string' ? v.name : (v?.name?.name || '')}</span>
                       {textAlign === 'center' && <span style={{ fontSize: px(descSize) || '0.85rem', opacity: 0.5 }}>|</span>}
-                      <span className="product-variant-price" style={{ fontSize: px(descSize) || '0.85rem', fontWeight: 'bold', color: priceColor || 'var(--price-color, inherit)' }}>{formatPrice(v.price)}</span>
+                      <span className="product-variant-price" style={{ fontSize: px(descSize) || '0.85rem', fontWeight: 'bold', color: priceColor || 'var(--price-color, inherit)' }}>{formatPrice(typeof v === 'number' ? v : v?.price)}</span>
                     </div>
                   ))}
                 </div>

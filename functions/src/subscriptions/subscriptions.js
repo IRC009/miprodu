@@ -95,6 +95,10 @@ async function handleCreateSubscription(request) {
       (existingSub.status === "authorized" || existingSub.status === "active") &&
       existingSub.id;
 
+    // Un plan en cualquier estado que tenga ID debe ser cancelado para evitar doble cobro.
+    // Esto incluye: paused, cancelled, pending, unpaid, y también authorized/active con cancelAtPeriodEnd.
+    const hasPreviousSubId = existingSub?.id && existingSub.id !== "manual";
+
     const isChangingPlan = hasActivePlan && (
       addBranches || 
       existingSub.cancelAtPeriodEnd === true
@@ -115,17 +119,20 @@ async function handleCreateSubscription(request) {
       }
 
       if (!isNaN(createdDate.getTime())) {
-        let configTrialDays = 7;
-        try {
-          const pricingSnap = await db.doc('platform_settings/pricing').get();
-          if (pricingSnap.exists) {
-            const data = pricingSnap.data();
-            if (typeof data.trialDays === 'number' && data.trialDays >= 1) {
-              configTrialDays = data.trialDays;
+        let configTrialDays = restaurantSnap.exists ? restaurantSnap.data()?.registrationTrialDays : null;
+        if (typeof configTrialDays !== 'number') {
+          configTrialDays = 7;
+          try {
+            const pricingSnap = await db.doc('platform_settings/pricing').get();
+            if (pricingSnap.exists) {
+              const data = pricingSnap.data();
+              if (typeof data.trialDays === 'number' && data.trialDays >= 1) {
+                configTrialDays = data.trialDays;
+              }
             }
+          } catch (e) {
+            console.warn('[pricing] Error reading trialDays:', e.message);
           }
-        } catch (e) {
-          console.warn('[pricing] Error reading trialDays:', e.message);
         }
 
         const nowTime = new Date();
@@ -144,7 +151,10 @@ async function handleCreateSubscription(request) {
 
     let freeTrial = null;
     let transactionAmount = cycleAmount;
-    let oldSubIdToCancel = null;
+    // ⚠️ ANTI-DOBLE-COBRO: Siempre capturar el ID anterior para cancelarlo en MP,
+    // sin importar su estado (paused, cancelled, pending, unpaid, authorized, etc.).
+    // Esto evita que un plan pausado o cancelado-con-periodo-activo siga cobrando.
+    let oldSubIdToCancel = hasPreviousSubId ? existingSub.id : null;
 
     if (isChangingPlan && alreadyUsedTrial && !isInActiveTrial) {
       const diasRestantes = calcularDiasRestantes(existingSub);
@@ -201,7 +211,7 @@ async function handleCreateSubscription(request) {
     const branchLabel = numBranches > 1 ? `${numBranches} sedes` : "1 sede";
 
     const payload = {
-      reason: `MiProdu · Plan ${planLabel} · ${branchLabel} · ${cycleLabel}`,
+      reason: `MiProdu - ${planLabel} (${branchLabel})`,
       external_reference: `${restaurantId}|${levelInt}|${numBranches}|${billingCycle}${oldSubIdToCancel ? "|" + oldSubIdToCancel : ""}`,
       payer_email: payerEmail,
       auto_recurring: {
@@ -378,8 +388,10 @@ async function verifySubscriptionExpiration(request) {
     const isCancelledState = subData.cancelAtPeriodEnd === true || subData.status === 'cancelled';
     if (!isCancelledState) return { expired: false };
     
-    const endDate = new Date(subData.cycleEndDate || subData.endDate);
-    if (isNaN(endDate.getTime())) return { expired: false };
+    const endDateStr = subData.cycleEndDate || subData.endDate;
+    const endDate = endDateStr ? new Date(endDateStr) : null;
+    if (!endDate || isNaN(endDate.getTime())) return { expired: false };
+
     if (new Date() < endDate) return { expired: false };
 
     // It is truly expired. Calculate analytics deltas before wiping

@@ -17,6 +17,7 @@ import { registerCashMovement, getOpenShift } from '../../../services/posService
 import { db } from '../../../services/firebase';
 import { deleteDoc, doc, getDoc } from 'firebase/firestore';
 import { getLoyaltyConfig, earnPoints, redeemPoints, getCustomer } from '../../../services/loyaltyService';
+import { calculateOrderCost } from '../../../services/costAtSaleService';
 
 export function useDashboardBilling(restaurantId, selectedBranch, activeShift, orders, fetchArchived, setManagingTable, setAuthModal, restaurant, staffUser, userProfile, alwaysOpenShift, requireOwnerPin, branches, allowAllCashiersToBill, waiters = []) {
   const { showAlert } = useAlert();
@@ -299,12 +300,24 @@ export function useDashboardBilling(restaurantId, selectedBranch, activeShift, o
           const billingWaiterId = firstOrder.waiterId || 'system';
           const billingWaiterName = firstOrder.waiterName || 'Sistema';
 
+          let costData = {
+            items,
+            productionCostAtSale: 0,
+            grossProfitAtSale: total,
+            marginPctAtSale: 0
+          };
+          try {
+            costData = await calculateOrderCost(restaurantId, items, total);
+          } catch (err) {
+            console.error('[useDashboardBilling] Error calculating order cost:', err);
+          }
+
           const orderData = { 
             branchId: firstOrder.branchId, 
             orderType: 'table', 
             tableNumber: tableNumber.toString(), 
             customerName: person.name, 
-            items, 
+            items: costData.items, 
             total, 
             waiterId: billingWaiterId, 
             waiterName: billingWaiterName, 
@@ -319,14 +332,18 @@ export function useDashboardBilling(restaurantId, selectedBranch, activeShift, o
             billedByName: waiterObj?.name || 'Sistema',
             paymentMethod: person.paymentMethod, 
             isSplitBill: true, 
-            status: 'pending' 
+            status: 'pending',
+            productionCostAtSale: costData.productionCostAtSale,
+            grossProfitAtSale: costData.grossProfitAtSale,
+            marginPctAtSale: costData.marginPctAtSale
           };
           const newOrder = await createOrder(restaurantId, orderData);
           const autoPrintInv = localStorage.getItem('autoPrintInvoice') === 'true';
           if (autoPrintInv) {
-            printTicket({ id: newOrder.id, items, total, customerName: person.name, tableNumber }, restaurant?.name || 'Restaurante', 'invoice');
+            printTicket({ id: newOrder.id, items: costData.items, total, customerName: person.name, tableNumber }, restaurant?.name || 'Restaurante', 'invoice');
           }
           await updateOrderStatus(restaurantId, newOrder.id, 'completed');
+
         }
         // Delete originals directly (no archiving) to avoid duplicate bucket entries
         for (const order of orders) {

@@ -122,10 +122,12 @@ export default function LockedFeature({ feature, children }) {
             maxWidth: 460, boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
           }}>
             <div style={{ fontWeight: 800, color: '#991b1b', marginBottom: '0.4rem', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Lock size={16} style={{ flexShrink: 0 }} /> Función Bloqueada — Sin Plan Activo
+              <Lock size={16} style={{ flexShrink: 0 }} /> Función Bloqueada — {subscription.status === 'unpaid' ? 'Pago Fallido' : 'Sin Plan Activo'}
             </div>
             <div style={{ fontSize: '0.85rem', color: '#7f1d1d', lineHeight: 1.6 }}>
-              Tu periodo de prueba ha finalizado. Para reactivar tu caja registradora, poder facturar y recibir pedidos en tiempo real, necesitas contratar un plan de suscripción activo.
+              {subscription.status === 'unpaid' 
+                ? 'El último cobro de tu suscripción no pudo ser procesado. Para reactivar tu caja registradora, poder facturar y recibir pedidos en tiempo real, por favor regulariza tu pago.'
+                : 'Tu periodo de prueba ha finalizado. Para reactivar tu caja registradora, poder facturar y recibir pedidos en tiempo real, necesitas contratar un plan de suscripción activo.'}
             </div>
           </div>
         ) : (

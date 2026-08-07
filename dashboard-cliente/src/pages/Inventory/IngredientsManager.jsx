@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Package, MapPin, Zap, Edit2, Trash2, ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, XCircle, ClipboardList } from 'lucide-react';
+import { Package, MapPin, Zap, Edit2, Trash2, ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, XCircle, ClipboardList, GitMerge } from 'lucide-react';
 import { useSubscription } from '../../context/SubscriptionContext';
 import { useRestaurantData } from '../../context/RestaurantDataContext';
 import '../Settings/SettingsStyles.css';
@@ -111,6 +111,7 @@ export default function IngredientsManager() {
         handleSave={handleSave}
         isSaving={isSaving}
         branches={branches}
+        allIngredients={ingredients}
       />
 
       <AdjustStockModal
@@ -211,6 +212,8 @@ export default function IngredientsManager() {
                   {filteredIngredients.map(ing => {
                     const isExpanded = expandedRows[ing.id];
                     const hasVariants = ing.hasVariants && Array.isArray(ing.variants) && ing.variants.length > 0;
+                    const hasComponents = Array.isArray(ing.components) && ing.components.length > 0;
+                    const isExpandable = hasVariants || hasComponents;
                     const totalVariantStock = hasVariants ? ing.variants.reduce((s, v) => s + (parseFloat(v.currentStock) || 0), 0) : null;
                     const stockOk = !ing.trackInventory || ing.currentStock > ing.minAlertThreshold;
                     const stockLow = ing.trackInventory && ing.currentStock > 0 && ing.currentStock <= ing.minAlertThreshold;
@@ -222,11 +225,11 @@ export default function IngredientsManager() {
                         <tr style={{ background: isExpanded ? '#f0f9ff' : undefined }}>
                           <td style={{ fontWeight: 600 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              {hasVariants && (
+                              {isExpandable && (
                                 <button
                                   onClick={() => toggleRow(ing.id)}
                                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#0369a1', display: 'flex', alignItems: 'center', padding: '2px', flexShrink: 0 }}
-                                  title={isExpanded ? 'Colapsar variantes' : 'Ver variantes'}
+                                  title={isExpanded ? 'Colapsar' : 'Ver detalle'}
                                 >
                                   {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                                 </button>
@@ -237,6 +240,11 @@ export default function IngredientsManager() {
                                   {hasVariants && (
                                     <span style={{ fontSize: '0.68rem', background: '#dbeafe', color: '#1d4ed8', borderRadius: '20px', padding: '1px 8px', fontWeight: 700 }}>
                                       {ing.variants.length} variantes
+                                    </span>
+                                  )}
+                                  {hasComponents && (
+                                    <span style={{ fontSize: '0.68rem', background: '#ede9fe', color: '#6d28d9', borderRadius: '20px', padding: '1px 8px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                      <GitMerge size={10} /> {ing.components.length} componentes
                                     </span>
                                   )}
                                 </div>
@@ -318,7 +326,7 @@ export default function IngredientsManager() {
                           </td>
                         </tr>
 
-                        {/* ── Filas de Sub-variantes (expandibles) ── */}
+                        {/* ── Filas de Sub-variantes ── */}
                         {hasVariants && isExpanded && ing.variants.map((v, vIdx) => {
                           const vStock = parseFloat(v.currentStock) || 0;
                           const vMin = parseFloat(v.minAlertThreshold) || 0;
@@ -370,6 +378,56 @@ export default function IngredientsManager() {
                             </tr>
                           );
                         })}
+
+                        {/* ── Filas de Componentes (BOM) ── */}
+                        {hasComponents && isExpanded && (
+                          <>
+                            <tr style={{ background: '#fdf4ff' }}>
+                              <td colSpan={6} style={{ padding: '6px 14px 4px 2.5rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, fontSize: '0.75rem', color: '#7c3aed' }}>
+                                  <GitMerge size={12} /> COMPONENTES / SUB-PRODUCTOS
+                                </div>
+                              </td>
+                            </tr>
+                            {ing.components.map((comp, cIdx) => {
+                              const compIng = filteredIngredients.find(i => i.id === comp.ingredientId) ||
+                                             ingredients.find(i => i.id === comp.ingredientId);
+                              const subtotal = (parseFloat(comp.quantity) || 0) * (compIng?.costPerUnit || 0);
+                              return (
+                                <tr key={`${ing.id}-comp-${cIdx}`} style={{ background: '#fdf4ff', borderLeft: '3px solid #c4b5fd' }}>
+                                  <td style={{ paddingLeft: '3rem' }}>
+                                    <div style={{ fontWeight: 600, fontSize: '0.84rem', color: '#4c1d95' }}>{comp.ingredientName}</div>
+                                    {compIng && <div style={{ fontSize: '0.68rem', color: '#7c3aed' }}>{compIng.category} · {compIng.unit}</div>}
+                                  </td>
+                                  <td><span style={{ fontSize: '0.7rem', color: '#7c3aed', fontStyle: 'italic', fontWeight: 600 }}>Componente</span></td>
+                                  <td>
+                                    <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#6d28d9' }}>{fmtCost(compIng?.costPerUnit || 0)}</div>
+                                    <div style={{ fontSize: '0.68rem', color: '#9333ea' }}>por {comp.unit}</div>
+                                  </td>
+                                  <td>
+                                    <span style={{ fontWeight: 600, color: '#4c1d95' }}>{comp.quantity}</span>
+                                    <span style={{ fontSize: '0.75rem', color: '#7c3aed', marginLeft: '3px' }}>{comp.unit}</span>
+                                    {subtotal > 0 && <div style={{ fontSize: '0.68rem', color: '#7c3aed', marginTop: '1px' }}>Subtotal: {fmtCost(subtotal)}</div>}
+                                  </td>
+                                  <td>
+                                    {compIng ? (
+                                      compIng.trackInventory ? (
+                                        (() => {
+                                          const cOut = (parseFloat(compIng.currentStock) || 0) <= 0;
+                                          const cLow = !cOut && (parseFloat(compIng.currentStock) || 0) <= (parseFloat(compIng.minAlertThreshold) || 0);
+                                          if (cOut) return <span className="stock-indicator stock-out" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><XCircle size={12} /> Agotado</span>;
+                                          if (cLow) return <span className="stock-indicator stock-low" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><AlertTriangle size={12} /> Stock bajo</span>;
+                                          return <span className="stock-indicator stock-ok" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><CheckCircle2 size={12} /> OK</span>;
+                                        })()
+                                      ) : <span className="badge badge-neutral">Sin control</span>
+                                    ) : <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>—</span>}
+                                  </td>
+                                  <td />
+                                </tr>
+                              );
+                            })}
+                          </>
+                        )}
                       </React.Fragment>
                     );
                   })}

@@ -14,7 +14,7 @@ export default function BranchLimitEnforcer() {
 
   useEffect(() => {
     // Solo el dueño debe reasignar sedes, y solo si hay una suscripción cargada
-    if (!restaurantId || userProfile.role !== 'owner' || subscription.status === 'loading' || loadingData) return;
+    if (!restaurantId || userProfile.role !== 'owner' || subscription.status === 'loading' || subscription.status === 'unpaid' || loadingData) return;
 
     const checkLimits = () => {
       try {

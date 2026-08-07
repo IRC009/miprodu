@@ -7,6 +7,7 @@ import { earnPoints, redeemPoints } from '../../../../services/loyaltyService';
 import { getOpenShift } from '../../../../services/posService';
 import { db } from '../../../../services/firebase';
 import { doc, deleteDoc } from 'firebase/firestore';
+import { calculateOrderCost } from '../../../../services/costAtSaleService';
 
 export default function DashboardCheckoutModal() {
   const {
@@ -642,7 +643,20 @@ export default function DashboardCheckoutModal() {
                     }
                   }
 
-                  // ─── 3. Build billing meta — marcamos loyaltyEarned:true DESPUÉS de earnPoints ─
+                  // ─── 3. Calculate order cost and profitability metrics ───
+                  let costData = {
+                    items: finalItems,
+                    productionCostAtSale: 0,
+                    grossProfitAtSale: finalTotal,
+                    marginPctAtSale: 0
+                  };
+                  try {
+                    costData = await calculateOrderCost(restaurantId, finalItems, finalTotal);
+                  } catch (err) {
+                    console.error('[DashboardCheckoutModal] Error calculating order cost:', err);
+                  }
+
+                  // ─── 4. Build billing meta — marcamos loyaltyEarned:true DESPUÉS de earnPoints ─
                   const billingMeta = {
                     isBilled: true,
                     isCollected,
@@ -660,7 +674,11 @@ export default function DashboardCheckoutModal() {
                     cashRegister: Number(checkoutRegisterIndex || 1),
                     tip: Number(tip),
                     discount: Number(discount) + pointsDiscountValue,
-                    total: finalTotal
+                    total: finalTotal,
+                    items: costData.items,
+                    productionCostAtSale: costData.productionCostAtSale,
+                    grossProfitAtSale: costData.grossProfitAtSale,
+                    marginPctAtSale: costData.marginPctAtSale
                   };
 
                   if (checkoutOrders.length > 1) {
@@ -679,7 +697,7 @@ export default function DashboardCheckoutModal() {
                       waiterId: checkoutOrders[0].waiterId || 'system',
                       waiterName: checkoutOrders[0].waiterName || 'Sistema',
                       source: 'pos',
-                      items: finalItems,
+                      items: costData.items,
                       subtotal: subtotal,
                       tip: Number(tip),
                       discount: Number(discount) + pointsDiscountValue,
@@ -702,10 +720,14 @@ export default function DashboardCheckoutModal() {
                       isConsolidated: true,
                       originalOrderIds: checkoutOrders.map(o => o.id),
                       tableSessionId: checkoutOrders[0].tableSessionId || checkoutOrders[0].id,
-                      sessionOpenedAt
+                      sessionOpenedAt,
+                      productionCostAtSale: costData.productionCostAtSale,
+                      grossProfitAtSale: costData.grossProfitAtSale,
+                      marginPctAtSale: costData.marginPctAtSale
                     };
 
                     const newOrder = await createOrder(restaurantId, consolidatedOrderData);
+
                     billedOrderId = newOrder.id;
 
                     for (const order of checkoutOrders) {
@@ -724,7 +746,7 @@ export default function DashboardCheckoutModal() {
                   if (autoPrintInvoice) {
                     printTicket({ 
                       id: billedOrderId, 
-                      items: finalItems, 
+                      items: costData.items, 
                       total: finalTotal, 
                       tip: Number(tip), 
                       discount: Number(discount) + pointsDiscountValue, 
@@ -736,6 +758,7 @@ export default function DashboardCheckoutModal() {
                       loyaltyPointsRedeemed: loyaltyPointsToRedeem
                     }, 'Caja', 'invoice');
                   }
+
 
 
                   showAlert('Pedido Facturado Correctamente', 'Éxito', 'success');

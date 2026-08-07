@@ -95,37 +95,7 @@ export function RestaurantDataProvider({ children }) {
 
       const branchesData = branchesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-      // --- LAZY EVALUATION FOR CANCELLED SUBSCRIPTIONS ---
       let finalRestData = restData;
-      const sub = restData.subscription || {};
-      
-      if (sub.id) {
-        const val = sub.cycleEndDate || sub.endDate;
-        if (val) {
-          let dateObj;
-          if (typeof val.toDate === 'function') {
-            dateObj = val.toDate();
-          } else if (val.seconds !== undefined) {
-            dateObj = new Date(val.seconds * 1000);
-          } else if (typeof val === 'string') {
-            let s = val.replace(/^(\d{4})-(\d{2})-(\d)([T\s])/, '$1-$2-0$3$4');
-            s = s.replace(/^(\d{4})-(\d)-/, '$1-0$2-');
-            dateObj = new Date(s);
-          }
-          
-          if (dateObj && !isNaN(dateObj.getTime()) && new Date() >= dateObj) {
-            try {
-              const verifyExpiration = httpsCallable(functions, 'verifySubscriptionExpiration');
-              const result = await verifyExpiration({ restaurantId: resId });
-              if (result.data?.expired) {
-                finalRestData.subscription = { status: 'cancelled' };
-              }
-            } catch (e) {
-              console.error("Error validando expiración de plan:", e);
-            }
-          }
-        }
-      }
       
       if (resId !== currentRestaurantIdRef.current) return;
       

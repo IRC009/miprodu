@@ -51,6 +51,7 @@ export function SubscriptionProvider({ user, children }) {
   const [subscription, setSubscription] = useState({ status: 'loading', planLevel: 0 });
   const [trialDays, setTrialDays] = useState(7);
   const [restaurantCreatedAt, setRestaurantCreatedAt] = useState(null);
+  const [restaurantRegistrationTrialDays, setRestaurantRegistrationTrialDays] = useState(null);
 
   useEffect(() => {
     const unsub = onSnapshot(doc(db, 'platform_settings', 'pricing'), (snap) => {
@@ -64,6 +65,13 @@ export function SubscriptionProvider({ user, children }) {
     return () => unsub();
   }, []);
 
+  const effectiveTrialDays = useMemo(() => {
+    if (typeof restaurantRegistrationTrialDays === 'number') {
+      return restaurantRegistrationTrialDays;
+    }
+    return trialDays;
+  }, [restaurantRegistrationTrialDays, trialDays]);
+
   const isRegTrialActive = useMemo(() => {
     if (!restaurantCreatedAt) return false;
     const createdDate = new Date(restaurantCreatedAt);
@@ -72,8 +80,8 @@ export function SubscriptionProvider({ user, children }) {
     const now = new Date();
     const diffTime = now.getTime() - createdDate.getTime();
     const diffDays = diffTime / (1000 * 60 * 60 * 24);
-    return diffDays >= 0 && diffDays <= trialDays;
-  }, [restaurantCreatedAt, trialDays]);
+    return diffDays >= 0 && diffDays <= effectiveTrialDays;
+  }, [restaurantCreatedAt, effectiveTrialDays]);
 
   const regTrialDaysRemaining = useMemo(() => {
     if (!restaurantCreatedAt) return 0;
@@ -83,8 +91,8 @@ export function SubscriptionProvider({ user, children }) {
     const now = new Date();
     const diffTime = now.getTime() - createdDate.getTime();
     const diffDays = diffTime / (1000 * 60 * 60 * 24);
-    return Math.max(0, Math.ceil(trialDays - diffDays));
-  }, [restaurantCreatedAt, trialDays]);
+    return Math.max(0, Math.ceil(effectiveTrialDays - diffDays));
+  }, [restaurantCreatedAt, effectiveTrialDays]);
 
   const effectiveSubscription = useMemo(() => {
     if (isRegTrialActive) {
@@ -237,6 +245,16 @@ export function SubscriptionProvider({ user, children }) {
           const now = new Date().toISOString();
           const uData = userSnap.exists() ? userSnap.data() : {};
           
+          let currentTrialDays = 7;
+          try {
+            const pricingSnap = await getDoc(doc(db, 'platform_settings', 'pricing'));
+            if (pricingSnap.exists() && typeof pricingSnap.data().trialDays === 'number') {
+              currentTrialDays = pricingSnap.data().trialDays;
+            }
+          } catch (e) {
+            console.warn("Error fetching trial days in SubscriptionContext auto-provisioning:", e);
+          }
+
           const restaurantData = {
             name: uData.restaurantName || 'Mi Catálogo',
             ownerId: user.uid,
@@ -247,6 +265,7 @@ export function SubscriptionProvider({ user, children }) {
             businessType: uData.businessType || '',
             branchCount: uData.branchCount || '',
             createdAt: now,
+            registrationTrialDays: currentTrialDays,
             subscription: { status: 'inactive', planLevel: 0 },
             leadSource: uData.howFound || '',
           };
@@ -358,8 +377,10 @@ export function SubscriptionProvider({ user, children }) {
             if (!active) return;
             if (snap.exists()) {
               setRestaurantCreatedAt(snap.data().createdAt || null);
+              setRestaurantRegistrationTrialDays(snap.data().registrationTrialDays || null);
             } else {
               setRestaurantCreatedAt(null);
+              setRestaurantRegistrationTrialDays(null);
             }
             const sub = snap.exists() ? (snap.data().subscription || { status: 'inactive', planLevel: 0 }) : { status: 'inactive', planLevel: 0 };
             
@@ -367,24 +388,20 @@ export function SubscriptionProvider({ user, children }) {
 
             // ── Verificación de expiración al cargar ──────────────────────────
             // Se ejecuta en cada snapshot (incluyendo el inicial al cargar la página)
-            // Si tiene ID de suscripción, siempre validamos si ya expiró (incluso si el status es 'cancelled')
+            // Si tiene ID de suscripción, siempre validamos si ya expiró si está en estado cancelado/por cancelar
             if (isOwnerOrAdmin && sub && sub.id && sub.status !== 'loading') {
-              const expDate = getSubscriptionExpirationDate(sub);
-              const isExpired = expDate ? expDate < new Date() : false;
-              
-              if (isExpired) {
-                const verifyExpiration = httpsCallable(functions, 'verifySubscriptionExpiration');
-                verifyExpiration({ restaurantId: current.id })
-                  .catch(err => {
-                    console.error('[SubCtx] ❌ Error en verifySubscriptionExpiration:', err);
-                    updateDoc(restRef, { 'subscription.status': 'cancelled' });
-                  });
-              }
-            } else if (isOwnerOrAdmin && sub && !sub.id && sub.status !== 'cancelled' && sub.status !== 'loading') {
-              // Fallback para planes manuales sin ID
-              const expDate = getSubscriptionExpirationDate(sub);
-              if (expDate && expDate < new Date()) {
-                updateDoc(restRef, { 'subscription.status': 'cancelled' });
+              const isCancelledState = sub.cancelAtPeriodEnd === true || sub.status === 'cancelled';
+              if (isCancelledState) {
+                const expDate = getSubscriptionExpirationDate(sub);
+                const isExpired = expDate ? expDate < new Date() : false;
+                
+                if (isExpired) {
+                  const verifyExpiration = httpsCallable(functions, 'verifySubscriptionExpiration');
+                  verifyExpiration({ restaurantId: current.id })
+                    .catch(err => {
+                      console.error('[SubCtx] ❌ Error en verifySubscriptionExpiration:', err);
+                    });
+                }
               }
             }
 
@@ -528,55 +545,33 @@ export function SubscriptionProvider({ user, children }) {
     localStorage.setItem('activeRestaurantId', id);
   }, []);
 
-  // ── Verificador de expiración proactivo ──────────────────────────────────────
-  // Se ejecuta cada vez que cambia la suscripción o el restaurantId activo.
-  // Si cycleEndDate/endDate ya pasó, cancela la suscripción en Firestore directamente.
-  useEffect(() => {
-    const isOwner = userProfile.role === 'owner' || userProfile.roles?.includes('owner');
-    const resId = activeRestaurantId; // Usar activeRestaurantId — siempre disponible
-    if (!isOwner || !resId) return;
-    if (!subscription || subscription.status === 'loading') return;
-    if (subscription.status === 'cancelled') return;
-
-    const expDate = getSubscriptionExpirationDate(subscription);
-    if (!expDate) return; // Sin fecha de fin → no hay nada que verificar
-
-    if (expDate < new Date()) {
-      const restRef = doc(db, 'restaurants', resId);
-      updateDoc(restRef, {
-        'subscription.status': 'cancelled'
-      })
-        
-        .catch(err => console.error('[SubscriptionContext] ❌ Error al cancelar suscripción expirada:', err));
-    }
-  }, [subscription, activeRestaurantId, userProfile.role, userProfile.roles]);
-
   const checkIsActive = useCallback(() => {
     if (isRegTrialActive) return true;
+    if (!subscription || subscription.status === 'loading') return false;
+
+    const status = subscription.status;
+    const BLOCKED_STATUSES = ['unpaid', 'pending', 'paused', 'suspended', 'rejected', 'failed'];
+    if (status && BLOCKED_STATUSES.includes(status)) {
+      return false;
+    }
+
     const expDate = getSubscriptionExpirationDate(subscription);
+    const now = new Date();
+
     if (expDate) {
-      const now = new Date();
-      if (expDate < now) return false; // Expirada
-      
-      // Si la fecha de expiración está en el futuro y tiene id de suscripción,
-      // sigue activa a pesar de que el status sea 'cancelled' (cancelación de renovación)
-      if (subscription.status === 'cancelled' && subscription.id) {
+      if (status === 'cancelled') {
+        if (expDate < now) return false;
         return true;
       }
+      
+      const gracePeriodMs = 5 * 24 * 60 * 60 * 1000; // 5 días de gracia
+      if (new Date(expDate.getTime() + gracePeriodMs) < now) {
+        return false;
+      }
+      return true;
     }
 
-    // If status is cancelled, then it's NOT active.
-    if (subscription.status === 'cancelled') return false;
-
-    // 1. Si existe ID de suscripción (Mercado Pago u otra), es un plan pagado real
-    const hasMPSubscription = !!subscription.id;
-    if (hasMPSubscription) {
-      return true; // Activa y válida
-    }
-
-    // 2. Si no tiene ID pero el status es active o authorized (p.ej. asignación manual)
-    const isStatusActive = subscription.status === 'authorized' || subscription.status === 'active';
-    if (isStatusActive) {
+    if (status === 'active' || status === 'authorized') {
       return true;
     }
 

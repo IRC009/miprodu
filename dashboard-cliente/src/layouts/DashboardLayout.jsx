@@ -402,9 +402,9 @@ export default function DashboardLayout({ user }) {
               </button>
             </div>
           )}
-          {/* Banner solo si no hay suscripción activa y el usuario es el DUEÑO */}
-          {!isActive && subscription.status !== 'loading' && userProfile.role === 'owner' && (
-            <SubscriptionBanner status={subscription.status} accessUntil={null} />
+          {/* Banner de suscripción para el dueño del restaurante */}
+          {subscription.status !== 'loading' && userProfile.role === 'owner' && (
+            <SubscriptionBanner status={subscription.status} subscription={subscription} accessUntil={null} />
           )}
           {isNavigating && <div className="nav-progress-bar" />}
 

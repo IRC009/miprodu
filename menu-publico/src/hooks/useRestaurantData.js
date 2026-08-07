@@ -50,21 +50,6 @@ export async function fetchInitialData(identifier) {
       console.warn('[public_info] Failed to load public_info in fetchInitialData:', e.message);
     }
 
-    // --- LAZY EVALUATION FOR CANCELLED SUBSCRIPTIONS ---
-    const sub = restaurantData.subscription || {};
-    if (sub.cancelAtPeriodEnd) {
-      const endDate = new Date(sub.cycleEndDate || sub.endDate);
-      if (new Date() >= endDate) {
-        try {
-          const verifyExpiration = httpsCallable(functions, 'verifySubscriptionExpiration');
-          verifyExpiration({ restaurantId: restaurantData.id }).catch(() => {}); // fire and forget
-          restaurantData.subscription = { status: 'cancelled' };
-        } catch (e) {
-          console.error(e);
-        }
-      }
-    }
-
     // 2. Cargar diseño en paralelo si ya tenemos el ID
     const designRef = doc(db, `restaurants/${restaurantData.id}/config/design`);
     const designSnap = await getDoc(designRef);
@@ -146,14 +131,7 @@ export function useRestaurantData(slugParam) {
                     branches: publicInfo.branches,
                     promotions: publicInfo.promotions
                   };
-                  // Keep lazy sub evaluation if cancelled
-                  const sub = updated.subscription || {};
-                  if (sub.cancelAtPeriodEnd) {
-                    const endDate = new Date(sub.cycleEndDate || sub.endDate);
-                    if (new Date() >= endDate) {
-                      updated.subscription = { status: 'cancelled' };
-                    }
-                  }
+
                   return updated;
                 });
               }
@@ -165,20 +143,7 @@ export function useRestaurantData(slugParam) {
             setData(foundData);
           });
 
-          // --- LAZY EVALUATION FOR CANCELLED SUBSCRIPTIONS ---
-          const sub = foundData.subscription || {};
-          if (sub.cancelAtPeriodEnd) {
-            const endDate = new Date(sub.cycleEndDate || sub.endDate);
-            if (new Date() >= endDate) {
-              try {
-                const verifyExpiration = httpsCallable(functions, 'verifySubscriptionExpiration');
-                verifyExpiration({ restaurantId: foundId }).catch(() => {});
-                foundData.subscription = { status: 'cancelled' };
-              } catch (e) {
-                console.error(e);
-              }
-            }
-          }
+
           setData(prev => prev || foundData);
         } else {
           setError('not_found');

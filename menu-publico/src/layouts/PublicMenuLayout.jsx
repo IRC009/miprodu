@@ -11,6 +11,30 @@ import { getGeneralSettings } from '../services/settingsService';
 import LoadingScreen from '../components/LoadingScreen';
 import { useAlert } from '../context/AlertContext';
 
+const normalizeDateString = (val) => {
+  if (typeof val !== 'string') return val;
+  let s = val.replace(/^(\d{4})-(\d{2})-(\d)([T\s])/, '$1-$2-0$3$4');
+  s = s.replace(/^(\d{4})-(\d)-/, '$1-0$2-');
+  return s;
+};
+
+const getSubscriptionExpirationDate = (sub) => {
+  if (!sub) return null;
+  const val = sub.cycleEndDate || sub.endDate;
+  if (val) {
+    let dateObj;
+    if (typeof val.toDate === 'function') {
+      dateObj = val.toDate();
+    } else if (val.seconds !== undefined) {
+      dateObj = new Date(val.seconds * 1000);
+    } else {
+      dateObj = new Date(normalizeDateString(val));
+    }
+    if (!isNaN(dateObj.getTime())) return dateObj;
+  }
+  return null;
+};
+
 export default function PublicMenuLayout() {
   const { slug } = useParams();
   const { restaurantData, isCustomDomain: isCustomDomainFromContext } = useOutletContext() || {};
@@ -142,16 +166,19 @@ export default function PublicMenuLayout() {
         setIsBranchInactive(isInactive);
         setResolvedBranch(activeBranch);
         
-        let trialDays = 7;
-        try {
-          const { doc, getDoc } = await import('firebase/firestore');
-          const { db } = await import('../services/firebase');
-          const pricingSnap = await getDoc(doc(db, 'platform_settings', 'pricing'));
-          if (pricingSnap.exists() && typeof pricingSnap.data().trialDays === 'number') {
-            trialDays = pricingSnap.data().trialDays;
+        let trialDays = restaurantData?.registrationTrialDays;
+        if (typeof trialDays !== 'number') {
+          trialDays = 7;
+          try {
+            const { doc, getDoc } = await import('firebase/firestore');
+            const { db } = await import('../services/firebase');
+            const pricingSnap = await getDoc(doc(db, 'platform_settings', 'pricing'));
+            if (pricingSnap.exists() && typeof pricingSnap.data().trialDays === 'number') {
+              trialDays = pricingSnap.data().trialDays;
+            }
+          } catch (e) {
+            console.warn("Error fetching trial days in menu publico layout:", e);
           }
-        } catch (e) {
-          console.warn("Error fetching trial days in menu publico layout:", e);
         }
 
         const sub = restaurantData?.subscription || {};
@@ -167,7 +194,25 @@ export default function PublicMenuLayout() {
           }
         }
 
-        const isSubActive = subStatus === 'active' || subStatus === 'authorized' || isRegTrialActive;
+        let isSubActive = false;
+        const BLOCKED_STATUSES = ['unpaid', 'pending', 'paused', 'suspended', 'rejected', 'failed'];
+        if (isRegTrialActive) {
+          isSubActive = true;
+        } else if (sub && subStatus && !BLOCKED_STATUSES.includes(subStatus)) {
+          const expDate = getSubscriptionExpirationDate(sub);
+          const now = new Date();
+          if (expDate) {
+            if (subStatus === 'cancelled') {
+              isSubActive = expDate >= now;
+            } else {
+              const gracePeriodMs = 5 * 24 * 60 * 60 * 1000;
+              isSubActive = new Date(expDate.getTime() + gracePeriodMs) >= now;
+            }
+          } else {
+            isSubActive = subStatus === 'active' || subStatus === 'authorized';
+          }
+        }
+
         const globalPlan = isSubActive ? (isRegTrialActive ? 2 : (parseInt(sub.planLevel) || 0)) : 0;
         const isMixed = !isRegTrialActive && sub.isMixed === true;
         

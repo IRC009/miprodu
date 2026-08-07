@@ -66,7 +66,7 @@ export function CartProvider({ children }) {
     fetchPromos();
   }, [restaurantId]);
 
-  const addToCart = (product, quantity, observations = '') => {
+  const addToCart = (product, quantity, observations = '', selectedVariant = null) => {
     try {
       import('../services/analyticsService').then(({ engagementAnalytics }) => {
         engagementAnalytics.trackEvent('add_to_cart', { productId: product.id, productName: product.name });
@@ -80,8 +80,25 @@ export function CartProvider({ children }) {
       }
     } catch (e) {}
 
+    const variantToUse = selectedVariant || product.selectedVariant;
+    const finalProduct = variantToUse
+      ? {
+          ...product,
+          name: variantToUse.name ? `${product.name} (${variantToUse.name})` : product.name,
+          price: (variantToUse.price !== undefined && variantToUse.price !== null) ? variantToUse.price : product.price,
+          discountPrice: null,
+          variantName: typeof variantToUse.name === 'string' ? variantToUse.name : (variantToUse.name?.name || ''),
+          selectedVariant: {
+            id: variantToUse.id || '',
+            name: typeof variantToUse.name === 'string' ? variantToUse.name : (variantToUse.name?.name || ''),
+            price: Number(variantToUse.price) || 0,
+            sku: variantToUse.sku || ''
+          }
+        }
+      : product;
+
     setCartItems(prev => {
-      const existing = prev.find(item => item.id === product.id && item.name === product.name && item.observations === observations);
+      const existing = prev.find(item => item.id === finalProduct.id && item.name === finalProduct.name && item.observations === observations);
       if (existing) {
         return prev.map(item => 
           item === existing 
@@ -89,7 +106,7 @@ export function CartProvider({ children }) {
             : item
         );
       }
-      return [...prev, { ...product, quantity, observations }];
+      return [...prev, { ...finalProduct, quantity, observations }];
     });
   };
 

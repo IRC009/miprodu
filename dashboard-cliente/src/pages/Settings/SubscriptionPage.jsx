@@ -359,7 +359,7 @@ export default function SubscriptionPage({ user }) {
   // Plan realmente pagado: si tiene id de MP (no expirado) o status active/authorized
   const isActivePaid = (() => {
     if (subscriptionFromCtx?.isRegTrial) return true;
-    if (sub.status === 'cancelled') return false;
+    if (sub.status === 'cancelled' || sub.status === 'unpaid') return false;
 
     const expDate = getSubscriptionExpirationDate(sub);
     if (expDate) {

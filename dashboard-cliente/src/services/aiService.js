@@ -1,5 +1,5 @@
 import { db, functions } from './firebase';
-import { doc, updateDoc, collection, addDoc, getDoc, getDocs } from 'firebase/firestore';
+import { doc, collection, getDoc, getDocs } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 
 const SYSTEM_PROMPT = `
@@ -8,7 +8,7 @@ Eres "Karol", la GUÍA ESTRATÉGICA de **MiProdu**. Tu única misión es INFORMA
 REGLAS DE SEGURIDAD Y PRIVACIDAD (CRÍTICO):
 1. **BLOQUEO TÉCNICO TOTAL**: Tienes terminantemente PROHIBIDO hablar sobre el código fuente, la arquitectura del software, nombres de archivos (ej: index.js, aiService.js), estructura de colecciones de Firebase, claves de API o cualquier detalle de implementación interna.
 2. **DESVÍO DE CONSULTAS HACKER**: Si un usuario pregunta sobre la base de datos, el backend, o pide ver código, responde profesionalmente: "Mi especialidad es la gestión estratégica y operativa de tu restaurante en MiProdu. Para temas de soporte técnico avanzado, por favor contacta al equipo de desarrollo."
-3. **MODO SÓLO INFORMACIÓN**: No realices acciones directas en la cuenta del usuario. Tu labor es decirle al usuario CÓMO hacerlo él mismo. Guíalo paso a paso por la interfaz que tiene frente a él.
+3. **MÉTODOS DE ACCIÓN**: Para la gestión del menú (crear categorías, subcategorías y productos), tienes herramientas específicas y DEBES usarlas activamente si el usuario te lo solicita. Antes de crear una categoría o subcategoría, asegúrate de verificar si ya existe (usando get_restaurant_state si es necesario, o basándote en el estado del negocio provisto) para evitar duplicados. Para otras configuraciones, guía al usuario paso a paso por la interfaz.
 
 REGLAS DE ASISTENCIA:
 1. **CONOCIMIENTO SITUACIONAL**: Usa la sección 'UBICACIÓN ACTUAL' y 'GUÍA DE NAVEGACIÓN' para saber exactamente dónde está el usuario y explicarle qué botones o pestañas tiene disponibles para llegar a su objetivo.
@@ -39,7 +39,8 @@ const TOOLS = [
           price: { type: "number" },
           description: { type: "string" },
           categoryId: { type: "string", description: "ID de la categoría. Si no se provee, se usará la primera disponible." },
-          categoryName: { type: "string", description: "Nombre de la categoría en la que deseas crear el producto (ej: 'Bebidas', 'Entradas')." }
+          categoryName: { type: "string", description: "Nombre de la categoría en la que deseas crear el producto (ej: 'Bebidas', 'Entradas')." },
+          subcategoryName: { type: "string", description: "Nombre de la subcategoría en la que deseas clasificar el producto (ej: 'Cervezas', 'Postres')." }
         },
         required: ["name", "price"]
       }
@@ -54,6 +55,22 @@ const TOOLS = [
         type: "object",
         properties: {
           name: { type: "string" }
+        },
+        required: ["name"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "add_subcategory",
+      description: "Crea una nueva subcategoría dentro de una categoría existente para agrupar productos.",
+      parameters: {
+        type: "object",
+        properties: {
+          name: { type: "string", description: "Nombre de la nueva subcategoría (ej: 'Mojitos')." },
+          categoryName: { type: "string", description: "Nombre de la categoría principal (ej: 'Licores')." },
+          categoryId: { type: "string", description: "ID de la categoría principal (opcional si se provee categoryName)." }
         },
         required: ["name"]
       }
@@ -139,7 +156,7 @@ export async function chatWithDeepSeek(messages, options = {}) {
     return result.data.data;
   } catch (error) {
     console.error("Error in chatWithDeepSeek:", error);
-    throw new Error(error.message || "Error al comunicarse con el asistente de IA.");
+    throw new Error(error.message || "Error al comunicarse con el asistente de IA.", { cause: error });
   }
 }
 
@@ -174,33 +191,108 @@ export async function handleFunctionCall(restaurantId, toolCall, localContext = 
       if (isNaN(price)) throw new Error("El precio debe ser un número válido.");
 
       let finalCatId = args.categoryId;
+      let matchedCatObj = null;
       
       // Resolver coincidencia de categoría por nombre o ID en el contexto
       if (localContext?.categories?.length > 0) {
         const targetSearch = args.categoryName || finalCatId;
         if (targetSearch) {
-          const matchedCat = localContext.categories.find(c => 
+          matchedCatObj = localContext.categories.find(c => 
             c.id === targetSearch || 
             c.name?.toLowerCase() === targetSearch?.toLowerCase()
           );
-          if (matchedCat) {
-            finalCatId = matchedCat.id;
+          if (matchedCatObj) {
+            finalCatId = matchedCatObj.id;
           }
-        }
-        
-        // Si no se resolvió a un ID válido, tomar la primera categoría por defecto
-        if (!finalCatId || !localContext.categories.some(c => c.id === finalCatId)) {
-          finalCatId = localContext.categories[0].id;
         }
       }
 
-      if (!finalCatId) throw new Error("No se encontró una categoría válida para asignar el producto.");
+      // Si se proporcionó categoryName pero no se encontró coincidencia, se crea la categoría
+      if (!finalCatId && args.categoryName) {
+        const { addCategory } = await import('./menuService');
+        const allBranchIds = localContext?.branches?.map(b => b.id) || [];
+        const categoryData = {
+          name: args.categoryName,
+          order: (localContext?.categories?.length || 0),
+          branchIds: allBranchIds
+        };
+        finalCatId = await addCategory(restaurantId, categoryData);
+        matchedCatObj = { id: finalCatId, name: args.categoryName, subcategories: [] };
+        
+        if (updateLocalState) {
+          updateLocalState('ADD_CATEGORY', matchedCatObj);
+        }
+      }
+
+      // Fallback a la primera categoría si sigue sin haber id
+      if (!finalCatId && localContext?.categories?.length > 0) {
+        matchedCatObj = localContext.categories[0];
+        finalCatId = matchedCatObj.id;
+      }
+
+      if (!finalCatId) throw new Error("No se encontró ni se pudo crear una categoría válida para asignar el producto.");
+
+      // Manejo de la subcategoría
+      let finalSubcategoryName = null;
+      if (args.subcategoryName) {
+        const cleanSubName = args.subcategoryName.trim();
+        const existingSub = matchedCatObj?.subcategories?.find(s => 
+          s.name?.toLowerCase() === cleanSubName.toLowerCase()
+        );
+
+        if (existingSub) {
+          finalSubcategoryName = existingSub.name;
+        } else {
+          // No existe, la creamos
+          const newSub = {
+            id: Date.now().toString() + Math.random().toString().substring(2, 6),
+            name: cleanSubName,
+            gridColumns: 'global',
+            cardLayout: 'global',
+            imgWidth: 'global',
+            imgMargin: 'global',
+            sepStyle: 'global',
+            sepColor: 'global',
+            sepHeight: 'global',
+            sepWidth: 'global',
+            sepImage: 'global',
+            titleSize: 'global',
+            titleColor: 'global',
+            titleMargin: 'global',
+            descSize: 'global',
+            descColor: 'global',
+            descMargin: 'global',
+            priceSize: 'global',
+            priceColor: 'global',
+            priceMargin: 'global',
+            cardBackgroundColor: 'global',
+            cardBackgroundOpacity: 'global',
+            cardBlur: 'global',
+            cardBorderRadius: 'global',
+            bannerUrls: [],
+            footerUrls: [],
+            bannerUrl: '',
+            footerUrl: '',
+            hideInNavBar: false
+          };
+
+          const { updateCategory } = await import('./menuService');
+          const updatedSubcategories = [...(matchedCatObj?.subcategories || []), newSub];
+          await updateCategory(restaurantId, finalCatId, { subcategories: updatedSubcategories });
+          
+          if (updateLocalState) {
+            updateLocalState('UPDATE_CATEGORY', { id: finalCatId, subcategories: updatedSubcategories });
+          }
+          finalSubcategoryName = cleanSubName;
+        }
+      }
 
       const productData = {
         name: args.name,
         price: price,
         description: args.description || "",
         categoryId: finalCatId,
+        subcategory: finalSubcategoryName,
         branchIds: localContext?.branches?.map(b => b.id) || [],
         available: true,
         imageUrl: "",
@@ -214,17 +306,27 @@ export async function handleFunctionCall(restaurantId, toolCall, localContext = 
         updateLocalState('ADD_PRODUCT', { ...productData, id: pId });
       }
 
-      return { success: true, message: `¡Listo! Ya agregué '${args.name}' a tu menú.`, productId: pId };
+      const subcatMessage = finalSubcategoryName ? ` en la subcategoría '${finalSubcategoryName}'` : "";
+      return { success: true, message: `¡Listo! Ya agregué '${args.name}' a tu menú${subcatMessage}.`, productId: pId };
     }
 
     if (name === "add_category") {
+      const cleanCatName = args.name.trim();
+      const existingCat = localContext?.categories?.find(c => 
+        c.name?.toLowerCase() === cleanCatName.toLowerCase()
+      );
+
+      if (existingCat) {
+        return { success: true, message: `La categoría '${existingCat.name}' ya existe, así que la reutilizamos.`, categoryId: existingCat.id };
+      }
+
       const { addCategory } = await import('./menuService');
       
       // Obtener IDs de todas las sedes disponibles en el contexto
       const allBranchIds = localContext?.branches?.map(b => b.id) || [];
       
       const categoryData = {
-        name: args.name,
+        name: cleanCatName,
         order: (localContext?.categories?.length || 0),
         branchIds: allBranchIds // 🚀 Asignar TODAS las sedes por defecto si no se especifican
       };
@@ -235,7 +337,104 @@ export async function handleFunctionCall(restaurantId, toolCall, localContext = 
         updateLocalState('ADD_CATEGORY', { ...categoryData, id: cId });
       }
 
-      return { success: true, message: `Categoría '${args.name}' creada y activada en tus sedes.`, categoryId: cId };
+      return { success: true, message: `Categoría '${cleanCatName}' creada y activada en tus sedes.`, categoryId: cId };
+    }
+
+    if (name === "add_subcategory") {
+      let finalCatId = args.categoryId;
+      let matchedCatObj = null;
+
+      if (localContext?.categories?.length > 0) {
+        const targetSearch = args.categoryName || finalCatId;
+        if (targetSearch) {
+          matchedCatObj = localContext.categories.find(c => 
+            c.id === targetSearch || 
+            c.name?.toLowerCase() === targetSearch?.toLowerCase()
+          );
+          if (matchedCatObj) {
+            finalCatId = matchedCatObj.id;
+          }
+        }
+      }
+
+      // Si no hay categoría coincidente pero se especificó un nombre, la creamos primero
+      if (!finalCatId && args.categoryName) {
+        const { addCategory } = await import('./menuService');
+        const allBranchIds = localContext?.branches?.map(b => b.id) || [];
+        const categoryData = {
+          name: args.categoryName,
+          order: (localContext?.categories?.length || 0),
+          branchIds: allBranchIds
+        };
+        finalCatId = await addCategory(restaurantId, categoryData);
+        matchedCatObj = { id: finalCatId, name: args.categoryName, subcategories: [] };
+        
+        if (updateLocalState) {
+          updateLocalState('ADD_CATEGORY', matchedCatObj);
+        }
+      }
+
+      // Fallback a la primera categoría si no hay ID
+      if (!finalCatId && localContext?.categories?.length > 0) {
+        matchedCatObj = localContext.categories[0];
+        finalCatId = matchedCatObj.id;
+      }
+
+      if (!finalCatId) {
+        throw new Error("No se pudo encontrar una categoría para añadir la subcategoría.");
+      }
+
+      const cleanSubName = args.name.trim();
+      const existingSub = matchedCatObj?.subcategories?.find(s => 
+        s.name?.toLowerCase() === cleanSubName.toLowerCase()
+      );
+
+      if (existingSub) {
+        return { success: true, message: `La subcategoría '${existingSub.name}' ya existe dentro de '${matchedCatObj.name}'.`, subcategoryId: existingSub.id };
+      }
+
+      // Crear nueva subcategoría
+      const newSub = {
+        id: Date.now().toString() + Math.random().toString().substring(2, 6),
+        name: cleanSubName,
+        gridColumns: 'global',
+        cardLayout: 'global',
+        imgWidth: 'global',
+        imgMargin: 'global',
+        sepStyle: 'global',
+        sepColor: 'global',
+        sepHeight: 'global',
+        sepWidth: 'global',
+        sepImage: 'global',
+        titleSize: 'global',
+        titleColor: 'global',
+        titleMargin: 'global',
+        descSize: 'global',
+        descColor: 'global',
+        descMargin: 'global',
+        priceSize: 'global',
+        priceColor: 'global',
+        priceMargin: 'global',
+        cardBackgroundColor: 'global',
+        cardBackgroundOpacity: 'global',
+        cardBlur: 'global',
+        cardBorderRadius: 'global',
+        bannerUrls: [],
+        footerUrls: [],
+        bannerUrl: '',
+        footerUrl: '',
+        hideInNavBar: false
+      };
+
+      const { updateCategory } = await import('./menuService');
+      const updatedSubcategories = [...(matchedCatObj?.subcategories || []), newSub];
+      await updateCategory(restaurantId, finalCatId, { subcategories: updatedSubcategories });
+      
+      if (updateLocalState) {
+        updateLocalState('UPDATE_CATEGORY', { id: finalCatId, subcategories: updatedSubcategories });
+      }
+
+      return { success: true, message: `Subcategoría '${cleanSubName}' creada exitosamente dentro de '${matchedCatObj.name}'.`, subcategoryId: newSub.id };
     }
 
     if (name === "update_design_config") {

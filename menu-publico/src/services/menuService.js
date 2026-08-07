@@ -192,6 +192,30 @@ export const getPublicMenu = async (restaurantId, branchId = null) => {
   }
 };
 
+const normalizeDateString = (val) => {
+  if (typeof val !== 'string') return val;
+  let s = val.replace(/^(\d{4})-(\d{2})-(\d)([T\s])/, '$1-$2-0$3$4');
+  s = s.replace(/^(\d{4})-(\d)-/, '$1-0$2-');
+  return s;
+};
+
+const getSubscriptionExpirationDate = (sub) => {
+  if (!sub) return null;
+  const val = sub.cycleEndDate || sub.endDate;
+  if (val) {
+    let dateObj;
+    if (typeof val.toDate === 'function') {
+      dateObj = val.toDate();
+    } else if (val.seconds !== undefined) {
+      dateObj = new Date(val.seconds * 1000);
+    } else {
+      dateObj = new Date(normalizeDateString(val));
+    }
+    if (!isNaN(dateObj.getTime())) return dateObj;
+  }
+  return null;
+};
+
 const isBranchPlanValid = (branch, sub) => {
   if (!branch) return false;
   
@@ -200,8 +224,30 @@ const isBranchPlanValid = (branch, sub) => {
     return false;
   }
   
-  const subStatus = sub?.status || 'inactive';
-  const isSubActive = subStatus === 'active' || subStatus === 'authorized';
+  let isSubActive = false;
+  if (sub) {
+    const subStatus = sub.status || 'inactive';
+    const BLOCKED_STATUSES = ['unpaid', 'pending', 'paused', 'suspended', 'rejected', 'failed'];
+    if (subStatus && !BLOCKED_STATUSES.includes(subStatus)) {
+      if (sub.isRegTrial) {
+        isSubActive = true;
+      } else {
+        const expDate = getSubscriptionExpirationDate(sub);
+        const now = new Date();
+        if (expDate) {
+          if (subStatus === 'cancelled') {
+            isSubActive = expDate >= now;
+          } else {
+            const gracePeriodMs = 5 * 24 * 60 * 60 * 1000;
+            isSubActive = new Date(expDate.getTime() + gracePeriodMs) >= now;
+          }
+        } else {
+          isSubActive = subStatus === 'active' || subStatus === 'authorized';
+        }
+      }
+    }
+  }
+
   if (!isSubActive) {
     return false;
   }
@@ -230,20 +276,34 @@ const getEffectiveSubscription = async (restDoc) => {
   const sub = restDoc?.subscription;
   const createdAt = restDoc?.createdAt;
   
-  if (!createdAt) return sub;
-  
-  let trialDays = 7;
-  try {
-    const pricingDoc = await Database.getById('platform_settings', 'pricing');
-    if (pricingDoc && typeof pricingDoc.trialDays === 'number') {
-      trialDays = pricingDoc.trialDays;
+  let activeSub = sub;
+  if (sub) {
+    const expDate = getSubscriptionExpirationDate(sub);
+    if (expDate) {
+      const gracePeriodMs = 5 * 24 * 60 * 60 * 1000; // 5 días de gracia
+      if (new Date(expDate.getTime() + gracePeriodMs) < new Date()) {
+        activeSub = { ...sub, status: 'unpaid' };
+      }
     }
-  } catch (e) {
-    console.warn("Error fetching trial days in menuService:", e);
+  }
+
+  if (!createdAt) return activeSub;
+  
+  let trialDays = restDoc?.registrationTrialDays;
+  if (typeof trialDays !== 'number') {
+    trialDays = 7;
+    try {
+      const pricingDoc = await Database.getById('platform_settings', 'pricing');
+      if (pricingDoc && typeof pricingDoc.trialDays === 'number') {
+        trialDays = pricingDoc.trialDays;
+      }
+    } catch (e) {
+      console.warn("Error fetching trial days in menuService:", e);
+    }
   }
   
   const createdDate = new Date(createdAt);
-  if (isNaN(createdDate.getTime())) return sub;
+  if (isNaN(createdDate.getTime())) return activeSub;
   
   const diffTime = new Date().getTime() - createdDate.getTime();
   const diffDays = diffTime / (1000 * 60 * 60 * 24);
@@ -251,14 +311,14 @@ const getEffectiveSubscription = async (restDoc) => {
   
   if (isRegTrialActive) {
     return {
-      ...(sub || {}),
+      ...(activeSub || {}),
       status: 'active',
       planLevel: 2,
       isRegTrial: true
     };
   }
   
-  return sub;
+  return activeSub;
 };
 
 export const getBranches = async (restaurantId) => {

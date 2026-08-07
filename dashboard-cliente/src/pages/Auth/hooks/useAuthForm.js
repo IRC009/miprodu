@@ -260,6 +260,17 @@ export function useAuthForm(onLogin) {
           password: encryptPassword(password),
         }, { merge: true });
 
+        // Obtener días de prueba de la configuración global
+        let currentTrialDays = 7;
+        try {
+          const pricingSnap = await getDoc(doc(db, 'platform_settings', 'pricing'));
+          if (pricingSnap.exists() && typeof pricingSnap.data().trialDays === 'number') {
+            currentTrialDays = pricingSnap.data().trialDays;
+          }
+        } catch (e) {
+          console.warn("Error fetching trial days in useAuthForm:", e);
+        }
+
         // 3. Restaurante base con todos los datos del formulario
         await setDoc(doc(db, 'restaurants', user.uid), {
           name: restaurantName,
@@ -271,6 +282,7 @@ export function useAuthForm(onLogin) {
           businessType: businessType || '',
           branchCount: branchCount || '',
           createdAt: now,
+          registrationTrialDays: currentTrialDays,
           subscription: { status: 'inactive', planLevel: 0 },
           leadSource: howFound || '',
         }, { merge: true });

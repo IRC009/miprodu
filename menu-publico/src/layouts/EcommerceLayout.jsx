@@ -10,6 +10,30 @@ import { getBranches } from '../services/menuService';
 import LoadingScreen from '../components/LoadingScreen';
 import './EcommerceLayout.css';
 
+const normalizeDateString = (val) => {
+  if (typeof val !== 'string') return val;
+  let s = val.replace(/^(\d{4})-(\d{2})-(\d)([T\s])/, '$1-$2-0$3$4');
+  s = s.replace(/^(\d{4})-(\d)-/, '$1-0$2-');
+  return s;
+};
+
+const getSubscriptionExpirationDate = (sub) => {
+  if (!sub) return null;
+  const val = sub.cycleEndDate || sub.endDate;
+  if (val) {
+    let dateObj;
+    if (typeof val.toDate === 'function') {
+      dateObj = val.toDate();
+    } else if (val.seconds !== undefined) {
+      dateObj = new Date(val.seconds * 1000);
+    } else {
+      dateObj = new Date(normalizeDateString(val));
+    }
+    if (!isNaN(dateObj.getTime())) return dateObj;
+  }
+  return null;
+};
+
 export default function EcommerceLayout() {
   const { slug } = useParams();
   const { restaurantData, isCustomDomain: isCustomDomainFromContext } = useOutletContext() || {};
@@ -84,7 +108,23 @@ export default function EcommerceLayout() {
         let isEnabled = data && (data.enableWhatsAppOrders !== false || data.enablePickupOrders !== false || data.enableWhatsAppDirectDelivery === true);
         const sub = restaurantData?.subscription || {};
         const subStatus = sub.status || 'inactive';
-        const isSubActive = subStatus === 'active' || subStatus === 'authorized';
+        
+        let isSubActive = false;
+        const BLOCKED_STATUSES = ['unpaid', 'pending', 'paused', 'suspended', 'rejected', 'failed'];
+        if (sub && subStatus && !BLOCKED_STATUSES.includes(subStatus)) {
+          const expDate = getSubscriptionExpirationDate(sub);
+          const now = new Date();
+          if (expDate) {
+            if (subStatus === 'cancelled') {
+              isSubActive = expDate >= now;
+            } else {
+              const gracePeriodMs = 5 * 24 * 60 * 60 * 1000;
+              isSubActive = new Date(expDate.getTime() + gracePeriodMs) >= now;
+            }
+          } else {
+            isSubActive = subStatus === 'active' || subStatus === 'authorized';
+          }
+        }
         if (!isSubActive) isEnabled = false;
         setOrdersEnabled(isEnabled);
       } catch (err) {

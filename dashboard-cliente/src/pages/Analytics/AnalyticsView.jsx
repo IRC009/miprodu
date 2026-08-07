@@ -104,7 +104,9 @@ export default function AnalyticsView() {
               // Calcular el costo en base a la receta del producto
               const product = products.find(p => p.id === item.id || p.name === item.name);
               let itemCost = 0;
-              if (product && product.recipe) {
+              if (item.costAtSale !== undefined && item.costAtSale !== null) {
+                 itemCost = item.costAtSale;
+              } else if (product && product.recipe) {
                  itemCost = product.recipe.reduce((sum, r) => sum + (r.quantity * (r.costPerUnit || 0)), 0);
               }
               const costForOrder = itemCost * item.quantity;
